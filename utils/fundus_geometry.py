@@ -13,13 +13,13 @@ __license__ = "CC BY-NC 4.0"
 from utils.vector import Vector
 
 
-def disc_macula_distance(disc_center, macula_center):
-    return Vector.distance(Vector(disc_center), Vector(macula_center))
+def disc_fovea_distance(disc_center, fovea_center):
+    return Vector.distance(Vector(disc_center), Vector(fovea_center))
 
 
-def macula_disc_angle(macula_center, disc_center):
+def fovea_disc_angle(fovea_center, disc_center):
 
-    macula_to_disc =  Vector(disc_center) - Vector(macula_center)
-    (r, theta) = macula_to_disc.toPolarDeg()
+    fovea_to_disc =  Vector(disc_center) - Vector(fovea_center)
+    (r, theta) = fovea_to_disc.toPolarDeg()
     return theta
 

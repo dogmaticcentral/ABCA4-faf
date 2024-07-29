@@ -45,7 +45,7 @@ class FafRecalibration(FafAnalysis):
             alias = faf_img_dict['case_id']['alias']
             hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "bg_histogram", 'txt')
             if not is_nonempty_file(hist_path):
-                raise f"{hist_path} does not exist or is empty"
+                raise Exception(f"{hist_path} does not exist or is empty")
             hist_paths.append(hist_path)
         self.new_max_location = int(mean([histogram_max(hist_path) for hist_path in hist_paths]))
 

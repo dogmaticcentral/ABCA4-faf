@@ -17,12 +17,12 @@ from pathlib import Path
 import numpy as np
 
 from classes.faf_analysis import FafAnalysis
-from faf00_settings import WORK_DIR, GEOMETRY
+from faf00_settings import WORK_DIR, GEOMETRY, DEBUG
 from utils.conventions import construct_workfile_path, original_2_aux_file_path
 from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
 from utils.image_utils import rgba_255_path_to_255_ndarray
 from utils.score import elliptic_mask
-from utils.utils import is_nonempty_file, scream
+from utils.utils import is_nonempty_file, scream, shrug
 from utils.vector import Vector
 
 
@@ -80,74 +80,33 @@ class FafFullMask(FafAnalysis):
             WORK_DIR, original_image, alias, "vasculature", "png", should_exist=True
         )
 
-        for region_png in [original_image, usable_region, blood_vessels]:
+        for region_png in [original_image, blood_vessels]:
             if not is_nonempty_file(region_png):
                 scream(f"{region_png} does not exist (or may be empty).")
                 exit()
+
+        if not is_nonempty_file(usable_region):
+            shrug(f"{usable_region} is nonexistent or empty - the image will be treated as free of artifacts")
+            usable_region = None
         return [original_image, usable_region, blood_vessels]
-
-    def elliptic_mask(
-        self,
-        width: int,
-        height: int,
-        disc_center: Vector,
-        macula_center: Vector,
-        dist: float,
-        usable_img_region: np.ndarray,
-        vasculature: np.ndarray,
-        outer_ellipse: bool,
-    ) -> np.ndarray:
-        mask = np.zeros((height, width))
-
-        radii = "outer_ellipse_radii" if outer_ellipse else "ellipse_radii"
-        (a, b) = tuple(i * dist for i in GEOMETRY[radii])
-        c = math.sqrt(a**2 - b**2)
-        u: Vector = (macula_center - disc_center).get_normalized()
-        ellipse_focus_1 = macula_center + u * c
-        ellipse_focus_2 = macula_center - u * c
-
-        disc_radius  = GEOMETRY["disc_radius"] * dist
-        fovea_radius = GEOMETRY["fovea_radius"] * dist
-
-        for y, x in product(range(height), range(width)):
-            if not usable_img_region[y, x]:
-                continue
-            if vasculature[y, x]:
-                continue
-            point = Vector(x, y)
-
-            # if outside ellipse, continue
-            d1 = (point - ellipse_focus_1).getLength()
-            d2 = (point - ellipse_focus_2).getLength()
-            if d1 + d2 > 2 * a:
-                continue
-
-            # if inside disc or fovea, continue
-            if Vector.distance(point, macula_center) < fovea_radius:
-                continue
-            if Vector.distance(point, disc_center) < disc_radius:
-                continue
-            # finally
-            mask[y, x] = 255
-        return mask
 
     def peripapillary_mask(
         self,
         width: int,
         height: int,
         disc_center: Vector,
-        macula_center: Vector,
+        fovea_center: Vector,
         dist: float,
-        usable_img_region: np.ndarray,
+        usable_img_region: np.ndarray | None,
         vasculature: np.ndarray,
         outer_ellipse: bool,
     ) -> np.ndarray:
-        a = macula_center
+        a = fovea_center
         b = outer_ellipse
         mask = np.zeros((height, width))
         disc_radius = GEOMETRY["disc_radius"] * dist
         for y, x in product(range(height), range(width)):
-            if not usable_img_region[y, x]:
+            if usable_img_region and not usable_img_region[y, x]:
                 continue
             if vasculature[y, x]:
                 continue
@@ -177,18 +136,19 @@ class FafFullMask(FafAnalysis):
             return str(outpng)
 
         disc_center   = Vector(faf_img_dict["disc_x"], faf_img_dict["disc_y"])
-        macula_center = Vector(faf_img_dict["macula_x"], faf_img_dict["macula_y"])
-        dist = Vector.distance(disc_center, macula_center)
+        fovea_center = Vector(faf_img_dict["fovea_x"], faf_img_dict["fovea_y"])
+        dist = Vector.distance(disc_center, fovea_center)
 
-        usable_img_region = rgba_255_path_to_255_ndarray(usable_region, channel=2)
+        usable_img_region = None if usable_region is None else rgba_255_path_to_255_ndarray(usable_region, channel=2)
         vasculature = grayscale_img_path_to_255_ndarray(blood_vessels)
 
-        height, width = usable_img_region.shape
+        height, width = vasculature.shape
 
         mask = mask_creator(
-            width, height, disc_center, macula_center, dist, usable_img_region, vasculature, outer_ellipse
+            width, height, disc_center, fovea_center, dist, usable_img_region, vasculature, outer_ellipse
         )
         ndarray_to_int_png(mask, outpng)
+        if DEBUG: print(f"Created {outpng}")
 
         return str(outpng)
 

@@ -54,7 +54,6 @@ class FafAutoBg(FafAnalysis):
         # TODO check that the outer ellipse and the orig image actually match
         return [original_image_path, inner_ellipse_path, outer_ellipse_path]
 
-
     @staticmethod
     def _pointlist_color(point_list: list[tuple], canvas: np.ndarray, color: list):
 
@@ -69,7 +68,6 @@ class FafAutoBg(FafAnalysis):
                 print(f"column type", type(x))
                 exit()
         return
-
 
     @staticmethod
     def _series_of_foci(radial_steps, a0, b0, dist, ellipse_center, u) -> list[tuple]:

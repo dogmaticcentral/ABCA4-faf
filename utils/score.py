@@ -42,13 +42,14 @@ def collect_bg_distro_params(original_image_path, alias, bg_stem) -> tuple:
     gradient_correction = SCORE_PARAMS["gradient_correction"]
     return bg_model.means_[0, 0], stdevs[0, 0, 0], gradient_correction
 
+
 def elliptic_mask(
         width: int,
         height: int,
         disc_center: Vector,
         macula_center: Vector,
         dist: float,
-        usable_img_region: np.ndarray,
+        usable_img_region: np.ndarray | None,
         vasculature: np.ndarray,
         outer_ellipse: bool = False,
     ) -> np.ndarray:
@@ -65,7 +66,7 @@ def elliptic_mask(
         fovea_radius = GEOMETRY["fovea_radius"] * dist
 
         for y, x in product(range(height), range(width)):
-            if not usable_img_region[y, x]:
+            if usable_img_region and not usable_img_region[y, x]:
                 continue
             if vasculature[y, x]:
                 continue
