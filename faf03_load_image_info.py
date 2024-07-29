@@ -72,8 +72,8 @@ def main():
         "height",
         "disc x",
         "disc y",
-        "macula x",
-        "macula y",
+        "fovea x",
+        "fovea y",
     ]
     infile_path = arg_parse(required_columns, accepted_columns_patient + accepted_columns_geometry)
     delimiter = guess_delimiter(infile_path)

@@ -5,7 +5,8 @@
 *.xlsx
 *.tsv
 *.png
-
+*.jpg
+images/
 
 
 # Byte-compiled / optimized / DLL files

@@ -17,20 +17,9 @@ import os
 
 from peewee import InterfaceError, ImproperlyConfigured, OperationalError
 
-from faf00_settings import IMAGE_REPO, WORK_DIR, DATABASES, RECOGNIZED_ENGINES
+from faf00_settings import WORK_DIR, DATABASES, RECOGNIZED_ENGINES
 from utils.db_utils import db_connect
 from utils.utils import scream, comfort, is_nonempty_file
-
-
-def image_repo_check() -> bool:
-    if not IMAGE_REPO.exists():
-        scream(f"{IMAGE_REPO} not found.")
-        return False
-    if not any(IMAGE_REPO.iterdir()):
-        scream(f"{IMAGE_REPO} seems to be empty.")
-        return False
-    comfort(f"Image repo {IMAGE_REPO} OK.")
-    return True
 
 
 def workdir_check() -> bool:
@@ -104,7 +93,7 @@ def main():
 
     print("Settings sanity check:")
     failed = 0
-    for test in [image_repo_check, workdir_check]:
+    for test in [workdir_check]:
         if not test():
             failed += 1
 

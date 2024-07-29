@@ -36,7 +36,7 @@ def check_image_dimensions(filepath: Path, faf_img_dict: dict):
     (h, w) = image_ndarr.shape
     image_actual = {'height': h, 'width': w}
     # are these dims reasonable numbers?
-    if h < 1000 or w < 1000:
+    if h < 500 or w < 500:
         scream(f"The dimensions ({h}, {w}) are too small for a reasonable analysis.")
         scream(f"\tConsider flagging {filepath} as unusable in the database.")
         exit()
@@ -59,7 +59,7 @@ def check_image_dimensions(filepath: Path, faf_img_dict: dict):
 
 
 def check_disc_and_macula(filepath: Path, faf_img_dict: dict):
-    for coordinate in ["disc_x", "disc_y", "macula_x", "macula_y"]:
+    for coordinate in ["disc_x", "disc_y", "fovea_x", "fovea_y"]:
         provided = faf_img_dict.get(coordinate)
         if provided:
             comfort(f"{coordinate} provided: {provided}")
@@ -78,7 +78,10 @@ def check_disc_and_macula(filepath: Path, faf_img_dict: dict):
 
 
 def check_images():
+    any_useable = False
     for faf_img_dict in FafImage.select().where(FafImage.usable == True).dicts():
+
+        any_useable = True
         # does the file exist
         faf_image_filepath = Path(faf_img_dict['image_path'])
         check_image_path(faf_image_filepath)
@@ -89,6 +92,9 @@ def check_images():
         # are the locations of disc and macula provided and reasonable?
         check_disc_and_macula(faf_image_filepath, faf_img_dict)
 
+    if not any_useable:
+        scream("there seem to be no images labeled as 'usable' in the database")
+        exit()
 
 def pair_is_match(path1: str, path2: str) -> bool:
     """ If you have a different convention, change the matching criterion here
@@ -96,6 +102,8 @@ def pair_is_match(path1: str, path2: str) -> bool:
     :param path2:  full path to img 2, provided as a string
     :return bool:  True if the paths satisfy matching criterion
     """
+    shrug("image pairs not checked - please provide the criterion")
+    return True
     return path1.replace("OD", "OX").replace("OS", "OX") == path2.replace("OD", "OX").replace("OS", "OX")
 
 

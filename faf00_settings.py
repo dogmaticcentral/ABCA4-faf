@@ -15,7 +15,6 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent
-IMAGE_REPO = Path("/storage/imaging/abca4_faf")
 WORK_DIR = Path("/home/ivana/scratch/abca4_faf")
 
 DEBUG = True
@@ -35,7 +34,7 @@ DATABASES = {
         "DB_NAME": f"{WORK_DIR}/abca4_faf.sqlite",
     },
 }
-DATABASES["default"] = DATABASES["mysql"]
+DATABASES["default"] = DATABASES["sqlite"]
 
 # set to empty string or None if not needed
 # (soffice, https://help.libreoffice.org/latest/en-US/text/shared/guide/convertfilters.html,
