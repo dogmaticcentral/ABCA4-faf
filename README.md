@@ -42,9 +42,9 @@ Here is a possible sample input.
 Note that you will have to create a (free) account with [Retina Image Bank](https://imagebank.asrs.org) 
 to download the images
 
-https://imagebank.asrs.org/file/71476/stargardt-disease  
-https://imagebank.asrs.org/file/130508/stargardt-disease 
-https://imagebank.asrs.org/file/130509/stargardt-disease
+* https://imagebank.asrs.org/file/71476/stargardt-disease  
+* https://imagebank.asrs.org/file/130508/stargardt-disease 
+* https://imagebank.asrs.org/file/130509/stargardt-disease
 
 
 ## Finding the approximate locations of fovea and disc in faf images
@@ -65,7 +65,7 @@ in `faf00_settings.py` file. See below.
 
 Fill in the values in `faf00_settings.py`. 
 
-![selecting db.png](doc/selecting_db.png)
+![selecting db.png](./doc/selecting_db.png)
 
 
 In particular, you will need a work directory where
