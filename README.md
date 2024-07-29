@@ -65,7 +65,7 @@ in `faf00_settings.py` file. See below.
 
 Fill in the values in `faf00_settings.py`. 
 
-![selecting db.png](./doc/selecting_db.png)
+![selecting db.png](doc/selecting_db.png)
 
 
 In particular, you will need a work directory where
