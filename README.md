@@ -1,11 +1,17 @@
 # About
 
+This repo contains a set of tools for the analysis of retinal fundus autofluorescence images.
+So far it has been usd in "Quantifying the progression of Stargardt disease ... etc" by Mihalek at al,
+submitted for publication.
+
 # Reporting issues and contributing
+If you would like to help fixing and building on this code, please report any issues in the issue
+tracker of this repo, or create a branch and make a pull request.
 
 # Installing the code
 
 
-# Tyring out a Demo
+# Trying out a Demo
 
 This brief into assumes that you can find your way around python - using virtual environment, 
 installing missing packages, and running scripts from the command line or from within your favorite IDE.

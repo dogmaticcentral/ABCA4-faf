@@ -16,7 +16,7 @@ from PIL import Image as PilImage  # scikit image object is also called Image
 from utils.ndarray_utils import extremize
 
 
-def extremize_pil(input_pil_image: PilImage,  cutoff=230, invert=False):
+def extremize_pil(input_pil_image: PilImage,  cutoff=0, invert=False):
 
     pixelmat = np.asarray(input_pil_image)
     return extremize(pixelmat, cutoff, invert)

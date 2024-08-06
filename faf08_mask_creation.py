@@ -21,7 +21,7 @@ from faf00_settings import WORK_DIR, GEOMETRY, DEBUG
 from utils.conventions import construct_workfile_path, original_2_aux_file_path
 from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
 from utils.image_utils import rgba_255_path_to_255_ndarray
-from utils.score import elliptic_mask
+from utils.ndarray_utils import elliptic_mask
 from utils.utils import is_nonempty_file, scream, shrug
 from utils.vector import Vector
 
@@ -135,7 +135,7 @@ class FafFullMask(FafAnalysis):
             print(f"found {outpng}")
             return str(outpng)
 
-        disc_center   = Vector(faf_img_dict["disc_x"], faf_img_dict["disc_y"])
+        disc_center  = Vector(faf_img_dict["disc_x"], faf_img_dict["disc_y"])
         fovea_center = Vector(faf_img_dict["fovea_x"], faf_img_dict["fovea_y"])
         dist = Vector.distance(disc_center, fovea_center)
 

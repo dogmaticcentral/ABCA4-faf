@@ -25,7 +25,8 @@ from models.abca4_faf_models import FafImage
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
 from utils.image_utils import grayscale_img_path_to_255_ndarray
-from utils.score import image_score, collect_bg_distro_params, elliptic_mask
+from utils.score import image_score, collect_bg_distro_params
+from utils.ndarray_utils import elliptic_mask
 from utils.vector import Vector
 
 

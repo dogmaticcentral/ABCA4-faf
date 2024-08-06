@@ -17,7 +17,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 WORK_DIR = Path("/home/ivana/scratch/abca4_faf")
 
-DEBUG = True
+DEBUG = False
 
 RECOGNIZED_ENGINES = ["peewee.sqlite", "peewee.mysql", "peewee.postgres"]
 DATABASES = {
@@ -35,6 +35,7 @@ DATABASES = {
     },
 }
 DATABASES["default"] = DATABASES["sqlite"]
+
 
 # set to empty string or None if not needed
 # (soffice, https://help.libreoffice.org/latest/en-US/text/shared/guide/convertfilters.html,
