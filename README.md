@@ -111,3 +111,23 @@ fove and dosc centers are inside the image bounds, do
 ```shell
 ./faf05_img_sanity_checks.py
 ```
+
+
+## Blood vessel detection an mask creation
+
+
+```shell
+./faf07_blood_vessel_detection.py 
+./faf08_mask_creation.py 
+```
+
+Both commands take `-h|--help` flag to print out the help message. Also, `-x|--skip_xisting` 
+will skip re-creating the blood vessel / mask image if one is already found in the 
+work directory.
+
+`./faf07_blood_vessel_detection.py` uses combination of traditional image processing methods
+to detect the outline of the blood vessels in each of the input images. It may fail in the cases
+of low contrast images, such as srs-rib-image-130508.jpg here, or in the cases of advanced Stargardt disease,
+when the large hypofluorescent areas start obscuring the vasculature.
+
+

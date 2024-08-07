@@ -53,6 +53,11 @@ def from_gray(gray_img: np.ndarray, channel=2) -> np.ndarray:
     return color_arr
 
 
+def get_image_dimensions(file_path):
+    with PilImage.open(file_path) as img:
+        return img.size  # returns (width, height)
+
+
 def gray_read_blur(path: str) -> np.ndarray:
     rgba_image = PilImage.open(path).filter(ImageFilter.GaussianBlur(radius=10))
     return np.array(ImageOps.grayscale(rgba_image))

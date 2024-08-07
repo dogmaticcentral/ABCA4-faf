@@ -1,3 +1,5 @@
+import numpy
+
 from faf00_settings import GEOMETRY
 
 _copyright__ = """
@@ -87,9 +89,9 @@ def elliptic_mask(
         fovea_radius = GEOMETRY["fovea_radius"] * dist
 
         for y, x in product(range(height), range(width)):
-            if usable_img_region and not usable_img_region[y, x]:
+            if usable_img_region is not None and usable_img_region[y, x] == 0:
                 continue
-            if vasculature and  vasculature[y, x]:
+            if vasculature is not None and vasculature[y, x] != 0:
                 continue
             point = Vector(x, y)
 
@@ -108,3 +110,30 @@ def elliptic_mask(
             mask[y, x] = 255
         return mask
 
+
+def peripapillary_mask(
+        width: int,
+    height: int,
+    disc_center: Vector,
+    fovea_center: Vector,
+    dist: float,
+    usable_img_region: np.ndarray | None,
+    vasculature: np.ndarray | None,
+    outer_ellipse: bool,
+) -> np.ndarray:
+
+    mask = np.zeros((height, width))
+    disc_radius = GEOMETRY["disc_radius"] * dist
+    for y, x in product(range(height), range(width)):
+        if usable_img_region is not None and usable_img_region[y, x] == 0:
+            continue
+        if vasculature is not None and vasculature[y, x] != 0:
+            continue
+        point = Vector(x, y)
+        dist_from_disc = (point - disc_center).getLength()
+        if dist_from_disc < disc_radius:
+            continue
+        if dist_from_disc > 1.25 * disc_radius:
+            continue
+        mask[y, x] = 255
+    return mask
