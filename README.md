@@ -113,21 +113,36 @@ fove and dosc centers are inside the image bounds, do
 ```
 
 
-## Blood vessel detection an mask creation
+## Blood vessel detection and mask creation
 
 
 ```shell
+./faf06_disc_macula_ellipse_overlay.py 
 ./faf07_blood_vessel_detection.py 
 ./faf08_mask_creation.py 
 ```
 
-Both commands take `-h|--help` flag to print out the help message. Also, `-x|--skip_xisting` 
-will skip re-creating the blood vessel / mask image if one is already found in the 
-work directory.
+In all commands
+* `-h|--help` flag to print out the help message
+* `-x|--skip_xisting` 
+will skip re-creating the  overlay / blood vessel / mask image if one is already found in the 
+work directory. 
+* `-p|--pdf` will create a pdf file in the `WORKIDR/reports` directory for quick manual inspection
+of the images created
 
-`./faf07_blood_vessel_detection.py` uses combination of traditional image processing methods
+A note about the parallelization: these script also take `-n|--n-cpus` option, however, due to 
+an oversight in the current implementation (Aug 2024) it does not work in the cases where sqlite is used
+as a storage.
+
+`faf06_disc_macula_ellipse_overlay.py`  creates a transparent background overlay image
+to be used in manual steps and sanity checking downstream.
+
+`faf07_blood_vessel_detection.py` uses combination of traditional image processing methods
 to detect the outline of the blood vessels in each of the input images. It may fail in the cases
 of low contrast images, such as srs-rib-image-130508.jpg here, or in the cases of advanced Stargardt disease,
 when the large hypofluorescent areas start obscuring the vasculature.
 
+`faf08_mask_creation.py` will create ROI mask, like this one, for example
+![roi_mask.png](doc/roi_mask.png)
 
+(this is a rather extreme example where a good chunk of the fundus view was obscured by eyelids / eyelashes.)
