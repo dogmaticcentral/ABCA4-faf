@@ -105,21 +105,45 @@ Then use the infomration tables you have created to fill the database:
 
 ## Further image sanity checking
 
-To do some further sanity checking on the images - such as that the files actualy exist, and the
-fove and dosc centers are inside the image bounds, do
+To do some further sanity checking on the images - such as that the files actually exist, and the
+fovea and disc centers are inside the image bounds, do
 
 ```shell
 ./faf05_img_sanity_checks.py
 ```
+
+## Creating ROI overlays
+
+```shell
+./faf06_disc_macula_ellipse_overlay.py 
+```
+
+`faf06_disc_macula_ellipse_overlay.py`  creates a transparent background overlay image
+to be used in manual steps and sanity checking downstream. Overlayas are simple transparent
+images that should ook like this:
+
+![overlay.png](doc/overlay.png)
+
+## Manual labeling of usable and bg sampling regions
+If the images challenging because of the presence of the artifacts, the artifact-free 
+('usable') region and the background intensity distribution sampling region might
+have to be determined manually. 
+See [manual_labeling](faf09_manual_preproc/manual_labeliing.md).
+
+## Auto-detection of bg sampling regions
+In high-quality images, the background intensity distribution sampling region can 
+be determined automatically. 
+See [auto_labelling](faf10_automatable/auto_labelling.md).
+
 
 
 ## Blood vessel detection and mask creation
 
 
 ```shell
-./faf06_disc_macula_ellipse_overlay.py 
-./faf07_blood_vessel_detection.py 
-./faf08_mask_creation.py 
+./faf12_blood_vessel_detection.py 
+./faf15_mask_creation.py 
+./faf15_mask_creation.py -l
 ```
 
 In all commands
@@ -134,9 +158,6 @@ A note about the parallelization: these script also take `-n|--n-cpus` option, h
 an oversight in the current implementation (Aug 2024) it does not work in the cases where sqlite is used
 as a storage.
 
-`faf06_disc_macula_ellipse_overlay.py`  creates a transparent background overlay image
-to be used in manual steps and sanity checking downstream.
-
 `faf07_blood_vessel_detection.py` uses combination of traditional image processing methods
 to detect the outline of the blood vessels in each of the input images. It may fail in the cases
 of low contrast images, such as srs-rib-image-130508.jpg here, or in the cases of advanced Stargardt disease,
@@ -146,3 +167,8 @@ when the large hypofluorescent areas start obscuring the vasculature.
 ![roi_mask.png](doc/roi_mask.png)
 
 (this is a rather extreme example where a good chunk of the fundus view was obscured by eyelids / eyelashes.)
+
+`faf08_mask_creation.py -l` will create a larger mask, to be used in deciding where to take a sample
+that represents the background distribution of intensities. 
+
+## Selecting reference (background region)

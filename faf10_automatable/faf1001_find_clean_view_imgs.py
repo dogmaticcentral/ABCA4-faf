@@ -51,14 +51,14 @@ class FafCleanView(FafAnalysis):
     @staticmethod
     def _ellipse_is_within_usable_region(faf_img_dict, mask) -> bool:
         disc_center = Vector(faf_img_dict["disc_x"], faf_img_dict["disc_y"])
-        macula_center = Vector(faf_img_dict["macula_x"], faf_img_dict["macula_y"])
-        dist = Vector.distance(disc_center, macula_center)
+        fovea_center = Vector(faf_img_dict["fovea_x"], faf_img_dict["fovea_y"])
+        dist = Vector.distance(disc_center, fovea_center)
 
         (a, b) = tuple(i * dist for i in GEOMETRY["ellipse_radii"])
         c = math.sqrt(a**2 - b**2)
-        u: Vector = (macula_center - disc_center).get_normalized()
-        ellipse_focus_1 = macula_center + u * c
-        ellipse_focus_2 = macula_center - u * c
+        u: Vector = (fovea_center - disc_center).get_normalized()
+        ellipse_focus_1 = fovea_center + u * c
+        ellipse_focus_2 = fovea_center - u * c
 
         ellipse_is_within_usable_regions = True
         height, width = faf_img_dict["height"], faf_img_dict["width"]
@@ -99,6 +99,11 @@ class FafCleanView(FafAnalysis):
 
 
 def main():
+    """ Use this script for a post hoc labelling of images as artifact free
+    (and thus good enough for automated analysis downstream.)
+    It relies on the file called <the original im path>.usable_region.png, that is,
+    the original image path where hte extension is replaced by usable_region.png'.
+    """
     faf_analysis = FafCleanView(name_stem="auto_bg")
     faf_analysis.run()
 
