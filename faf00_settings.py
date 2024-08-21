@@ -22,19 +22,27 @@ DEBUG = False
 RECOGNIZED_ENGINES = ["peewee.sqlite", "peewee.mysql", "peewee.postgres"]
 DATABASES = {
     "mysql": {
-        "ENGINE": "peewee.mysql",  # note that peewee can also run on too of sqlite3
+        "ENGINE": "peewee.mysql",
         "DB_NAME": "abca4_faf",
         "USER": "abca4",
         "PASSWORD": os.environ.get("MARIADB_PASSWD"),
         "HOST": "127.0.0.1",
         "PORT": 3308,
     },
+    "postgres": {
+        "ENGINE": "peewee.postgres",
+        "DB_NAME": "abca4_faf",
+        "USER": "abca4",
+        "PASSWORD": os.environ.get("POSTGRES_PASSWD"),
+        "HOST": "127.0.0.1",
+        "PORT": 5432,
+    },
     "sqlite": {
         "ENGINE": "peewee.sqlite",  # note that peewee can also run on top of sqlite3
         "DB_NAME": f"{WORK_DIR}/abca4_faf.sqlite",
     },
 }
-DATABASES["default"] = DATABASES["mysql"]
+DATABASES["default"] = DATABASES["postgres"]
 
 
 # set to empty string or None if not needed
