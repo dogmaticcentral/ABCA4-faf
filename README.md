@@ -180,5 +180,6 @@ that represents the background distribution of intensities.
 ## Selecting reference (background region)
 
 Work in progress
+
 ![funny image](doc/work_in_progress.jpg)
 courtesy of [Andy Fogg](https://commons.m.wikimedia.org/wiki/File:Work_in_progress_%283558670297%29.jpg)
