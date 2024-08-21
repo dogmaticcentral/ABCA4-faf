@@ -10,6 +10,12 @@ tracker of this repo, or create a branch and make a pull request.
 
 # Installing the code
 
+```bash
+python3 -m venv venv
+. venv/bin/activate
+pip install -r requirements.txt
+```
+For a simple tryout using sqlite, you can comment out the psycopg2 or mysqldb lines from requirements.txt.
 
 # Trying out a Demo
 

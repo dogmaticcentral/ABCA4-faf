@@ -88,6 +88,18 @@ def db_connection_check() -> bool:
     return True
 
 
+def user_can_create_tables(engine) -> bool:
+    conn = db_connect(test=True)
+    conn.connect()
+    # TODO I am here
+    if engine == 'postgres':
+        # SELECT has_schema_privilege('testuser', 'public', 'CREATE');
+        return True
+    else:
+        return True
+    return True
+
+
 def main():
     """Sanity checking for the project settings"""
 
@@ -97,7 +109,7 @@ def main():
         if not test():
             failed += 1
 
-    if "sqlite"  in DATABASES["default"]["ENGINE"]:
+    if "sqlite" in DATABASES["default"]["ENGINE"]:
         dbname = DATABASES["default"]["DB_NAME"]
         if is_nonempty_file(dbname):
             pass
