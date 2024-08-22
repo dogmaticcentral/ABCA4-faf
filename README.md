@@ -69,8 +69,8 @@ and reading off the coordinates in the lower left corner.
 ## Choosing your db server
 
 This code uses [Peewee ORM](http://docs.peewee-orm.com/en/latest/), 
-and was tested to work with MySQL and SQLite. The easiest way to start is with 
-SQLite, in which case you do not have to do anything except making sure that SQLit si selected 
+and was tested to work with MySQL, postgres, and SQLite. The easiest way to start is with 
+SQLite, in which case you do not have to do anything except making sure that SQLite si selected 
 in `faf00_settings.py` file. See below.
 
 ## Settings
@@ -179,7 +179,7 @@ that represents the background distribution of intensities.
 
 ## Selecting reference (background region)
 
-Work in progress
+Work in progress (Aug 22, 2024)
 
 ![funny image](doc/work_in_progress.png)
 courtesy of [Andy Fogg](https://commons.m.wikimedia.org/wiki/File:Work_in_progress_%283558670297%29.jpg)

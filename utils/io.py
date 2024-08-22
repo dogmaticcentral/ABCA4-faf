@@ -26,7 +26,7 @@ def file_to_list_of_dict(infile, delimiter, obligatory_columns) -> list[dict]:
     inf = open(infile)
     ret_dict_list = []
     header = None
-    for line in inf:
+    for line_number, line in enumerate(inf, 1):
         fields = line.rstrip("\n").split(delimiter)
         if len(fields) < len(obligatory_columns):
             continue
@@ -46,7 +46,9 @@ def file_to_list_of_dict(infile, delimiter, obligatory_columns) -> list[dict]:
             line_dict = dict(zip(header, fields))
             line_dict["eye"] = line_dict["eye"].upper()
             if line_dict["eye"] not in ["OD", "OS"]:
-                print(f"please label the eyes as 'OD' or 'OS' (I am reading {line_dict['eye']})")
+                msg  = f"Please label the eyes as 'OD' or 'OS'. "
+                msg += f"(It says \'{line_dict['eye']}\' in the row {line_number})."
+                print(msg)
                 exit(1)
             ret_dict_list.append(line_dict)
 

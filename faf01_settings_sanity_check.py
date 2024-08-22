@@ -19,7 +19,7 @@ from peewee import InterfaceError, ImproperlyConfigured, OperationalError
 
 from faf00_settings import WORK_DIR, DATABASES, RECOGNIZED_ENGINES
 from utils.db_utils import db_connect
-from utils.utils import scream, comfort, is_nonempty_file
+from utils.utils import scream, comfort, is_nonempty_file, shrug
 
 
 def workdir_check() -> bool:
@@ -88,16 +88,38 @@ def db_connection_check() -> bool:
     return True
 
 
-def user_can_create_tables(engine) -> bool:
+def postgres_check_schema_privilege(conn, schema, privilege):
+    sql = """
+    SELECT 
+      has_schema_privilege(%s, %s) AS has_privilege
+    """
+
+    with conn.connection_context():
+        result = conn.execute_sql(sql, [schema, privilege])
+
+        for row in result.fetchall():
+            return row[0]
+
+
+def user_can_create_tables() -> bool:
     conn = db_connect(test=True)
     conn.connect()
-    # TODO I am here
-    if engine == 'postgres':
-        # SELECT has_schema_privilege('testuser', 'public', 'CREATE');
-        return True
+    can_create = True
+    if DATABASES["default"]["ENGINE"] == 'peewee.postgres':
+        can_create = postgres_check_schema_privilege(conn, 'public', 'CREATE')
+
+    # TODO: the same check for mysql - though setting perms is less tricky here
+    elif DATABASES["default"]["ENGINE"] == 'peewee.mysql':
+        shrug(f"'permission to create tables' check not implemented for the mysql case")
+        can_create = True
+
+    db = DATABASES["default"]["DB_NAME"]
+    user = DATABASES["default"]["USER"]
+    if not can_create:
+        scream(f"User '{user}' has no permission to create tables in '{db}' database.")
     else:
-        return True
-    return True
+        comfort(f"User '{user}' can create tables in '{db}' database.")
+    return can_create
 
 
 def main():
@@ -117,7 +139,7 @@ def main():
             scream(f"{dbname} does not exists or is empty")
             failed += 1
     else:
-        for test in [db_pass_defined, db_connection_check]:
+        for test in [db_pass_defined, db_connection_check, user_can_create_tables]:
             if not test():
                 failed += 1
 

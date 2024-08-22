@@ -116,11 +116,14 @@ def check_pairs():
         scream(img_pair.left_eye_image_id.image_path)
         scream(img_pair.right_eye_image_id.image_path)
         exit(1)
+    comfort(f"all image pairs match according to the criterion provided in pair_is_match() method.")
 
 
 def main():
     db = db_connect()
     check_images()
+    print()
+    print("checking image pairs")
     check_pairs()
     print()
     db.close()
