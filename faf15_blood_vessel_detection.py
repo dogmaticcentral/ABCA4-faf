@@ -130,7 +130,7 @@ class FafVasculature(FafAnalysis):
         area = (height-200) * (width-200)
         frac = vasc_pixels/area
         warn = " <=========== " if frac < 1.E-4 else ""
-        if not warn:  return "OK"
+        if not warn: return "OK"
 
         scream(f'sanity check failed for {vasculature_image_path}')
         scream(f"image size: {area} vasc pixels {vasc_pixels}  fraction {frac:.1E}  {warn}")
@@ -140,7 +140,6 @@ class FafVasculature(FafAnalysis):
         db.close()
 
         return "sanity check failed"
-
 
     #######################################################################
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:

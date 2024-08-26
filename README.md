@@ -130,6 +130,22 @@ images that should ook like this:
 
 ![overlay.png](doc/overlay.png)
 
+Note the inner and outerellipses, centered on the fovea, and dimensions specified in
+[faf00_settings.py](faf00_settings.py):
+
+```python
+# geometry parameters used in fundus analysis
+# the unit distance is the distance between the centers of optic disc and fovea
+GEOMETRY = {
+    "disc_radius": 1 / 3,
+    "fovea_radius": 1 / 9,
+    "ellipse_radii": (2, 1),
+    "outer_ellipse_radii": (3, 2),
+    "cropping_radii": (3, 2),
+}
+```
+
+
 ## Manual labeling of usable and bg sampling regions
 If the images challenging because of the presence of the artifacts, the artifact-free 
 ('usable') region and the background intensity distribution sampling region might
@@ -147,9 +163,9 @@ See [auto_labelling](faf10_automatable/auto_labelling.md).
 
 
 ```shell
-./faf12_blood_vessel_detection.py 
-./faf15_mask_creation.py 
-./faf15_mask_creation.py -l
+./faf15_blood_vessel_detection.py 
+./faf17_mask_creation.py 
+./faf17_mask_creation.py -l
 ```
 
 In all commands
@@ -177,9 +193,45 @@ when the large hypofluorescent areas start obscuring the vasculature.
 `faf08_mask_creation.py -l` will create a larger mask, to be used in deciding where to take a sample
 that represents the background distribution of intensities. 
 
-## Selecting reference (background region)
+## Selecting reference (background) region
 
-Work in progress (Aug 22, 2024)
+As of this writing (late Aug, 2024) we have no way of automatically detecting artifacts 
+in FAF images, so the analysis pipeline starts with manually delineating the region within
+eyelashes, shadows, hair, etc. If the inner ellipse is within this region, we take it as 
+a signal that the image is of reasonable quality, and an automatic way
+of detecting a background sampling region can be attempted. Otherwise, we resort to manually 
+delineating the background sampling region.
+
+Note, however, that automatic selection of the bg region might still be impossible, because
+the hypoflurescent region has already covered most of the _outer_ ellipse, where we suggest the bg
+sampling region should be placed
+
+### Is the inner ellipse within the usable region?
+
+Use [faf10_automatable/faf1001_find_clean_view_imgs.py](faf10_automatable/faf1001_find_clean_view_imgs.py). 
+The images  in which the inner ellipse is partly covered by the artifacts will set to False  the boolean field
+'celan_view' in the 'faf_images' table in the database.
+
+### Manually delineate background sampling region
+See [faf09_manual_preproc/manual_labeliing.md](faf09_manual_preproc/manual_labeliing.md)
+
+### Scripted bg sampling region delineation
+
+Use [faf10_automatable/faf1002_auto_bg_regions.py](faf10_automatable/faf1002_auto_bg_regions.py). 
+To restrict your analysis to the images with the clean view of the ROI (the inner ellipse) pass the 
+`-v/--clean_vew_only` flag to the script.
+
+## Background histograms and image recalibration
+
+Note that we  use the recalibrated images only 
+for the purpose of blood vessel detection. Empirically, the blood
+vessel detection works better on recalibrated images, while we
+prefer to leave the images un-manipulated for the scoring purpose.
+
+Collect background histogram data using [faf12_background_hists.py](faf12_background_hists.py)
+This script will fall back on manually delineated background regions if the auto bgs are not available.
+
+Work in progress (Aug 25, 2024)
 
 ![funny image](doc/work_in_progress.png)
 courtesy of [Andy Fogg](https://commons.m.wikimedia.org/wiki/File:Work_in_progress_%283558670297%29.jpg)

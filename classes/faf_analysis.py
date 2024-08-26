@@ -59,6 +59,7 @@ class FafAnalysis(ABC):
             print(f"if {self.args.n_cpus} is a reasonable number, please change in argv_parse()")
             exit()
 
+
         if self.args.image_path:
             cursor = db_connect()
             faf_img_dicts = list(
@@ -139,6 +140,7 @@ class FafAnalysis(ABC):
 
         self.create_parser()
         self.argv_parse()
+
         number_of_cpus = self.args.n_cpus
         img_path = self.args.image_path
 
@@ -151,7 +153,7 @@ class FafAnalysis(ABC):
         db.close()
 
         # run one round through all images, so we can fail early if something is missing
-        for faf_img_dict in all_faf_img_dicts:  self.input_manager(faf_img_dict)
+        # for faf_img_dict in all_faf_img_dicts:  self.input_manager(faf_img_dict)
 
         # enforce cpu if we are using sqlite
         if DATABASES["default"] == DATABASES["sqlite"] and number_of_cpus > 1:

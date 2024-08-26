@@ -1,3 +1,5 @@
+from utils.utils import shrug
+
 _copyright__ = """
 
     Copyright 2024 Ivana Mihalek
@@ -63,7 +65,12 @@ def gray_read_blur(path: str) -> np.ndarray:
     return np.array(ImageOps.grayscale(rgba_image))
 
 
-def grayscale_img_path_to_255_ndarray(img_path) -> np.ndarray:
+def grayscale_img_path_to_255_ndarray(img_path: Path) -> np.ndarray:
+    if Path(img_path).suffix != ".tiff":
+        with PilImage.open(img_path) as img:
+            if img.mode != 'L':
+                msg = "does not seem to be grayscale, yet we are reading it as such- do we know what we are doing here?"
+                shrug(f"{img_path} {msg}")
     img_as_array: np.ndarray = imread(str(img_path), as_gray=True)
     if np.max(img_as_array) < 1.1:
         return img_as_ubyte(img_as_array)

@@ -10,22 +10,15 @@
 
 """
 from utils.db_utils import db_connect
-
-"""
-Find and mark blood vessels inside the usable region.
-"""
 import os
 
 import numpy as np
 
 from pathlib import Path
 from statistics import mean
-from PIL import Image as PilImage
-from PIL import ImageFilter, ImageOps
-from skimage import morphology
 
 from classes.faf_analysis import FafAnalysis
-from faf00_settings import WORK_DIR
+from faf00_settings import WORK_DIR, USE_AUTO
 from utils.conventions import construct_workfile_path
 from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
 from utils.utils import is_nonempty_file, read_simple_hist, scream, histogram_max
@@ -43,7 +36,8 @@ class FafRecalibration(FafAnalysis):
         for faf_img_dict in all_faf_img_dicts:
             original_image_path  = Path(faf_img_dict['image_path'])
             alias = faf_img_dict['case_id']['alias']
-            hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "bg_histogram", 'txt')
+            purpose = "auto_bg_histogram" if USE_AUTO else "bg_histogram"
+            hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, purpose, 'txt')
             if not is_nonempty_file(hist_path):
                 raise Exception(f"{hist_path} does not exist or is empty")
             hist_paths.append(hist_path)
@@ -52,7 +46,8 @@ class FafRecalibration(FafAnalysis):
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         original_image_path = Path(faf_img_dict['image_path'])
         alias = faf_img_dict['case_id']['alias']
-        histogram_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "bg_histogram", 'txt')
+        purpose = "auto_bg_histogram" if USE_AUTO else "bg_histogram"
+        histogram_path = construct_workfile_path(WORK_DIR, original_image_path, alias, purpose, 'txt')
         for region_png in [original_image_path, histogram_path]:
             if not is_nonempty_file(region_png):
                 scream(f"{region_png} does not exist (or may be empty).")

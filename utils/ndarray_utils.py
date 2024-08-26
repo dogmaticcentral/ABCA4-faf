@@ -75,40 +75,41 @@ def elliptic_mask(
         usable_img_region: np.ndarray | None = None,
         vasculature: np.ndarray | None = None,
         outer_ellipse: bool = False,
-    ) -> np.ndarray:
-        mask = np.zeros((height, width))
+) -> np.ndarray:
 
-        radii = "outer_ellipse_radii" if outer_ellipse else "ellipse_radii"
-        (a, b) = tuple(i * dist for i in GEOMETRY[radii])
-        c = math.sqrt(a**2 - b**2)
-        u: Vector = (fovea_center - disc_center).get_normalized()
-        ellipse_focus_1 = fovea_center + u * c
-        ellipse_focus_2 = fovea_center - u * c
+    mask = np.zeros((height, width))
 
-        disc_radius  = GEOMETRY["disc_radius"] * dist
-        fovea_radius = GEOMETRY["fovea_radius"] * dist
+    radii = "outer_ellipse_radii" if outer_ellipse else "ellipse_radii"
+    (a, b) = tuple(i * dist for i in GEOMETRY[radii])
+    c = math.sqrt(a**2 - b**2)
+    u: Vector = (fovea_center - disc_center).get_normalized()
+    ellipse_focus_1 = fovea_center + u * c
+    ellipse_focus_2 = fovea_center - u * c
 
-        for y, x in product(range(height), range(width)):
-            if usable_img_region is not None and usable_img_region[y, x] == 0:
-                continue
-            if vasculature is not None and vasculature[y, x] != 0:
-                continue
-            point = Vector(x, y)
+    disc_radius  = GEOMETRY["disc_radius"] * dist
+    fovea_radius = GEOMETRY["fovea_radius"] * dist
 
-            # if outside ellipse, continue
-            d1 = (point - ellipse_focus_1).getLength()
-            d2 = (point - ellipse_focus_2).getLength()
-            if d1 + d2 > 2 * a:
-                continue
+    for y, x in product(range(height), range(width)):
+        if usable_img_region is not None and usable_img_region[y, x] == 0:
+            continue
+        if vasculature is not None and vasculature[y, x] != 0:
+            continue
+        point = Vector(x, y)
 
-            # if inside disc or fovea, continue
-            if Vector.distance(point, fovea_center) < fovea_radius:
-                continue
-            if Vector.distance(point, disc_center) < disc_radius:
-                continue
-            # finally
-            mask[y, x] = 255
-        return mask
+        # if outside ellipse, continue
+        d1 = (point - ellipse_focus_1).getLength()
+        d2 = (point - ellipse_focus_2).getLength()
+        if d1 + d2 > 2 * a:
+            continue
+
+        # if inside disc or fovea, continue
+        if Vector.distance(point, fovea_center) < fovea_radius:
+            continue
+        if Vector.distance(point, disc_center) < disc_radius:
+            continue
+        # finally
+        mask[y, x] = 255
+    return mask
 
 
 def peripapillary_mask(

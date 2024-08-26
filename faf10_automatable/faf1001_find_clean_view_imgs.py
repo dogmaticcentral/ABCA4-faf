@@ -104,8 +104,9 @@ def main():
     It relies on the file called <the original im path>.usable_region.png, that is,
     the original image path where hte extension is replaced by usable_region.png'.
     """
-    faf_analysis = FafCleanView(name_stem="auto_bg")
+    faf_analysis = FafCleanView()
     faf_analysis.run()
+
 
 ########################
 if __name__ == "__main__":
