@@ -13,6 +13,7 @@ from statistics import mean, median
 
 import pandas as pd
 
+from faf00_settings import USE_AUTO
 from utils.db_utils import db_connect
 from models.abca4_results import Score
 
@@ -26,7 +27,7 @@ def rows_from_db() -> list[dict]:
         rows.append({'alias': case.alias,
                      'image acquired': faf_img.age_acquired,
                      'eye': faf_img.eye,
-                     'score': round(score.pixel_score, 0)})
+                     'score': round(score.pixel_score_auto, 0) if USE_AUTO else round(score.pixel_score, 0)})
     return rows
 
 

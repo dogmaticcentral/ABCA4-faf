@@ -16,11 +16,12 @@ import os
 from pptx import Presentation
 from pptx.util import Pt
 
-from faf00_settings import WORK_DIR
+from faf00_settings import WORK_DIR, USE_AUTO
 from models.abca4_results import Score
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
 from utils.reports import pptx_to_pdf
+from utils.utils import is_nonempty_file, shrug
 
 
 def rows_from_db() -> list[list]:
@@ -29,7 +30,9 @@ def rows_from_db() -> list[list]:
     for score in Score.select():
         faf_img = score.faf_image_id
         case = faf_img.case_id
-        rows.append([case.alias, faf_img.age_acquired, faf_img.eye, score.pixel_score, faf_img.image_path])
+        rows.append([case.alias, faf_img.age_acquired, faf_img.eye,
+                     score.pixel_score_auto if USE_AUTO else score.pixel_score,
+                     faf_img.image_path])
 
     return rows
 
@@ -62,8 +65,14 @@ def add_catalog_slide(prs: Presentation, row: list):
     [alias, age, eye, score, original_img_path] = row
 
     composite_png = construct_workfile_path(WORK_DIR, original_img_path, alias, "composite", 'png')
-    bg_hist_png   = construct_workfile_path(WORK_DIR, original_img_path, alias, "bg_histogram", 'png')
-    hist_png      = construct_workfile_path(WORK_DIR, original_img_path, alias, "histogram", 'png')
+    if USE_AUTO:
+        bg_hist_png   = construct_workfile_path(WORK_DIR, original_img_path, alias, "auto_bg_histogram" , 'png')
+        if not is_nonempty_file(bg_hist_png):
+            shrug(f"{bg_hist_png} does not exist (or may be empty) - falling back on the manual selection.")
+            bg_hist_png   = construct_workfile_path(WORK_DIR, original_img_path, alias, "bg_histogram", 'png')
+    else:
+        bg_hist_png   = construct_workfile_path(WORK_DIR, original_img_path, alias, "bg_histogram", 'png')
+    hist_png      = construct_workfile_path(WORK_DIR, original_img_path, alias, "roi_histogram", 'png')
     score_png     = construct_workfile_path(WORK_DIR, original_img_path, alias, "pixel_score", 'png')
 
     for img in [composite_png, bg_hist_png, hist_png, score_png]:
@@ -112,7 +121,7 @@ def main():
     subtitle = slide.placeholders[1]
 
     title.text = "Abca4 FAF image catalog"
-    subtitle.text = "Ivana, May 2024"
+    subtitle.text = "Ivana, Sept 2024"
 
     for row in rows_ordered_by_alias_and_age(rows):
         add_catalog_slide(prs, row)

@@ -47,8 +47,8 @@ def main():
     # tke the patient alias and the eye from intput line
     # create legend with the matching colors
     # input the name from the cli? or create for all patients?
-    alias = "Pearl Picnic"
-    eye = "OD"
+    alias = "Tony Toothpaste"
+    eye = "OS"
     # get the ages from the database
     db = db_connect()
     query = (FafImage

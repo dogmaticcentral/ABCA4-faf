@@ -47,8 +47,8 @@ def paired_eye_scores(controls=False) -> dict:
     query = FafImage.select(
         FafImage.case_id,
         FafImage.age_acquired,
-        peewee.fn.array_agg(FafImage.id).alias("img_ids")
-        if we_are_using_postgres else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
+        peewee.fn.array_agg(FafImage.id).alias("img_ids") if we_are_using_postgres
+        else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
     ).group_by(FafImage.case_id, FafImage.age_acquired)
 
     for faf_img in query:

@@ -121,16 +121,16 @@ class PixelScore(FafAnalysis):
         height, width = outmatrix.shape[:2]
         # clip the nd_array to output, tom make the scoring map clearer
         (disc_x, disc_y) = (faf_img_dict["disc_x"], faf_img_dict["disc_y"])
-        (macula_x, macula_y) = (faf_img_dict["macula_x"], faf_img_dict["macula_y"])
-        unit_dist = disc_fovea_distance((disc_x, disc_y), (macula_x, macula_y))
+        (fovea_x, fovea_y) = (faf_img_dict["fovea_x"], faf_img_dict["fovea_y"])
+        unit_dist = disc_fovea_distance((disc_x, disc_y), (fovea_x, fovea_y))
         (x_from, x_to) = (
-            macula_x - GEOMETRY["cropping_radii"][0] * unit_dist,
-            macula_x + GEOMETRY["cropping_radii"][0] * unit_dist,
+            fovea_x - GEOMETRY["cropping_radii"][0] * unit_dist,
+            fovea_x + GEOMETRY["cropping_radii"][0] * unit_dist,
         )
         (x_from, x_to) = self.cleaned_up(x_from, x_to, width)
         (y_from, y_to) = (
-            macula_y - GEOMETRY["cropping_radii"][1] * unit_dist,
-            macula_y + GEOMETRY["cropping_radii"][1] * unit_dist,
+            fovea_y - GEOMETRY["cropping_radii"][1] * unit_dist,
+            fovea_y + GEOMETRY["cropping_radii"][1] * unit_dist,
         )
         (y_from, y_to) = self.cleaned_up(y_from, y_to, height)
         print(f"writing  {outpng}")

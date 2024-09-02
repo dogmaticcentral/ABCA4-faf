@@ -16,35 +16,45 @@ import peewee
 from pptx import Presentation
 from pptx.util import Pt
 
-from faf00_settings import WORK_DIR
+from faf00_settings import WORK_DIR, USE_AUTO, DATABASES, DEBUG
 from models.abca4_faf_models import FafImage
 from models.abca4_results import Score
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
 from utils.reports import pptx_to_pdf
-from utils.utils import is_nonempty_file
+from utils.utils import is_nonempty_file, shrug
 
 
 def rows_w_avg_score_from_db() -> list[list]:
     rows = []  # [alias, age, avg_score, orig_images: dict]
+    we_are_using_postgres = DATABASES["default"]["ENGINE"] == 'peewee.postgres'
     query = FafImage.select(
         FafImage.case_id,
         FafImage.age_acquired,
-        peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
+        peewee.fn.array_agg(FafImage.id).alias("img_ids") if we_are_using_postgres
+        else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
     ).group_by(FafImage.case_id, FafImage.age_acquired)
 
     for faf_img in query:
         alias = faf_img.case_id.alias
+
         if isinstance(faf_img.img_ids, int):
             pair_imgs = [faf_img.img_ids]  # this one is actually missing its pair
         else:
-            pair_imgs = [int(i) for i in faf_img.img_ids.split(",")]
-        avg_score = mean([Score.get_by_id(i).pixel_score for i in pair_imgs])
+            pairs = faf_img.img_ids if we_are_using_postgres else faf_img.img_ids.split(",")
+            pair_imgs = [int(i) for i in pairs]
 
+        try:
+            if USE_AUTO:
+                avg_score = mean([Score.select().where(Score.faf_image_id==i).get().pixel_score_auto for i in pair_imgs])
+            else:
+                avg_score = mean([Score.select().where(Score.faf_image_id==i).get().pixel_score for i in pair_imgs])
+        except Exception:
+            shrug(f"one or more images from the pair {pair_imgs} has no score present in the db")
+            continue
         age_images_acquired = faf_img.age_acquired
         image_paths = {(entry := FafImage.get_by_id(i)).eye: entry.image_path for i in pair_imgs}
         rows.append([alias, age_images_acquired, avg_score, image_paths])
-
     rows_sorted = sorted(rows, key=lambda row: row[2])
     return rows_sorted
 
@@ -53,7 +63,7 @@ def add_score_progression_slide(prs: Presentation, row: list):
     [alias, age, avg_score, orig_images] = row
     if not orig_images:
         return
-    print(alias, age, f"{avg_score:.2f}")
+    if DEBUG: print(alias, age, f"{avg_score:.2f}")
 
     title_only_slide_layout = prs.slide_layouts[5]
     slide = prs.slides.add_slide(title_only_slide_layout)

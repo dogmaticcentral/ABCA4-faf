@@ -283,7 +283,11 @@ that represents the background distribution of intensities.
 
 [faf18_image_region_composites.py](faf55_image_region_composites.py)
 This step is optional, but advisable - create (for manual inspection) composite images
-consisting of xxx. They should wind up in the work directory (refer to the
+consisting of the original image, with the elliptical ROI, fove and optic head, usable and bg sampling regions overlaid:
+
+![composite img illustration](doc/regions.png)
+
+They should wind up in the work directory (refer to the
 work directory tree above), and look something like this:
 
 
@@ -319,10 +323,10 @@ SCORE_PARAMS = {
 }
 ```
 
-Caveat: for the automated bg selection this correction does not really help.
-A possible reason: when manually selecting the bg region the curators so far tended to select the furthermost
-regions in the outer ellipse, for which the difference from the inner ellipse is the largest.
-Whan picking the bg region automatically, this is no longer the case.
+**Caveat**: if the control images are not  of the
+same quality as the clinical images analyzed (and / or obtained
+under very similar conditions), this does not really help.
+
 
 ## Histogram progression
 
@@ -339,18 +343,74 @@ And, finally, we get to score the FAF images in our set
 ```bash
 faf28_pixel_score.py
 faf30_score_vs_time_plot.py
-faf31_score_sensitivity_to_fovea_location.py
+faf31_score_sensitivity_to_fovea_location.py  # note this one takes very long
 faf32_score_od_vs_os_plot.py
 faf33_score_comparison.py
 ```
 
 ## More reporting and analysis tools
+<br>
+
+
+#### An illustration of hist shape change over time
+```bash
+faf53_hist_progression.py  
+```
+<br>
+
+#### An illustration of image regions used in the analysis
+```bash
+faf55_image_region_composites.py 
+```
+One illustration should look like this (without the blue square in the center):
+
+![regions, illustrated](doc/regions.png)
+
+amd the script can create a 'catalogue' of such images in pdf format whn used with `-p` option.
+Works for manually selected background regions only.
+
+<br>
+
+
+#### Text description of the dataset
+```bash
+./faf56_dataset_overview.py
+```
+The output should look something like
+```bash
+    We included images from 21 visits. 
+    A total of 1-12 images (median 2) 
+    spanning 0.0-6.4 (median 0.0) were obtained in each patient. The first of these was obtained 
+    at a median age of 10.3 years (range 5.2–19.4). 
+    The median interval between follow-up visits was 2.0 (range 0.3–6.4).    
+```
+
+<br>
+
+#### Case catalog
+
+Note: the following script expects that [faf12_background_hists.py](faf12_background_hists.py) 
+and  [faf22_roi_histograms.py](faf22_roi_histograms.py) 
+were  run for all cases (just run with the default options, 
+wihtout `-c` option that limits the run to controls). 
+
+
+It also expects the images produced by running [faf28_pixel_score.py](faf28_pixel_score.py) with `-p` option.
+```bash
+./faf58_case_catalog.py
+```
+The output will be a catalog in pdf format, showing the illustration (heatmap) of the
+pixel level scores and histograms collected in the ROI and the background regions, like this:
+![sample page from case catalog](doc/catalog_illustration.png)
+
+<br>
+
+#### Score catalog
+
+Similar to the above, except the images are shown as pairs,
+and the patient cases sorted by the increasing average score.
 
 ```bash
-faf53_hist_progression.py
-faf55_image_region_composites.py
-faf56_dataset_overview.py
-faf58_case_catalog.py
 faf59_score_catalog.py
 ```
 
