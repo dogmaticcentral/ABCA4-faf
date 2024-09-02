@@ -1,3 +1,5 @@
+Work in progress, Sept 2, 2024
+
 # About
 
 This repo contains a set of tools for the analysis of retinal fundus autofluorescence images.
@@ -339,15 +341,23 @@ faf28_pixel_score.py
 faf30_score_vs_time_plot.py
 faf31_score_sensitivity_to_fovea_location.py
 faf32_score_od_vs_os_plot.py
+faf33_score_comparison.py
 ```
 
 ## More reporting and analysis tools
 
 ```bash
-
+faf53_hist_progression.py
+faf55_image_region_composites.py
+faf56_dataset_overview.py
+faf58_case_catalog.py
+faf59_score_catalog.py
 ```
 
-Work in progress (Sep 2, 2024)
+## Odds and ends
 
-![funny image](doc/work_in_progress.png)
-courtesy of [Andy Fogg](https://commons.m.wikimedia.org/wiki/File:Work_in_progress_%283558670297%29.jpg)
+Visualisation of the idea behind the heuristic score used here.
+
+```bash
+faf60_score_simulation.py
+```
