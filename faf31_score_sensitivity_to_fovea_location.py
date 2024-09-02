@@ -32,14 +32,14 @@ from utils.vector import Vector
 
 def create_randomly_displaced_mask(faf_img_dict, displacement_pct) -> np.ndarray:
     disc_center   = Vector(faf_img_dict["disc_x"], faf_img_dict["disc_y"])
-    macula_center = Vector(faf_img_dict["macula_x"], faf_img_dict["macula_y"])
+    fovea_center = Vector(faf_img_dict["fovea_x"], faf_img_dict["fovea_y"])
 
-    original_dist = Vector.distance(disc_center, macula_center)
-    # add a random component to macula and disc_centers
+    original_dist = Vector.distance(disc_center, fovea_center)
+    # add a random component to fovea and disc_centers
     scale = original_dist*displacement_pct/100
     # disc_center = disc_center + Vector.randomUnitCircle()*scale
-    macula_center = macula_center + Vector.randomUnitCircle()*scale
-    dist = Vector.distance(disc_center, macula_center)
+    fovea_center = fovea_center + Vector.randomUnitCircle()*scale
+    dist = Vector.distance(disc_center, fovea_center)
 
     (width, height) = (faf_img_dict['width'], faf_img_dict['height'])
     usable_img_region = np.ones((height, width))
@@ -49,7 +49,7 @@ def create_randomly_displaced_mask(faf_img_dict, displacement_pct) -> np.ndarray
     vasc_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "vasculature", "png", should_exist=True)
     vasculature = grayscale_img_path_to_255_ndarray(vasc_path)
 
-    return elliptic_mask(width, height, disc_center, macula_center, dist, usable_img_region, vasculature)
+    return elliptic_mask(width, height, disc_center, fovea_center, dist, usable_img_region, vasculature)
 
 
 def single_image_job(faf_img_dict, displacement_pct) -> tuple:
@@ -130,10 +130,10 @@ set tics font "Helvetica,20"
 set lmargin at screen 0.2
 set bmargin at screen 0.2
 set xrange [-1:32]
-set yrange [78:91]
+set yrange [78:95]
 set xlabel "Randomized location of fovea - % of the fovea-disc distance" font "Helvetica,20" offset 0, -2
 set ylabel "Corr intensity score vs disease duration\n(Spearman, %)" font "Helvetica,20" offset -15, 0
-plot 'experiment.tsv' with yerrorbars pt 7 ps 3
+plot 'experiment.tsv' skip 1 with yerrorbars pt 7 ps 3
 
 
 """

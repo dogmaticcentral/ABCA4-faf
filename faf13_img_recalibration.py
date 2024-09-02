@@ -15,6 +15,7 @@ import os
 import numpy as np
 
 from pathlib import Path
+from skimage import exposure
 from statistics import mean
 
 from classes.faf_analysis import FafAnalysis
@@ -69,19 +70,12 @@ class FafRecalibration(FafAnalysis):
 
     def recalibrate(self, input_filepath: Path | str, hist_path: Path | str, alias: str,
                     shift_max_only=True, skip_if_exists=False) -> str:
-        this_bg_histogram_max = int(np.argmax(read_simple_hist(hist_path)))
-        orig_img: np.ndarray = grayscale_img_path_to_255_ndarray(input_filepath)
         outpng = construct_workfile_path(WORK_DIR, input_filepath, alias, self.name_stem, 'png')
         if skip_if_exists and is_nonempty_file(outpng):
             print(f"{os.getpid()} {outpng} found")
             return str(outpng)
-        recal_image = np.zeros(orig_img.shape, dtype=int)
-        intensity_shift = self.new_max_location - this_bg_histogram_max
-        for iy, ix in np.ndindex(orig_img.shape[0], orig_img.shape[1]):
-            if shift_max_only:
-                recal_image[iy, ix] = min(max(orig_img[iy, ix] + intensity_shift, 0), 255)
-            else:
-                recal_image[iy, ix] = self.rescale(this_bg_histogram_max, orig_img[iy, ix])
+        orig_img = grayscale_img_path_to_255_ndarray(input_filepath)
+        recal_image = exposure.equalize_adapthist(orig_img)*255  # CLAHE
         ndarray_to_int_png(recal_image, outpng)
         return str(outpng)
 

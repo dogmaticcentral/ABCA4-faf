@@ -33,14 +33,14 @@ class FafBgHistograms(FafAnalysis):
     def create_parser(self):
         super().create_parser()
         self.parser.add_argument(
-            "-r",
+            "-c",
             "--ctrl_only",
             dest="ctrl_only",
             action="store_true",
             help="Run for control cases only. Default: False",
         )
         self.parser.add_argument(
-            "-e",
+            "-l",
             "--outer_ellipse",
             dest="outer_ellipse",
             action="store_true",

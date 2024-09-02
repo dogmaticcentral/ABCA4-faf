@@ -81,7 +81,7 @@ class FafFullMask(FafAnalysis):
             )
             files_to_check.append(blood_vessels)
         else:
-            blood_vessels = None
+            blood_vessels = None  # if not available, we can do without it
 
         for region_png in files_to_check:
             if not is_nonempty_file(region_png):

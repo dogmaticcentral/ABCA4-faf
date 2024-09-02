@@ -84,6 +84,43 @@ In particular, you will need a work directory where
 scripts can store auxiliary files, if needed.  It should be specified as 
 `WORK_DIR` variable in the `faf00_settings.py` file. 
 
+## Work directory naming conventions
+
+The auxilary files will be stored in a directory subtree in `WORKDIR`, grouped by the
+patient alias, for example
+```bash
+├── Patient1
+│├── auto_bg_histograms
+│├── auto_bgs
+│├── bg_histograms
+│├── composites
+│├── elliptic_masks
+│├── outer_masks
+│├── overlays
+│├── recals
+│├── roi_histograms
+│└── vasculatures
+├── Patient2
+│├── auto_bg_histograms
+│├── auto_bgs
+│├── bg_histograms
+│├── composites
+│├── elliptic_masks
+│├── outer_masks
+│├── overlays
+│├── recals
+│├── roi_histograms
+│└── vasculatures
+├── reports
+│├── auto_bg_histogram.pdf
+│├── bg_histogram.pdf
+│├── lu45667o8s5n.tmp
+│└── overlay.pdf
+.
+.
+.
+```
+
 ## Basic sanity checking
 
 If `faf01_settings_sanity_check.py` is not executable, make it so (not needed if you
@@ -159,40 +196,6 @@ See [auto_labelling](faf10_automatable/auto_labelling.md).
 
 
 
-## Blood vessel detection and mask creation
-
-
-```shell
-./faf15_blood_vessel_detection.py 
-./faf17_mask_creation.py 
-./faf17_mask_creation.py -l
-```
-
-In all commands
-* `-h|--help` flag to print out the help message
-* `-x|--skip_xisting` 
-will skip re-creating the  overlay / blood vessel / mask image if one is already found in the 
-work directory. 
-* `-p|--pdf` will create a pdf file in the `WORKIDR/reports` directory for quick manual inspection
-of the images created
-
-A note about the parallelization: these script also take `-n|--n-cpus` option, however, due to 
-an oversight in the current implementation (Aug 2024) it does not work in the cases where sqlite is used
-as a storage.
-
-`faf07_blood_vessel_detection.py` uses combination of traditional image processing methods
-to detect the outline of the blood vessels in each of the input images. It may fail in the cases
-of low contrast images, such as srs-rib-image-130508.jpg here, or in the cases of advanced Stargardt disease,
-when the large hypofluorescent areas start obscuring the vasculature.
-
-`faf08_mask_creation.py` will create ROI mask, like this one, for example
-![roi_mask.png](doc/roi_mask.png)
-
-(this is a rather extreme example where a good chunk of the fundus view was obscured by eyelids / eyelashes.)
-
-`faf08_mask_creation.py -l` will create a larger mask, to be used in deciding where to take a sample
-that represents the background distribution of intensities. 
-
 ## Selecting reference (background) region
 
 As of this writing (late Aug, 2024) we have no way of automatically detecting artifacts 
@@ -231,7 +234,120 @@ prefer to leave the images un-manipulated for the scoring purpose.
 Collect background histogram data using [faf12_background_hists.py](faf12_background_hists.py)
 This script will fall back on manually delineated background regions if the auto bgs are not available.
 
-Work in progress (Aug 25, 2024)
+To create recalibrated images in the WORKDIR specified in `faf00_settings.py`, run
+[faf13_img_recalibration.py](faf13_img_recalibration.py). `-h` to see the options.
+
+Blood vessel detection is currently a simple heuristic using traditional image processing tools
+from Piillow and scikit-image:
+[faf15_blood_vessel_detection.py](faf15_blood_vessel_detection.py). The heuristic is rather fragile,
+and will likely be replaced in the future.
+
+## Blood vessel detection and mask creation
+
+
+```shell
+./faf13_blood_vessel_detection.py 
+./faf17_mask_creation.py 
+./faf17_mask_creation.py -l
+```
+
+In all commands
+* `-h|--help` flag to print out the help message
+* `-x|--skip_xisting` 
+will skip re-creating the  overlay / blood vessel / mask image if one is already found in the 
+work directory. 
+* `-p|--pdf` will create a pdf file in the `WORKIDR/reports` directory for quick manual inspection
+of the images created
+
+A note about the parallelization: these script also take `-n|--n-cpus` option, however, due to 
+an oversight in the current implementation (Aug 2024) it does not work in the cases where sqlite is used
+as a storage.
+
+`faf13_blood_vessel_detection.py` uses combination of traditional image processing methods
+to detect the outline of the blood vessels in each of the input images. It may fail in the cases
+of low contrast images, such as srs-rib-image-130508.jpg here, or in the cases of advanced Stargardt disease,
+when the large hypofluorescent areas start obscuring the vasculature.
+
+`faf17_mask_creation.py` will create ROI mask, like this one, for example
+![roi_mask.png](doc/roi_mask.png)
+
+(this is a rather extreme example where a good chunk of the fundus view was obscured by eyelids / eyelashes.)
+
+`faf17_mask_creation.py -l` will create a larger mask, to be used in deciding where to take a sample
+that represents the background distribution of intensities. 
+
+
+## Region composites
+
+[faf18_image_region_composites.py](faf55_image_region_composites.py)
+This step is optional, but advisable - create (for manual inspection) composite images
+consisting of xxx. They should wind up in the work directory (refer to the
+work directory tree above), and look something like this:
+
+
+Note that the `-p` flag is needed to produce the pdf version of the report.
+Alternatively, `-s` can be used to produce pptx files, 
+though these tend to be rather voluminous.
+
+
+## The difference in brightness between the inner and the outer ellipse 
+
+Run 
+```bash
+faf22_roi_histograms.py -c
+```
+
+followed by
+```bash
+faf22_roi_histograms.py -c -l
+````
+
+and finally
+```bash
+23_gradient_correction.py
+````
+
+This number should be used as a correction for using 
+the reference region in the outer ellipse, by setting 
+`SCORE_PARAMS["gradient_correction"]` in `faf00_settings.py` to that number.
+```python
+SCORE_PARAMS = {
+    "black_pixel_weight": 10,
+    "gradient_correction": myvalue_here
+}
+```
+
+Caveat: for the automated bg selection this correction does not really help.
+A possible reason: when manually selecting the bg region the curators so far tended to select the furthermost
+regions in the outer ellipse, for which the difference from the inner ellipse is the largest.
+Whan picking the bg region automatically, this is no longer the case.
+
+## Histogram progression
+
+THis is a strictly optional step, used for producing an illustration
+in the original paper
+[faf25_hist_progression.py](faf53_hist_progression.py)
+
+The output should look like
+
+## Image scoring
+
+And, finally, we get to score the FAF images in our set
+
+```bash
+faf28_pixel_score.py
+faf30_score_vs_time_plot.py
+faf31_score_sensitivity_to_fovea_location.py
+faf32_score_od_vs_os_plot.py
+```
+
+## More reporting and analysis tools
+
+```bash
+
+```
+
+Work in progress (Sep 2, 2024)
 
 ![funny image](doc/work_in_progress.png)
 courtesy of [Andy Fogg](https://commons.m.wikimedia.org/wiki/File:Work_in_progress_%283558670297%29.jpg)

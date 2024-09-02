@@ -14,19 +14,27 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import peewee
 
-from faf00_settings import USE_AUTO
+from faf00_settings import USE_AUTO, DATABASES
 from models.abca4_faf_models import FafImage
 from models.abca4_results import Score
 from utils.db_utils import db_connect
+from utils.utils import shrug
 
 
-def sort_out_score(od_pixel_score, os_pixel_score, pair_imgs, use_auto=False):
+def sort_out_score(od_pixel_score, os_pixel_score, pair_imgs, use_auto=False) -> str:
     # not sure how to make this prettier while sticking to peewee
-    right_eye_index = 0  if FafImage.get_by_id(pair_imgs[0]).eye == "OD" else 1
+    right_eye_index = 0 if FafImage.get_by_id(pair_imgs[0]).eye == "OD" else 1
     left_eye_index  = 1 - right_eye_index
-    score =  "pixel_score_auto" if use_auto else  "pixel_score"
-    od_pixel_score.append(getattr(FafImage.get_by_id(pair_imgs[right_eye_index]).scores[0], score))
-    os_pixel_score.append(getattr(FafImage.get_by_id(pair_imgs[left_eye_index]).scores[0], score))
+    score = "pixel_score_auto" if use_auto else "pixel_score"
+    scores_od = FafImage.get_by_id(pair_imgs[right_eye_index]).scores
+    scores_os = FafImage.get_by_id(pair_imgs[left_eye_index]).scores
+    if scores_od and scores_os:
+        od_pixel_score.append(getattr(scores_od[0], score))
+        os_pixel_score.append(getattr(scores_os[0], score))
+        return 'ok'
+    else:
+        shrug(f"some sores not available for the image pair with db indices {pair_imgs}")
+        return 'fail'
 
 
 def paired_eye_scores(controls=False) -> dict:
@@ -35,10 +43,12 @@ def paired_eye_scores(controls=False) -> dict:
     # SQL: select case_id, age_acquired, group_concat(id separator ", ")
     # as img_ids from faf_images group by case_id, age_acquired \G
     # I could not find how to pass the separator to peewees GROUP_CONCAT, but "," is the default
+    we_are_using_postgres = DATABASES["default"]["ENGINE"] == 'peewee.postgres'
     query = FafImage.select(
         FafImage.case_id,
         FafImage.age_acquired,
-        peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
+        peewee.fn.array_agg(FafImage.id).alias("img_ids")
+        if we_are_using_postgres else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
     ).group_by(FafImage.case_id, FafImage.age_acquired)
 
     for faf_img in query:
@@ -49,8 +59,9 @@ def paired_eye_scores(controls=False) -> dict:
         if isinstance(faf_img.img_ids, int):
             continue  # this one is actually missing its mate
 
-        pair_imgs = faf_img.img_ids.split(",")
-        sort_out_score(od_pixel_score, os_pixel_score, pair_imgs, USE_AUTO)
+        pair_imgs = faf_img.img_ids if we_are_using_postgres else faf_img.img_ids.split(",")
+        if len(pair_imgs) != 2: continue
+        if sort_out_score(od_pixel_score, os_pixel_score, pair_imgs, USE_AUTO) != "ok": continue
 
         age_image_acquired = faf_img.age_acquired
         onset = faf_img.case_id.onset_age

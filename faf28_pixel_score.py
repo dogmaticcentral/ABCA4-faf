@@ -22,7 +22,7 @@ from classes.faf_analysis  import FafAnalysis
 from faf00_settings import WORK_DIR, GEOMETRY, SCORE_PARAMS, USE_AUTO
 from models.abca4_results  import Score
 from utils.conventions     import construct_workfile_path
-from utils.fundus_geometry import disc_macula_distance
+from utils.fundus_geometry import disc_fovea_distance
 from utils.gaussian        import gaussian_mixture
 from utils.image_utils     import grayscale_img_path_to_255_ndarray, ndarray_to_4channel_png
 from utils.utils           import is_nonempty_file, read_simple_hist, scream
@@ -122,7 +122,7 @@ class PixelScore(FafAnalysis):
         # clip the nd_array to output, tom make the scoring map clearer
         (disc_x, disc_y) = (faf_img_dict["disc_x"], faf_img_dict["disc_y"])
         (macula_x, macula_y) = (faf_img_dict["macula_x"], faf_img_dict["macula_y"])
-        unit_dist = disc_macula_distance((disc_x, disc_y), (macula_x, macula_y))
+        unit_dist = disc_fovea_distance((disc_x, disc_y), (macula_x, macula_y))
         (x_from, x_to) = (
             macula_x - GEOMETRY["cropping_radii"][0] * unit_dist,
             macula_x + GEOMETRY["cropping_radii"][0] * unit_dist,

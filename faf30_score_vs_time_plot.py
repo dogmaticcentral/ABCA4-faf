@@ -147,12 +147,17 @@ def average_eye_scores(roi="elliptic", controls=False) -> dict:
     # SQL: select case_id, age_acquired, group_concat(id separator ", ")
     # as img_ids from faf_images group by case_id, age_acquired \G
     # I could not find how to pass the separator to peewees GROUP_CONCAT, but "," is the default
+    # in postgres, I could not get this to work, to be closer to the mysql solution
+    # # peewee.fn.string_agg(peewee.fn.cast(FafImage.id, 'TEXT')).alias('img_ids'),
+    we_are_using_postgres =  DATABASES["default"]["ENGINE"] == 'peewee.postgres'
     if USE_AUTO:
         query = FafImage.select(
             FafImage.case_id,
             FafImage.age_acquired,
-            peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
-        ).where(FafImage.clean_view==True
+            peewee.fn.array_agg(FafImage.id).alias("img_ids") if we_are_using_postgres
+            else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
+            peewee.fn.array_agg(FafImage.id).alias("img_ids"),
+        ).where(FafImage.clean_view == True
         ).group_by(FafImage.case_id, FafImage.age_acquired)
 
     else:
@@ -161,7 +166,8 @@ def average_eye_scores(roi="elliptic", controls=False) -> dict:
             FafImage.age_acquired,
             peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
         ).group_by(FafImage.case_id, FafImage.age_acquired)
-
+    # print(query.sql())
+    # exit()
     timepoints = 0
     for faf_img in query:
         if not controls and faf_img.case_id.is_control: continue
@@ -171,7 +177,7 @@ def average_eye_scores(roi="elliptic", controls=False) -> dict:
         if isinstance(faf_img.img_ids, int):
             pair_imgs = [faf_img.img_ids]  # this one is actually missing its pair
         else:
-            pair_imgs = faf_img.img_ids.split(",")
+            pair_imgs = faf_img.img_ids if we_are_using_postgres else faf_img.img_ids.split(",")
 
         avg_score = img_pair_avg_score(pair_imgs, roi)
         pixel_score.append(avg_score)

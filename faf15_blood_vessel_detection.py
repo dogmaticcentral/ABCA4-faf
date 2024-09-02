@@ -10,6 +10,7 @@
 
 """
 from itertools import product
+from statistics import median
 
 import numpy as np
 from skimage.io import ImageCollection
@@ -22,19 +23,21 @@ from utils.vector import Vector
 """
 Find and mark blood vessels inside the usable region.
 """
+
 import os
+import matplotlib
 
-
+from matplotlib import pyplot as plt
 from pathlib import Path
 from PIL import Image as PilImage
 from PIL import ImageFilter, ImageOps
-from skimage import morphology
+from skimage import morphology, exposure, filters
 
 from classes.faf_analysis import FafAnalysis
-from faf00_settings import WORK_DIR, DEBUG
+from faf00_settings import WORK_DIR, DEBUG, USE_AUTO
 from utils.conventions import construct_workfile_path
 from utils.pil_utils import extremize_pil
-from utils.utils import is_nonempty_file, scream
+from utils.utils import is_nonempty_file, scream, histogram_max
 from utils.ndarray_utils import Ellipse, elliptic_mask, extremize
 
 
@@ -42,11 +45,14 @@ class FafVasculature(FafAnalysis):
 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         original_image_path = Path(faf_img_dict["image_path"])
-        for region_png in [original_image_path]:
+        alias = faf_img_dict['case_id']['alias']
+        # let's use recalibrated images for blood vessel detection
+        recal_image_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "recal", "png")
+        for region_png in [original_image_path, recal_image_path]:
             if not is_nonempty_file(region_png):
                 scream(f"{region_png} does not exist (or may be empty).")
                 exit()
-        return [original_image_path]
+        return [original_image_path, recal_image_path]
 
     def find_vasculature(
         self, original_img_filepath: Path | str, preproc_img_filepath: Path | str, alias: str, skip_if_exists=False
@@ -60,27 +66,47 @@ class FafVasculature(FafAnalysis):
             print(f"{os.getpid()} {outpng} started")
 
         input_pil_image = PilImage.open(str(preproc_img_filepath))
-        # this picks vasculature nicely, but with a lot of tiny artifacts around it
-        # this could probably be optimized by reducing the image to the elliptic ROI (region of interest)
-        # im2 = input_pil_image.filter(ImageFilter.CONTOUR).filter(ImageFilter.ModeFilter())
-        im2 = input_pil_image.filter(ImageFilter.ModeFilter()).filter(ImageFilter.CONTOUR)
-
+        # im1 = input_pil_image.filter(ImageFilter.GaussianBlur(radius=3))
+        # if DEBUG:
+        #     im1.save(fnm := f"{os.getpid()}.im1.png")
+        #     print(f"DEBUG step: wrote {fnm}")
+        # # this picks vasculature nicely, but with a lot of tiny artifacts around it
+        # # this could probably be optimized by reducing the image to the elliptic ROI (region of interest)
+        # # try a bit of a blur?
+        im2 = input_pil_image.filter(ImageFilter.CONTOUR)
         if DEBUG:
-            im2.save("im2.png")
-            print(f"wrote im2.png")
+            im2.save(fnm := f"{os.getpid()}.im2.png")
+            print(f"DEBUG step: wrote {fnm}")
+
+        im0 = np.asarray(im2)
+        flat = im0.flatten()
+        # for some reason, density means "normalized"
+        hist, bins = np.histogram(flat, bins=255)
+        # completely white and completely black pixels are non-informative - drop
+        # normalize to 1
+        hist = hist[1:-1] / sum(hist[1:-1])
+        cumulative = np.cumsum(hist)
+        # find intensity at which the cumulative fn is the closest to 20%
+        bottom_n_pct_intensity = (np.abs(cumulative - 0.3)).argmin()
 
         im3 = ImageOps.grayscale(im2)
-        np_array_extremized = extremize_pil(im3, cutoff=230, invert=False)  # not binary, but 0 or 255
+
+        np_array_extremized = extremize_pil(im3, cutoff=bottom_n_pct_intensity, invert=False)  # not binary, but 0 or 255
 
         if DEBUG:
-            ndarray_to_int_png(np_array_extremized, outfnm := "im3.extr.png")
-            print(f"wrote {outfnm}")
+            ndarray_to_int_png(np_array_extremized, outfnm := f"{os.getpid()}.im3.extr.png")
+            print(f"DEBUG step: wrote {outfnm}")
 
         # Area closing removes all _dark_ structures of an image with a surface smaller than area_threshold.
-        np_bool_array_closed = morphology.area_closing(np_array_extremized.astype(bool), area_threshold=500, connectivity=3)
+        np_bool_array_open = morphology.area_opening(np_array_extremized.astype(bool), area_threshold=100, connectivity=3)
         if DEBUG:
-            ndarray_to_int_png(np_bool_array_closed.astype(int)*255, outfnm := "im3.closed.png")
-            print(f"wrote {outfnm}")
+            ndarray_to_int_png(np_bool_array_open.astype(int)*255, outfnm := f"{os.getpid()}.im3.open.png")
+            print(f"DEBUG step: wrote {outfnm}")
+
+        np_bool_array_closed = morphology.area_closing(np_bool_array_open, area_threshold=500, connectivity=3)
+        if DEBUG:
+            ndarray_to_int_png(np_bool_array_closed.astype(int)*255, outfnm := f"{os.getpid()}.im3.closed.png")
+            print(f"DEBUG step: wrote {outfnm}")
 
         ndarray_to_int_png((~np_bool_array_closed).astype(int) * 255, outpng)
             
@@ -117,7 +143,6 @@ class FafVasculature(FafAnalysis):
         if DEBUG: print(f"wrote {preprocessed_img_path}")
         return preprocessed_img_path
 
-
     def vasc_sanity_check(self,  vasculature_image_path: Path, faf_img_dict):
 
         # calculate the number of 255 pixels in labeling the vasculature position,
@@ -150,11 +175,10 @@ class FafVasculature(FafAnalysis):
         :return: str
             THe return string indicates success or failure - generated in compose() function
         """
-        [original_image_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict["case_id"]["alias"]
+        [original_image_path, recal_image_path] = self.input_manager(faf_img_dict)
 
-        # preprocessed_img_path = self.inverse_ellipse_mask(original_image_path, alias, faf_img_dict)
-        retstr = self.find_vasculature(original_image_path, original_image_path, alias, skip_if_exists)
+        retstr = self.find_vasculature(original_image_path, recal_image_path, alias, skip_if_exists)
         if "failed" in retstr:
             return retstr
 
