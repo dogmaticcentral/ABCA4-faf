@@ -96,6 +96,7 @@ def check_images():
         scream("there seem to be no images labeled as 'usable' in the database")
         exit()
 
+
 def pair_is_match(path1: str, path2: str) -> bool:
     """ If you have a different convention, change the matching criterion here
     :param path1:  full path to img 1, provided as a string
@@ -127,6 +128,7 @@ def main():
     check_pairs()
     print()
     db.close()
+
 
 ########################
 if __name__ == "__main__":

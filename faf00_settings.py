@@ -61,6 +61,7 @@ GEOMETRY = {
 }
 
 SCORE_PARAMS = {
+    "white_pixel_weight": 1,
     "black_pixel_weight": 10,
     "gradient_correction": 0
 }
@@ -68,7 +69,7 @@ SCORE_PARAMS = {
 # this is pewee c**p that I am not sure where to put
 global_db_proxy = Proxy()
 
-USE_AUTO: bool = True
+USE_AUTO: bool = False
 
 
 

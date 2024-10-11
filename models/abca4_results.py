@@ -27,3 +27,14 @@ class Score(BaseModel):
     pixel_score_auto = FloatField(null=True)
     pixel_score_peripapillary = FloatField(null=True)
 
+
+class PlaygroundScore(BaseModel):
+    class Meta:
+        table_name = "playground_scores"
+    faf_image_id = ForeignKeyField(FafImage, backref='playground_scores')  # what is backref?
+    pixel_score_white = FloatField(null=True)
+    pixel_score_black = FloatField(null=True)
+    pixel_score_1 = FloatField(null=True)  # black pixel with the same weight as the white one
+    pixel_score_5 = FloatField(null=True)  # black pixel with  5 times the weight of the white
+    pixel_score_15 = FloatField(null=True)  # black pixel with 15 times the weight of the white
+

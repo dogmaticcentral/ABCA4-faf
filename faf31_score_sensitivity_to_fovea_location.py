@@ -20,7 +20,7 @@ import numpy as np
 from playhouse.shortcuts import model_to_dict
 import scipy.stats as stats
 
-from faf00_settings import WORK_DIR
+from faf00_settings import WORK_DIR, SCORE_PARAMS
 from models.abca4_faf_models import FafImage
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
@@ -58,7 +58,12 @@ def single_image_job(faf_img_dict, displacement_pct) -> tuple:
     bg_stem =  "auto_bg_histogram"
     bg_distro_params = collect_bg_distro_params(original_image_path, alias, bg_stem)
     mask = create_randomly_displaced_mask(faf_img_dict, displacement_pct)
-    (score, _) = image_score(original_image_path, mask, bg_distro_params)
+    (score, _) = image_score(original_image_path,
+                             white_pixel_weight=1,
+                             black_pixel_weight=SCORE_PARAMS["black_pixel_weight"],
+                             mask=mask,
+                             bg_distro_params=bg_distro_params)
+
     time_from_onset = faf_img_dict["age_acquired"] - faf_img_dict["case_id"]["onset_age"]
     return time_from_onset, score
 

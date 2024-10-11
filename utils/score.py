@@ -42,6 +42,8 @@ def collect_bg_distro_params(original_image_path, alias, bg_stem) -> tuple:
 
 def image_score(
     original_image_path: Path,
+    white_pixel_weight: int,
+    black_pixel_weight: int,
     mask: np.ndarray,
     bg_distro_params: tuple,
     evaluate_score_matrix=False,
@@ -61,10 +63,11 @@ def image_score(
         norm += 1
         value = image[y, x]
         if value < bg_mean_corrected:
-            pixel_score = SCORE_PARAMS["black_pixel_weight"] * (bg_mean_corrected - value)
+
+            pixel_score = black_pixel_weight * (bg_mean_corrected - value)
             if evaluate_score_matrix: score_matrix[y, x, 0] = pixel_score
         else:
-            pixel_score = 1 * (value - bg_mean_corrected)
+            pixel_score = white_pixel_weight * (value - bg_mean_corrected)
             if evaluate_score_matrix: score_matrix[y, x, 1] = pixel_score
         score += pixel_score
 

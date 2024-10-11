@@ -171,7 +171,11 @@ class PixelScore(FafAnalysis):
         [original_image_path, full_mask_path, bg_distro_params] = self.input_manager(faf_img_dict)
         mask  = grayscale_img_path_to_255_ndarray(full_mask_path)
         make_illustration = self.args.make_slides or self.args.make_pdf
-        (score, score_matrix) = image_score(original_image_path, mask, bg_distro_params,
+        (score, score_matrix) = image_score(original_image_path,
+                                            white_pixel_weight=1,
+                                            black_pixel_weight=SCORE_PARAMS["black_pixel_weight"],
+                                            mask=mask,
+                                            bg_distro_params=bg_distro_params,
                                             evaluate_score_matrix=make_illustration)
         self.store_or_update(faf_img_dict["id"], score)
         db.close()

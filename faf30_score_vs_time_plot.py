@@ -24,7 +24,7 @@ import matplotlib.ticker
 import scipy.stats as stats
 
 from models.abca4_faf_models import FafImage
-from models.abca4_results import Score
+from models.abca4_results import Score, PlaygroundScore
 from utils.db_utils import db_connect
 
 from faf00_settings import DATABASES, USE_AUTO
@@ -130,26 +130,41 @@ def plot_score_vs_age(df_cases: pd.DataFrame, df_controls: pd.DataFrame, title: 
     print(f"figure written to {fnm}")
 
 
-def img_pair_avg_score(faf_img_ids, roi):
+def img_pair_avg_score(faf_img_ids, roi, exercise):
     # there better be only one score for image id
-    if roi == "pp":
-        img_scores = [FafImage.get_by_id(img_id).scores[0].pixel_score.peripapillary for img_id in faf_img_ids]
-    else:
-        if USE_AUTO:
-            img_scores = [FafImage.get_by_id(img_id).scores[0].pixel_score_auto for img_id in faf_img_ids]
+    if exercise is None:
+        if roi == "pp":
+            img_scores = [FafImage.get_by_id(img_id).scores[0].pixel_score.peripapillary for img_id in faf_img_ids]
         else:
-            img_scores = [FafImage.get_by_id(img_id).scores[0].pixel_score for img_id in faf_img_ids]
+            if USE_AUTO:
+                img_scores = [FafImage.get_by_id(img_id).scores[0].pixel_score_auto for img_id in faf_img_ids]
+            else:
+                img_scores = [FafImage.get_by_id(img_id).scores[0].pixel_score for img_id in faf_img_ids]
+    else:
+        if exercise == "white":
+            img_scores = [FafImage.get_by_id(img_id).playground_scores[0].pixel_score_white for img_id in faf_img_ids]
+        elif exercise == "black":
+            img_scores = [FafImage.get_by_id(img_id).playground_scores[0].pixel_score_black for img_id in faf_img_ids]
+        elif exercise == "1":
+            img_scores = [FafImage.get_by_id(img_id).playground_scores[0].pixel_score_1 for img_id in faf_img_ids]
+        elif exercise == "5":
+            img_scores = [FafImage.get_by_id(img_id).playground_scores[0].pixel_score_5 for img_id in faf_img_ids]
+        elif exercise == "15":
+            img_scores = [FafImage.get_by_id(img_id).playground_scores[0].pixel_score_15 for img_id in faf_img_ids]
+        else:
+            raise Exception(f"Unrecognized exercise score: {exercise}")
+
     return mean(img_scores)
 
 
-def average_eye_scores(roi="elliptic", controls=False) -> dict:
+def average_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
     [alias, age, haplotype_tested, time_from_onset, pixel_score] = [[], [], [], [], []]
     # SQL: select case_id, age_acquired, group_concat(id separator ", ")
     # as img_ids from faf_images group by case_id, age_acquired \G
     # I could not find how to pass the separator to peewees GROUP_CONCAT, but "," is the default
     # in postgres, I could not get this to work, to be closer to the mysql solution
     # # peewee.fn.string_agg(peewee.fn.cast(FafImage.id, 'TEXT')).alias('img_ids'),
-    we_are_using_postgres =  DATABASES["default"]["ENGINE"] == 'peewee.postgres'
+    we_are_using_postgres = DATABASES["default"]["ENGINE"] == 'peewee.postgres'
     if USE_AUTO:
         query = FafImage.select(
             FafImage.case_id,
@@ -164,7 +179,8 @@ def average_eye_scores(roi="elliptic", controls=False) -> dict:
         query = FafImage.select(
             FafImage.case_id,
             FafImage.age_acquired,
-            peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
+            peewee.fn.array_agg(FafImage.id).alias("img_ids") if we_are_using_postgres
+            else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
         ).group_by(FafImage.case_id, FafImage.age_acquired)
     # print(query.sql())
     # exit()
@@ -179,7 +195,7 @@ def average_eye_scores(roi="elliptic", controls=False) -> dict:
         else:
             pair_imgs = faf_img.img_ids if we_are_using_postgres else faf_img.img_ids.split(",")
 
-        avg_score = img_pair_avg_score(pair_imgs, roi)
+        avg_score = img_pair_avg_score(pair_imgs, roi, exercise)
         pixel_score.append(avg_score)
         age_image_acquired = faf_img.age_acquired
         onset = faf_img.case_id.onset_age
@@ -200,11 +216,39 @@ def average_eye_scores(roi="elliptic", controls=False) -> dict:
     }
 
 
-def individual_eye_scores(roi="elliptic", controls=False) -> dict:
+def which_score(score, roi, exercise) -> float:
+    if exercise is None:
+        if roi == "pp":
+            return score.pixel_score_peripapillary
+        else:
+            if USE_AUTO:
+                return score.pixel_score_auto
+            else:
+                return score.pixel_score
+    else:
+        if exercise == "white":
+            return score.pixel_score_white
+        elif exercise == "black":
+            return score.pixel_score_black
+        elif exercise == "1":
+            return score.pixel_score_1
+        elif exercise == "5":
+            return score.pixel_score_5
+        elif exercise == "15":
+            return score.pixel_score_15
+        else:
+            raise Exception(f"Unrecognized exercise score: {exercise}")
+
+
+def individual_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
 
     [age, haplotype_tested, time_from_onset, pixel_score] = [[], [], [], []]
     timepoints = 0
-    for score in Score.select():
+    if exercise is None:
+        score_selector = Score.select()
+    else:
+        score_selector = PlaygroundScore.select()
+    for score in score_selector:
         case = score.faf_image_id.case_id
         if not controls and score.faf_image_id.case_id.is_control:
             continue
@@ -221,13 +265,7 @@ def individual_eye_scores(roi="elliptic", controls=False) -> dict:
         else:
             time_from_onset.append(age_image_acquired - onset)
         age.append(age_image_acquired)
-        if roi == "pp":
-            pixel_score.append(score.pixel_score_peripapillary)
-        else:
-            if USE_AUTO:
-                pixel_score.append(score.pixel_score_auto)
-            else:
-                pixel_score.append(score.pixel_score)
+        pixel_score.append(which_score(score, roi, exercise))
         haplotype_tested.append(case.haplotype_tested)
     print(f"total timepoints, individual eyes{', controls' if controls else ''}: {timepoints}")
     return {
@@ -278,22 +316,26 @@ def subsample(df_cases):
 def main():
 
     if len(argv) > 1 and argv[1] in ["-h", "--help"]:
-        print(f"{argv[0]} [-h/--help] | [-a/--avg] [-p/--peripapillary] [-l/--latex]")
+        print(f"{argv[0]} [-h/--help] | [-a/--avg] [-p/--peripapillary] [-l/--latex] [--exercise-<type>]")
         exit()
     average = len({"-a", "--avg"}.intersection(argv)) > 0
-    latex =  len({"-l", "--latex"}.intersection(argv)) > 0
+    latex = len({"-l", "--latex"}.intersection(argv)) > 0
     roi = "pp" if {"-p", "--peripapillary"}.intersection(argv) else "elliptic"
+    exercise = None
+    for exrcise_type in ["black", "white", "1", "5", "15"]:
+        if f"--exercise-{exrcise_type}" in argv:
+            exercise = exrcise_type
 
     db = db_connect()  # this initializes global proxy
     if average:
-        ret_dict = average_eye_scores(roi=roi)
+        ret_dict = average_eye_scores(roi=roi, exercise=exercise)
         df_cases = pd.DataFrame.from_dict(ret_dict)
-        ret_dict = average_eye_scores(roi=roi, controls=True)
+        ret_dict = average_eye_scores(roi=roi, exercise=exercise, controls=True)
         df_controls = pd.DataFrame.from_dict(ret_dict)
     else:
-        ret_dict = individual_eye_scores(roi=roi)
+        ret_dict = individual_eye_scores(roi=roi, exercise=exercise)
         df_cases = pd.DataFrame.from_dict(ret_dict)
-        ret_dict = individual_eye_scores(roi=roi, controls=True)
+        ret_dict = individual_eye_scores(roi=roi, exercise=exercise, controls=True)
         df_controls = pd.DataFrame.from_dict(ret_dict)
     db.close()
 
@@ -330,7 +372,7 @@ def main():
             ["linear", "age", "yes"],
             outf,
             latex=latex
-       )
+        )
         report_stats(
             filtered_df["time_from_onset"],
             filtered_df["pixel_score"],
