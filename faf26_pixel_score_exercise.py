@@ -12,18 +12,12 @@
 from utils.db_utils import db_connect
 from utils.score import image_score, collect_bg_distro_params
 
-from itertools import product
 from pathlib import Path
-from pprint import pprint
-
-import numpy as np
 
 from classes.faf_analysis  import FafAnalysis
 from faf00_settings import WORK_DIR, GEOMETRY, SCORE_PARAMS, USE_AUTO
 from models.abca4_results import PlaygroundScore
 from utils.conventions     import construct_workfile_path
-from utils.fundus_geometry import disc_fovea_distance
-from utils.gaussian        import gaussian_mixture
 from utils.image_utils     import grayscale_img_path_to_255_ndarray, ndarray_to_4channel_png
 from utils.utils           import is_nonempty_file, read_simple_hist, scream
 

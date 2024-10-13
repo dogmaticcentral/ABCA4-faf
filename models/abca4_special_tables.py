@@ -30,3 +30,11 @@ class OptosLocation(BaseModel):
     disc_location_x  = IntegerField(null=False)
     disc_location_y  = IntegerField(null=False)
     disc_confidence = FloatField(null=False)
+
+
+class FAF123Label(BaseModel):
+    class Meta:
+        table_name = "faf123_label"
+    faf_image_id = ForeignKeyField(FafImage, backref='faf123_label')  # what is backref?
+    label = IntegerField(null=False)
+    curator = CharField(null=True)
