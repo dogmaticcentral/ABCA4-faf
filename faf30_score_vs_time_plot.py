@@ -11,6 +11,7 @@
 """
 
 import math
+from pprint import pprint
 from random import sample
 
 import pandas as pd
@@ -25,38 +26,43 @@ import scipy.stats as stats
 
 from models.abca4_faf_models import FafImage
 from models.abca4_results import Score, PlaygroundScore
+from models.abca4_special_tables import FAF123Label
 from utils.db_utils import db_connect
-
+from utils.utils import is_nonempty_file
 from faf00_settings import DATABASES, USE_AUTO
 
 
-def marker_n_color(df, basecolor):
-    if not df["haplotype_tested"].empty:
-        marker = ["o" if h else "x" for h in df["haplotype_tested"]]
-        color  = [basecolor if h else "royalblue" for h in df["haplotype_tested"]]
-    else:
+def marker_n_color(df, basecolor, faf123=None):
+    if df["haplotype_tested"].empty:  # these are controls
         marker = ["o"] * len(df["pixel_score"])
         color  = ["orange"] * len(df["pixel_score"])
+    else:
+        marker = ["o" if h else "x" for h in df["haplotype_tested"]]
+        if df["faf123"].empty:
+            color = [basecolor if h else "royalblue" for h in df["haplotype_tested"]]
+        else:  # we have FAF1, 2, 3 phenotype labels
+            label_color = [basecolor, 'green', 'yellow', 'red']
+            color = [label_color[f] for f in df["faf123"]]
     return marker, color
 
 
-def scatter(ax, df, timeframe, basecolor):
-    marker, color = marker_n_color(df, basecolor)
+def scatter(ax, df, timeframe, basecolor, faf123=None):
+    marker, color = marker_n_color(df, basecolor, faf123)
     for i in range(len(df[timeframe])):
         ax.scatter(df[timeframe][i], df["pixel_score"][i], marker=marker[i], color=color[i])
 
 
-def connect(ax, df, timeframe, basecolor):
+def connect(ax, df, timeframe, basecolor, faf123=None):
     # the timeframe here is time_form_onset or age - I need to coma up with a different name
     for alias in df['alias'].unique():
         sub_frame = df.loc[df['alias'] == alias].reset_index()
         if len(sub_frame) < 2: continue
         ax.plot(sub_frame[timeframe], sub_frame['pixel_score'])
-        scatter(ax, sub_frame, timeframe, basecolor)
+        scatter(ax, sub_frame, timeframe, basecolor, faf123)
 
 
 def plot_score_vs_age(df_cases: pd.DataFrame, df_controls: pd.DataFrame, title: str = "",
-                      logscale=False, show_longitudinal=False):
+                      logscale=False, show_longitudinal=False, faf123=None):
 
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, gridspec_kw={"width_ratios": [2, 2, 1]}, sharey="row")
     fig.set_size_inches(10, 5)
@@ -70,7 +76,6 @@ def plot_score_vs_age(df_cases: pd.DataFrame, df_controls: pd.DataFrame, title: 
 
     ##############################################################
     # AGE PLOT
-
     ax1.tick_params(axis="both", which="major", labelsize=ticklabelfont)
     ax1.set_xlim([df_cases["age"].min() * 0.9, df_cases["age"].max() * 1.1])
     ax1.set_xlabel("Age (yrs)", fontsize=smallfont)
@@ -83,7 +88,7 @@ def plot_score_vs_age(df_cases: pd.DataFrame, df_controls: pd.DataFrame, title: 
         ax1.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
         ax1.get_yaxis().set_minor_formatter(matplotlib.ticker.NullFormatter())
 
-    drawing_callable(ax1, df_cases, 'age', 'mediumblue')
+    drawing_callable(ax1, df_cases, 'age', 'mediumblue', faf123)
 
     ##############################################################
     # TIME FROM ONSET PLOT
@@ -103,7 +108,7 @@ def plot_score_vs_age(df_cases: pd.DataFrame, df_controls: pd.DataFrame, title: 
         ax2.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
         ax2.get_yaxis().set_minor_formatter(matplotlib.ticker.NullFormatter())
 
-    drawing_callable(ax2, df_cases, 'time_from_onset', 'mediumblue')
+    drawing_callable(ax2, df_cases, 'time_from_onset', 'mediumblue', faf123)
 
     ##############################################################
     # CONTROLS PLOT
@@ -242,7 +247,7 @@ def which_score(score, roi, exercise) -> float:
 
 def individual_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
 
-    [age, haplotype_tested, time_from_onset, pixel_score] = [[], [], [], []]
+    [age, haplotype_tested, time_from_onset, pixel_score, faf123_label] = [[], [], [], [], []]
     timepoints = 0
     if exercise is None:
         score_selector = Score.select()
@@ -267,12 +272,21 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict
         age.append(age_image_acquired)
         pixel_score.append(which_score(score, roi, exercise))
         haplotype_tested.append(case.haplotype_tested)
-    print(f"total timepoints, individual eyes{', controls' if controls else ''}: {timepoints}")
+
+        query = FAF123Label.select().where(FAF123Label.faf_image_id == score.faf_image_id)
+        faf123_labels = [flb.label  for flb in query]
+        # TODO I am here this can be zeron not sure how:
+        if len(faf123_labels) > 0:
+            faf123_label.append(int(round(mean(list(faf123_labels)))))
+
+
+    # print(f"total timepoints, individual eyes{', controls' if controls else ''}: {timepoints}")
     return {
         "age": age,
         "haplotype_tested": haplotype_tested,
         "time_from_onset": time_from_onset,
         "pixel_score": pixel_score,
+        "faf123_label": faf123_label
     }
 
 
@@ -313,8 +327,7 @@ def subsample(df_cases):
     print(f"ge of onset, avg Spearman corr: {avg_sp:.1f}%")
 
 
-def main():
-
+def improvized_arg_parser() -> tuple:
     if len(argv) > 1 and argv[1] in ["-h", "--help"]:
         print(f"{argv[0]} [-h/--help] | [-a/--avg] [-p/--peripapillary] [-l/--latex] [--exercise-<type>]")
         exit()
@@ -325,6 +338,14 @@ def main():
     for exrcise_type in ["black", "white", "1", "5", "15"]:
         if f"--exercise-{exrcise_type}" in argv:
             exercise = exrcise_type
+
+    return average, latex, roi, exercise
+
+
+def main():
+
+    # TODO this needs a proper parser
+    (average, latex, roi, exercise) = improvized_arg_parser()
 
     db = db_connect()  # this initializes global proxy
     if average:

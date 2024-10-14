@@ -42,7 +42,7 @@ DATABASES = {
         "DB_NAME": f"{WORK_DIR}/abca4_faf.sqlite",
     },
 }
-DATABASES["default"] = DATABASES["postgres"]
+DATABASES["default"] = DATABASES["mysql"]
 
 
 # set to empty string or None if not needed
