@@ -335,7 +335,7 @@ def subsample(df_cases):
 
 def improvized_arg_parser() -> tuple:
     if len(argv) > 1 and argv[1] in ["-h", "--help"]:
-        print(f"{argv[0]} [-h/--help] | [-a/--avg] [-p/--peripapillary] [-l/--latex] [--exercise-<type>]")
+        print(f"{argv[0]} [-h/--help] | [-a/--avg] [-p/--peripapillary] [-l/--latex] [--exercise-<type>] [-f/--color_by_faf123]")
         exit()
     average = len({"-a", "--avg"}.intersection(argv)) > 0
     latex = len({"-l", "--latex"}.intersection(argv)) > 0
