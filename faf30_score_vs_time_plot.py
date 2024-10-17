@@ -245,7 +245,7 @@ def which_score(score, roi, exercise) -> float:
             raise Exception(f"Unrecognized exercise score: {exercise}")
 
 
-def individual_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
+def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=False) -> dict:
 
     [age, haplotype_tested, time_from_onset, pixel_score, faf123_labels] = [[], [], [], [], []]
     timepoints = 0
@@ -273,6 +273,9 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict
         pixel_score.append(which_score(score, roi, exercise))
         haplotype_tested.append(case.haplotype_tested)
 
+        if not faf123:
+            faf123_labels.append(0)
+            continue
         query = FAF123Label.select().where(FAF123Label.faf_image_id == score.faf_image_id)
         faf123_label = [flb.label  for flb in query]
         if len(faf123_label) == 0:
@@ -337,17 +340,18 @@ def improvized_arg_parser() -> tuple:
     average = len({"-a", "--avg"}.intersection(argv)) > 0
     latex = len({"-l", "--latex"}.intersection(argv)) > 0
     roi = "pp" if {"-p", "--peripapillary"}.intersection(argv) else "elliptic"
+    faf123 = {"-f", "--color_by_faf123"}.intersection(argv)
     exercise = None
     for exrcise_type in ["black", "white", "1", "5", "15"]:
         if f"--exercise-{exrcise_type}" in argv:
             exercise = exrcise_type
 
-    return average, latex, roi, exercise
+    return average, latex, roi, faf123, exercise
 
 
 def main():
 
-    (average, latex, roi, exercise) = improvized_arg_parser()
+    (average, latex, roi, faf123, exercise) = improvized_arg_parser()
 
     db = db_connect()  # this initializes global proxy
     if average:
@@ -356,7 +360,7 @@ def main():
         ret_dict = average_eye_scores(roi=roi, exercise=exercise, controls=True)
         df_controls = pd.DataFrame.from_dict(ret_dict)
     else:
-        ret_dict = individual_eye_scores(roi=roi, exercise=exercise)
+        ret_dict = individual_eye_scores(roi=roi, exercise=exercise, faf123=faf123)
         df_cases = pd.DataFrame.from_dict(ret_dict)
         ret_dict = individual_eye_scores(roi=roi, exercise=exercise, controls=True)
         df_controls = pd.DataFrame.from_dict(ret_dict)

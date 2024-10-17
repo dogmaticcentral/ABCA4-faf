@@ -28,8 +28,6 @@ the control images.
 """
 
 
-
-
 class FafGradCorrection(FafAnalysis):
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         """Check the presence of all input files that we need to create the composite img.

@@ -10,19 +10,15 @@
 
 """
 import pandas as pd
-from peewee import fn, IntegerField
+import sys
 
 from models.abca4_faf_models import Case, FafImage
 from utils.db_utils import db_connect
-from utils.score import image_score, collect_bg_distro_params
-
-from pathlib import Path
 from sys import argv
-from faf00_settings import WORK_DIR, GEOMETRY, SCORE_PARAMS, USE_AUTO
 from models.abca4_special_tables import FAF123Label
-from utils.conventions     import construct_workfile_path
-from utils.image_utils     import grayscale_img_path_to_255_ndarray, ndarray_to_4channel_png
-from utils.utils           import is_nonempty_file, read_simple_hist, scream
+from utils.utils           import is_nonempty_file
+
+sys.path.insert(0, "..")
 
 
 def get_alias_to_id_mapping() -> dict:
@@ -97,6 +93,8 @@ def main():
         faf123_label =  row['FAF label - Ivana']
         store_or_update(image_id, faf123_label, "ivana")
     db.close()
+
+
 ########################
 if __name__ == "__main__":
     main()

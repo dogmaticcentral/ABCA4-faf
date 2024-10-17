@@ -144,8 +144,8 @@ guessed from the extension (',' for a csv, and '\t' for tsv file.)
 Then use the infomration tables you have created to fill the database:
 
 ```shell
-./faf03_load_image_info.py images/images.tsv
-./faf04_load_image_pair_info.py images/image_pairs.tsv 
+./faf0301_load_image_info.py images/images.tsv
+./faf0303_load_image_pair_info.py images/image_pairs.tsv 
 ```
 
 ## Further image sanity checking

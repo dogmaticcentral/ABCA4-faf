@@ -9,6 +9,7 @@
     The License is noncommercial - you may not use this material for commercial purposes.
 
 """
+import sys
 
 from pathlib import Path
 from pprint import pprint
@@ -18,6 +19,8 @@ from models.abca4_faf_models import FafImage, ImagePair
 from utils.io import guess_delimiter
 from utils.db_utils import db_connect
 from utils.utils import is_nonempty_file, scream
+
+sys.path.insert(0, "..")
 
 
 def arg_parse() -> Path:

@@ -9,6 +9,8 @@
     The License is noncommercial - you may not use this material for commercial purposes.
 
 """
+import sys
+
 from utils.db_utils import db_connect
 
 from pathlib import Path
@@ -17,6 +19,8 @@ from sys import argv
 from models.abca4_faf_models import Case, FafImage
 from utils.io import guess_delimiter, list_to_quoted_str, file_to_list_of_dict
 from utils.utils import is_nonempty_file
+
+sys.path.insert(0, "..")
 
 """
 Load the info from a tsv/csv file into the database.
