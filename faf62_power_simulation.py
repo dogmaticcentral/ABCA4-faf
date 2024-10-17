@@ -9,6 +9,8 @@
     The License is noncommercial - you may not use this material for commercial purposes.
 
 """
+import matplotlib.pyplot as plt
+
 import numpy as np
 from itertools import chain
 from scipy import stats
@@ -25,45 +27,56 @@ import math
 from random import uniform, sample, normalvariate
 
 
-# TODO estimate the params od the exponential fit to the data
-def simulation0(num_sims, sample_size, exp_factor, sigma,  effect_size, alpha) -> float:
+def simulation(num_sims, sample_size, exp_factor, sigma, correlation, alpha) -> float:
+    # rejection refers to rejecting the null hypothesis (= there is no correlation)
     rejected = 0
     for _ in range(num_sims):
         x = [uniform(0,10) for _ in range(sample_size)]
-        y = [normalvariate(mu=math.exp(i*exp_factor),sigma=sigma) for i in x]
+        y = [normalvariate(mu=math.exp(i*exp_factor), sigma=sigma) for i in x]
         spearman = stats.spearmanr(x, y)
-        if spearman.statistic > effect_size and spearman.pvalue < alpha:
+        if spearman.statistic > correlation and spearman.pvalue < alpha:
             rejected += 1
     return rejected/num_sims
 
-# TODO estimate the params od the exponential fit to the data
-def simulation1(num_sims, sample_size, exp_factor, sigma, effect_size, alpha) -> float:
-    correlation = effect_size
-    rejected = 0
-    for _ in range(num_sims):
-        x = np.random.uniform(0, 10, sample_size)
-        # Exponential behavior with noise
-        y = np.random.exponential(scale=exp_factor, size=sample_size) + np.random.normal(scale=sigma, size=sample_size)
-        # Apply a transformation to achieve the desired correlation
-        y = stats.rankdata(y + correlation * (x - np.mean(x))) + np.random.normal(scale=sigma, size=sample_size)
-        spearman = stats.spearmanr(x, y)
-        if spearman.statistic > effect_size and spearman.pvalue < alpha:
-            rejected += 1
-    return rejected/num_sims
+
+def plot(size, power):
+
+    smallfont = 20
+    ticklabelfont = 16
+
+    fig, ax1 = plt.subplots(1, 1)
+    ax1.tick_params(axis="x", which="major", labelsize=ticklabelfont)
+    ax1.set_xlabel("Number of data points", fontsize=smallfont, labelpad=10)
+    ax1.set_ylabel("Simulated power", fontsize=smallfont, labelpad=10)
+    for i in range(2):
+        ax1.plot(size, power[i], label=f"run {i+1}")
+        ax1.scatter(size, power[i])
+
+    ax1.legend(loc="lower right", prop={'size': 12})
+
+    fig.tight_layout()
+    plt.savefig("power.png")
 
 
 def main():
 
-    num_sims   = 100
+    num_sims   = 1000
     exp_factor = 1.0
     sigma = 100.0
-    effect_size = 0.80
-    alpha = 1.e-3
+    correlation = 0.80
+    alpha = 1.e-6
 
-    for sample_size in chain (range(5,30, 2),   range(30, 100, 5)):
-        power0 = simulation0(num_sims, sample_size, exp_factor, sigma, effect_size, alpha)
-        power1 = simulation0(num_sims, sample_size, exp_factor, sigma, effect_size, alpha)
+    size = []
+    power = [[], []]
+    for sample_size in chain (range(10, 39, 2),   range(40, 100, 5)):
+        power0 = simulation(num_sims, sample_size, exp_factor, sigma, correlation, alpha)
+        power1 = simulation(num_sims, sample_size, exp_factor, sigma, correlation, alpha)
+        size.append(sample_size)
+        power[0].append(power0)
+        power[1].append(power1)
         print(f"N={sample_size}   power0={power0:.3f}  power1={power1:.3f}")
+
+    plot(size, power)
 
 
 ########################

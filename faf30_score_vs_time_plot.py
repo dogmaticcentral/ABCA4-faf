@@ -38,11 +38,11 @@ def marker_n_color(df, basecolor, faf123=None):
         color  = ["orange"] * len(df["pixel_score"])
     else:
         marker = ["o" if h else "x" for h in df["haplotype_tested"]]
-        if df["faf123"].empty:
+        if df["faf123_label"].empty:
             color = [basecolor if h else "royalblue" for h in df["haplotype_tested"]]
         else:  # we have FAF1, 2, 3 phenotype labels
             label_color = [basecolor, 'green', 'yellow', 'red']
-            color = [label_color[f] for f in df["faf123"]]
+            color = [label_color[f] for f in df["faf123_label"]]
     return marker, color
 
 
@@ -247,7 +247,7 @@ def which_score(score, roi, exercise) -> float:
 
 def individual_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
 
-    [age, haplotype_tested, time_from_onset, pixel_score, faf123_label] = [[], [], [], [], []]
+    [age, haplotype_tested, time_from_onset, pixel_score, faf123_labels] = [[], [], [], [], []]
     timepoints = 0
     if exercise is None:
         score_selector = Score.select()
@@ -274,19 +274,22 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict
         haplotype_tested.append(case.haplotype_tested)
 
         query = FAF123Label.select().where(FAF123Label.faf_image_id == score.faf_image_id)
-        faf123_labels = [flb.label  for flb in query]
-        # TODO I am here this can be zeron not sure how:
-        if len(faf123_labels) > 0:
-            faf123_label.append(int(round(mean(list(faf123_labels)))))
+        faf123_label = [flb.label  for flb in query]
+        if len(faf123_label) == 0:
+            # note this means that I may not have the faf123
+            # for the cases I am not interested in (or for the controls)
+            faf123_labels.append(0)
+        elif len(faf123_label) > 1:
+            raise Exception(f"More than one label found for {case.alias}, {age_image_acquired}")
+        else:
+            faf123_labels.append(faf123_label[0])
 
-
-    # print(f"total timepoints, individual eyes{', controls' if controls else ''}: {timepoints}")
     return {
         "age": age,
         "haplotype_tested": haplotype_tested,
         "time_from_onset": time_from_onset,
         "pixel_score": pixel_score,
-        "faf123_label": faf123_label
+        "faf123_label": faf123_labels
     }
 
 
@@ -344,7 +347,6 @@ def improvized_arg_parser() -> tuple:
 
 def main():
 
-    # TODO this needs a proper parser
     (average, latex, roi, exercise) = improvized_arg_parser()
 
     db = db_connect()  # this initializes global proxy
