@@ -281,7 +281,7 @@ that represents the background distribution of intensities.
 
 ## Region composites
 
-[faf18_image_region_composites.py](faf55_image_region_composites.py)
+[faf18_image_region_composites.py](faf30_production/faf55_image_region_composites.py)
 This step is optional, but advisable - create (for manual inspection) composite images
 consisting of the original image, with the elliptical ROI, fove and optic head, usable and bg sampling regions overlaid:
 
@@ -332,7 +332,7 @@ under very similar conditions), this does not really help.
 
 THis is a strictly optional step, used for producing an illustration
 in the original paper
-[faf25_hist_progression.py](faf53_hist_progression.py)
+[faf25_hist_progression.py](faf30_production/faf53_hist_progression.py)
 
 The output should look like
 
@@ -342,10 +342,10 @@ And, finally, we get to score the FAF images in our set
 
 ```bash
 faf28_pixel_score.py
-faf30_score_vs_time_plot.py
-faf31_score_sensitivity_to_fovea_location.py  # note this one takes very long
-faf32_score_od_vs_os_plot.py
-faf33_score_comparison.py
+faf3000_score_vs_time_plot.py
+faf3002_score_sensitivity_to_fovea_location.py  # note this one takes very long
+faf3005_score_od_vs_os_plot.py
+faf3006_score_comparison.py
 ```
 
 ## More reporting and analysis tools
@@ -354,13 +354,13 @@ faf33_score_comparison.py
 
 #### An illustration of hist shape change over time
 ```bash
-faf53_hist_progression.py  
+faf3008_hist_progression.py  
 ```
 <br>
 
 #### An illustration of image regions used in the analysis
 ```bash
-faf55_image_region_composites.py 
+faf3010_image_region_composites.py 
 ```
 One illustration should look like this (without the blue square in the center):
 
@@ -374,7 +374,7 @@ Works for manually selected background regions only.
 
 #### Text description of the dataset
 ```bash
-./faf56_dataset_overview.py
+./faf3012_dataset_overview.py
 ```
 The output should look something like
 ```bash
@@ -397,7 +397,7 @@ wihtout `-c` option that limits the run to controls).
 
 It also expects the images produced by running [faf28_pixel_score.py](faf28_pixel_score.py) with `-p` option.
 ```bash
-./faf58_case_catalog.py
+./faf3016_case_catalog.py
 ```
 The output will be a catalog in pdf format, showing the illustration (heatmap) of the
 pixel level scores and histograms collected in the ROI and the background regions, like this:
@@ -411,7 +411,7 @@ Similar to the above, except the images are shown as pairs,
 and the patient cases sorted by the increasing average score.
 
 ```bash
-faf59_score_catalog.py
+faf3018_score_catalog.py
 ```
 
 ## Odds and ends
@@ -419,5 +419,5 @@ faf59_score_catalog.py
 Visualisation of the idea behind the heuristic score used here.
 
 ```bash
-faf60_score_simulation.py
+faf5000_score_simulation.py
 ```

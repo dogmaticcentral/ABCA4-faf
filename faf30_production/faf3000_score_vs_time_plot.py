@@ -11,7 +11,6 @@
 """
 
 import math
-from pprint import pprint
 from random import sample
 
 import pandas as pd
@@ -28,7 +27,6 @@ from models.abca4_faf_models import FafImage
 from models.abca4_results import Score, PlaygroundScore
 from models.abca4_special_tables import FAF123Label
 from utils.db_utils import db_connect
-from utils.utils import is_nonempty_file
 from faf00_settings import DATABASES, USE_AUTO
 
 
@@ -349,6 +347,21 @@ def improvized_arg_parser() -> tuple:
     return average, latex, roi, faf123, exercise
 
 
+def construct_title(base, exercise, average) -> str:
+    title = base
+    if exercise:
+        if exercise == "white":
+            title += ", light component only"
+        elif exercise == "black":
+            title += ", dark component only"
+        else:
+            title += f", dark/light relative weight: {exercise}"
+    if average:
+        title += ", average over OD and OS"
+
+    return title
+
+
 def main():
 
     (average, latex, roi, faf123, exercise) = improvized_arg_parser()
@@ -416,14 +429,10 @@ def main():
         report_stats(filtered_df["age"], logscore, ["log", "age", "yes"], outf, latex=latex)
         report_stats(filtered_df["time_from_onset"], logscore, ["log", "onset", "yes"], outf, latex=latex)
 
-    title = f"Score vs time"
-    if average:
-        title += ", average over OD and OS"
+    title = construct_title(f"Score vs time", exercise, average)
     plot_score_vs_age(df_cases, df_controls, title=title, show_longitudinal=False)
 
-    title = f"Log score vs time"
-    if average:
-        title += ", average over OD and OS"
+    title =  construct_title(f"Log score vs time", exercise, average)
     plot_score_vs_age(df_cases, df_controls, title=title, logscale=True, show_longitudinal=False)
 
 
