@@ -103,8 +103,8 @@ def pair_is_match(path1: str, path2: str) -> bool:
     :param path2:  full path to img 2, provided as a string
     :return bool:  True if the paths satisfy matching criterion
     """
-    shrug("image pairs not checked - please provide the criterion")
-    return True
+    # shrug("image pairs not checked - please provide the criterion")
+    # return True
     return path1.replace("OD", "OX").replace("OS", "OX") == path2.replace("OD", "OX").replace("OS", "OX")
 
 
