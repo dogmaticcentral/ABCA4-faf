@@ -310,27 +310,6 @@ def report_stats(x, y, labels: list, outf=None, latex=False) -> tuple[float, flo
     return spearman, pearson
 
 
-def subsample(df_cases):
-    print()
-    print()
-    n_points = len(df_cases["age"])
-    avg_sp = 0
-    n_iters = 100
-    for i in range(1, n_iters + 1):
-        print(f"subsample {i}")
-        sampling_index = sample(range(n_points), n_points // 3)
-        x = [df_cases["age"][i] for i in sampling_index]
-        y = [df_cases["pixel_score"][i] for i in sampling_index]
-        [sp, pear] = report_stats(x, y, ["Age"])
-        x = [df_cases["time_from_onset"][i] for i in sampling_index]
-        [sp, pear] = report_stats(x, y, ["Onset"])
-        avg_sp += sp
-    avg_sp *= 100 / n_iters
-
-    print()
-    print(f"ge of onset, avg Spearman corr: {avg_sp:.1f}%")
-
-
 def improvized_arg_parser() -> tuple:
     if len(argv) > 1 and argv[1] in ["-h", "--help"]:
         print(f"{argv[0]} [-h/--help] | [-a/--avg] [-p/--peripapillary] [-l/--latex] [--exercise-<type>] [-f/--color_by_faf123]")
