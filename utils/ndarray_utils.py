@@ -24,6 +24,8 @@ import numpy as np
 from utils.utils import is_nonempty_file, read_simple_hist
 from utils.vector import Vector
 
+IntPoint  = list[int]
+IntPointList = list[IntPoint]
 
 noneg = np.vectorize(lambda x: max(0, x))
 
@@ -110,6 +112,15 @@ def elliptic_mask(
         # finally
         mask[y, x] = 255
     return mask
+
+
+def ndarray2pointlist(bw_image: np.ndarray) -> IntPointList:
+    point_list: IntPointList = []
+    for row, column in np.ndindex(bw_image.shape[:2]):
+        if bw_image[row, column] > 0.1:
+            # the first index in a numpy array is row, which would be a y coordinate in the image
+            point_list.append([column, row])
+    return point_list
 
 
 def peripapillary_mask(

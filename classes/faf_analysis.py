@@ -59,7 +59,6 @@ class FafAnalysis(ABC):
             print(f"if {self.args.n_cpus} is a reasonable number, please change in argv_parse()")
             exit()
 
-
         if self.args.image_path:
             cursor = db_connect()
             faf_img_dicts = list(

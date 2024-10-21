@@ -9,6 +9,8 @@
     The License is noncommercial - you may not use this material for commercial purposes.
 
 """
+from pprint import pprint
+
 from utils.db_utils import db_connect
 import os
 
@@ -70,6 +72,7 @@ class FafRecalibration(FafAnalysis):
 
     def recalibrate(self, input_filepath: Path | str, hist_path: Path | str, alias: str,
                     shift_max_only=True, skip_if_exists=False) -> str:
+
         outpng = construct_workfile_path(WORK_DIR, input_filepath, alias, self.name_stem, 'png')
         if skip_if_exists and is_nonempty_file(outpng):
             print(f"{os.getpid()} {outpng} found")

@@ -17,7 +17,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 WORK_DIR = Path("/home/ivana/scratch/abca4_faf")
 
-DEBUG = False
+DEBUG = True
 
 RECOGNIZED_ENGINES = ["peewee.sqlite", "peewee.mysql", "peewee.postgres"]
 DATABASES = {

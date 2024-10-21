@@ -36,11 +36,11 @@ class FafOverlay(FafAnalysis):
         https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-width
         """
 
-        image_size    = (faf_img_dict['width'], faf_img_dict['height'])
-        disc_center   = (faf_img_dict['disc_x'], faf_img_dict['disc_y'])
+        image_size   = (faf_img_dict['width'], faf_img_dict['height'])
+        disc_center  = (faf_img_dict['disc_x'], faf_img_dict['disc_y'])
         fovea_center = (faf_img_dict['fovea_x'], faf_img_dict['fovea_y'])
 
-        svg_filepath  = construct_workfile_path(WORK_DIR, faf_img_dict['image_path'],
+        svg_filepath = construct_workfile_path(WORK_DIR, faf_img_dict['image_path'],
                                                 faf_img_dict['case_id']['alias'], 'overlay', 'svg')
         if skip_if_exists and is_nonempty_file(svg_filepath):
             if DEBUG: print(f"found {svg_filepath}")
@@ -49,6 +49,7 @@ class FafOverlay(FafAnalysis):
         # Create a new SVG drawing with specified width and height
         dwg = svgwrite.Drawing(str(svg_filepath), size=image_size)
         dist = disc_fovea_distance(disc_center, fovea_center)
+
         # Draw a red circle around disc center
         dwg.add(dwg.circle(center=disc_center, r=int(round(dist*GEOMETRY["disc_radius"])), fill='red'))
 

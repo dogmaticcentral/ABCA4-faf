@@ -40,13 +40,14 @@ class FafAutoBg(FafAnalysis):
 
     def __init__(self, name_stem: str = "faf_analysis", description: str = "Description not provided."):
         super().__init__(name_stem, description)
-        self.clean_vew_only = False
 
     def create_parser(self):
         super().create_parser()
         self.parser.add_argument("-v", '--clean_view_only',
                                  dest="clean_view_only", action="store_true",
                                  help="Use only images with the clean view of the ROI. Default: False")
+        self.parser.add_argument("-c", '--ctrl_only', dest="ctrl_only", action="store_true",
+                                 help="Process only control images. Default: False.")
 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         """Check the presence of all input files that we need to create the composite img.
@@ -151,7 +152,6 @@ class FafAutoBg(FafAnalysis):
             angular_index = self._find_angular_index(point_moved, u, angles)
             histogram[(shell_index, angular_index)][original_image[y, x]] += 1
             if test: test_mask[(shell_index, angular_index)].append((x, y))
-
 
         if test and test_mask: self._region_illustration(outer_mask, radial_steps, angular_steps, test_mask)
         return histogram
@@ -274,7 +274,10 @@ class FafAutoBg(FafAnalysis):
         print(f"wrote {outpng}")
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
-        if self.clean_vew_only and not faf_img_dict['clean_view']: return "ok"
+
+        if self.args.clean_view_only and not faf_img_dict['clean_view']: return "ok"
+        if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
+
         [original_image_path, usable_region_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict['case_id']['alias']
         outpng = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, "png")

@@ -103,9 +103,10 @@ def pair_is_match(path1: str, path2: str) -> bool:
     :param path2:  full path to img 2, provided as a string
     :return bool:  True if the paths satisfy matching criterion
     """
-    # shrug("image pairs not checked - please provide the criterion")
-    # return True
-    return path1.replace("OD", "OX").replace("OS", "OX") == path2.replace("OD", "OX").replace("OS", "OX")
+    # TODO find a way to pass the pattern that should match here
+    shrug("image pairs not checked - please provide the criterion")
+    return True
+    # return path1.replace("OD", "OX").replace("OS", "OX") == path2.replace("OD", "OX").replace("OS", "OX")
 
 
 def check_pairs():
@@ -122,7 +123,7 @@ def check_pairs():
 
 def main():
     db = db_connect()
-    check_images()
+    # check_images()
     print()
     print("checking image pairs")
     check_pairs()

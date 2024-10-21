@@ -100,6 +100,24 @@ def pil_image_to_grayscale_png(pil_image: PilImage, outpng: Path | str):
     PilImage.fromarray(pil_image).save(str(outpng))
 
 
+def read_single_channel(path: str | Path, channel: str) -> np.ndarray:
+    image_in : np.ndarray= imread(path)
+    channel_idx = {"red": 0, "green": 1, "blue": 2}
+    if channel not in list(channel_idx.keys()):
+        print(f"unrecognized channel: '{channel}'")
+        exit()
+
+    if image_in.shape[2] == 4:  # we need to get rid of the alpha channel
+        # print(f"Uh-oh looks like we have an alpha channel in {path} - reading a single channel might be slow")
+        single_channel_image = np.zeros(image_in.shape[:-1], dtype='uint8')
+        for y, x  in product( range(image_in.shape[0]), range(image_in.shape[1])):
+            if not image_in[y, x][3]: continue
+            single_channel_image[y, x] = image_in[y, x][channel_idx[channel]]
+    else:
+        single_channel_image = image_in[:, :, channel_idx[channel]]
+    return single_channel_image
+
+
 def rgba_255_path_to_255_ndarray(img_path: Path | str, channel: int = 0) -> np.ndarray:
     """ Inputs filepath to a 255  image and returns a single channel as ndarray.
     :param simple_object_img_path: Path | str

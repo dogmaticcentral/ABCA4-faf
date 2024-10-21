@@ -34,7 +34,7 @@ class OptosLocation(BaseModel):
 
 class FAF123Label(BaseModel):
     class Meta:
-        table_name = "faf123_label"
-    faf_image_id = ForeignKeyField(FafImage, backref='faf123_label')  # what is backref?
+        table_name = "faf123_labels"
+    faf_image_id = ForeignKeyField(FafImage, backref='faf123_labels')  # what is backref?
     label = IntegerField(null=False)
     curator = CharField(null=True)

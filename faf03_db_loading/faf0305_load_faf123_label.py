@@ -46,6 +46,7 @@ def parse_faf123(faf123_file) -> dict:
     print(f"reading {faf123_file}")
     return {}
 
+
 def store_or_update(image_id, faf123_label, curator):
 
     label_selected = FAF123Label.select().where(FAF123Label.faf_image_id == image_id, FAF123Label.curator == curator)
