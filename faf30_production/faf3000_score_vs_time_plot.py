@@ -36,7 +36,7 @@ def marker_n_color(df, basecolor, faf123=None):
         color  = ["orange"] * len(df["pixel_score"])
     else:
         marker = ["o" if h else "x" for h in df["haplotype_tested"]]
-        if df["faf123_label"].empty:
+        if "faf123_label" not in df.columns or df["faf123_label"].empty:
             color = [basecolor if h else "royalblue" for h in df["haplotype_tested"]]
         else:  # we have FAF1, 2, 3 phenotype labels
             label_color = [basecolor, 'green', 'yellow', 'red']
@@ -168,13 +168,13 @@ def average_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
     # in postgres, I could not get this to work, to be closer to the mysql solution
     # # peewee.fn.string_agg(peewee.fn.cast(FafImage.id, 'TEXT')).alias('img_ids'),
     we_are_using_postgres = DATABASES["default"]["ENGINE"] == 'peewee.postgres'
+
     if USE_AUTO:
         query = FafImage.select(
             FafImage.case_id,
             FafImage.age_acquired,
             peewee.fn.array_agg(FafImage.id).alias("img_ids") if we_are_using_postgres
             else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
-            peewee.fn.array_agg(FafImage.id).alias("img_ids"),
         ).where(FafImage.clean_view == True
         ).group_by(FafImage.case_id, FafImage.age_acquired)
 
@@ -358,7 +358,11 @@ def main():
         df_controls = pd.DataFrame.from_dict(ret_dict)
     db.close()
 
+    print(f"number of points {len(df_cases)}")
+
     filtered_df = df_cases.loc[df_cases["haplotype_tested"]]
+    print(f"number of points with the haplotype tested {len(filtered_df)}")
+
     out_fnm = "stats.tex" if latex else "stats.tsv"
     with open(out_fnm, "w") as outf:
         separator = " & " if latex else "\t"

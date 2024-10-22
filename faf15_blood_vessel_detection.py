@@ -32,6 +32,7 @@ from pathlib import Path
 from PIL import Image as PilImage
 from PIL import ImageFilter, ImageOps
 from skimage import morphology, exposure, filters
+from skimage.transform import resize
 
 from classes.faf_analysis import FafAnalysis
 from faf00_settings import WORK_DIR, DEBUG, USE_AUTO
@@ -66,31 +67,40 @@ class FafVasculature(FafAnalysis):
             print(f"{os.getpid()} {outpng} started")
 
         input_pil_image = PilImage.open(str(preproc_img_filepath))
-        # im1 = input_pil_image.filter(ImageFilter.GaussianBlur(radius=3))
-        # if DEBUG:
-        #     im1.save(fnm := f"{os.getpid()}.im1.png")
-        #     print(f"DEBUG step: wrote {fnm}")
+        width, height = input_pil_image.size
+        im1 = input_pil_image.resize((width//3, height//3))
+        if DEBUG:
+            print(f"DEBUG: new size = {(width//3, height//3)}")
+            im1.save(fnm := f"{os.getpid()}.im1.png")
+            print(f"DEBUG step: wrote {fnm}")
         # # this picks vasculature nicely, but with a lot of tiny artifacts around it
         # # this could probably be optimized by reducing the image to the elliptic ROI (region of interest)
         # # try a bit of a blur?
-        im2 = input_pil_image.filter(ImageFilter.CONTOUR)
+        im2 = im1.filter(ImageFilter.CONTOUR)
         if DEBUG:
             im2.save(fnm := f"{os.getpid()}.im2.png")
             print(f"DEBUG step: wrote {fnm}")
 
         im0 = np.asarray(im2)
         flat = im0.flatten()
-        # for some reason, density means "normalized"
+
         hist, bins = np.histogram(flat, bins=255)
         # completely white and completely black pixels are non-informative - drop
         # normalize to 1
         hist = hist[1:-1] / sum(hist[1:-1])
         cumulative = np.cumsum(hist)
-        # find intensity at which the cumulative fn is the closest to 20%
-        bottom_n_pct_intensity = (np.abs(cumulative - 0.3)).argmin()
+
+        bottom_fraction = 0.3
+        opening_area_threshold = 100
+        opening_connectivity = 3
+        closing_area_threshold = 500
+        closing_connectivity = 3
+
+
+        # find intensity at which the cumulative fn is the closest to bottom_fraction
+        bottom_n_pct_intensity = (np.abs(cumulative - bottom_fraction)).argmin()
 
         im3 = ImageOps.grayscale(im2)
-
         np_array_extremized = extremize_pil(im3, cutoff=bottom_n_pct_intensity, invert=False)  # not binary, but 0 or 255
 
         if DEBUG:
@@ -98,18 +108,25 @@ class FafVasculature(FafAnalysis):
             print(f"DEBUG step: wrote {outfnm}")
 
         # Area closing removes all _dark_ structures of an image with a surface smaller than area_threshold.
-        np_bool_array_open = morphology.area_opening(np_array_extremized.astype(bool), area_threshold=100, connectivity=3)
+        np_bool_array_open = morphology.area_opening(np_array_extremized.astype(bool),
+                                                     area_threshold=opening_area_threshold,
+                                                     connectivity=opening_connectivity)
         if DEBUG:
             ndarray_to_int_png(np_bool_array_open.astype(int)*255, outfnm := f"{os.getpid()}.im3.open.png")
             print(f"DEBUG step: wrote {outfnm}")
 
-        np_bool_array_closed = morphology.area_closing(np_bool_array_open, area_threshold=500, connectivity=3)
+        np_bool_array_closed = morphology.area_closing(np_bool_array_open,
+                                                       area_threshold=closing_area_threshold,
+                                                       connectivity=closing_connectivity)
         if DEBUG:
             ndarray_to_int_png(np_bool_array_closed.astype(int)*255, outfnm := f"{os.getpid()}.im3.closed.png")
             print(f"DEBUG step: wrote {outfnm}")
 
-        ndarray_to_int_png((~np_bool_array_closed).astype(int) * 255, outpng)
-            
+        # ndarray_to_int_png((~np_bool_array_closed).astype(int) * 255, outpng)
+
+        resized_back = resize(np_bool_array_closed, (height, width))
+        ndarray_to_int_png((~resized_back).astype(int) * 255, outpng)
+
         if is_nonempty_file(outpng):
             print(f"{os.getpid()} {outpng} done")
             return str(outpng)

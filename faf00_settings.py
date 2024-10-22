@@ -17,7 +17,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 WORK_DIR = Path("/home/ivana/scratch/abca4_faf")
 
-DEBUG = True
+DEBUG = False
 
 RECOGNIZED_ENGINES = ["peewee.sqlite", "peewee.mysql", "peewee.postgres"]
 DATABASES = {
@@ -63,13 +63,13 @@ GEOMETRY = {
 SCORE_PARAMS = {
     "white_pixel_weight": 1,
     "black_pixel_weight": 10,
-    "gradient_correction": 0
+    "gradient_correction": 15
 }
 
 # this is pewee c**p that I am not sure where to put
 global_db_proxy = Proxy()
 
-USE_AUTO: bool = False
+USE_AUTO: bool = True
 
 
 
