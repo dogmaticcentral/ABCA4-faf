@@ -232,7 +232,7 @@ def which_score(score, roi, exercise) -> float:
         if exercise == "white":
             return score.pixel_score_white
         elif exercise == "black":
-            return score.pixel_score_black
+            return score.pixel_score_blackrevised_supplement.pdf
         elif exercise == "1":
             return score.pixel_score_1
         elif exercise == "5":
@@ -413,10 +413,10 @@ def main():
         report_stats(filtered_df["time_from_onset"], logscore, ["log", "onset", "yes"], outf, latex=latex)
 
     title = construct_title(f"Score vs time", exercise, average)
-    plot_score_vs_age(df_cases, df_controls, title=title, show_longitudinal=False)
+    plot_score_vs_age(df_cases, df_controls, title=title, show_longitudinal=True)
 
     title =  construct_title(f"Log score vs time", exercise, average)
-    plot_score_vs_age(df_cases, df_controls, title=title, logscale=True, show_longitudinal=False)
+    plot_score_vs_age(df_cases, df_controls, title=title, logscale=True, show_longitudinal=True)
 
 
 ########################
