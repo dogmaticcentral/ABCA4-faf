@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    © 2024 Ivana Mihalek ivana.mihalek@gmail.com
+    © 2024-2025 Ivana Mihalek ivana.mihalek@gmail.com
 
     Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
     You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/
@@ -46,11 +46,11 @@ def arg_parse(required_columns, accepted_columns) -> Path:
 
 def store_patient_data(data_dict: dict):
     defaults = {}
-    if data_dict["onset age"]:
+    if data_dict.get("onset age"):
         defaults["onset_age"] = float(data_dict["onset age"])
-    if data_dict["is control"]:
+    if data_dict.get("is control"):
         defaults["is_control"] = data_dict["is control"].lower() in ["1", "y", "true"]
-    if data_dict["is control"]:
+    if data_dict.get("haplotype tested"):
         defaults["haplotype_tested"] = data_dict["haplotype tested"].lower() in ["1", "y", "true"]
     case, created = Case.get_or_create(alias=data_dict["patient alias"], defaults=defaults)
     return case

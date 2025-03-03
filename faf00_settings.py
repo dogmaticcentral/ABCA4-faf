@@ -69,7 +69,8 @@ SCORE_PARAMS = {
 # this is pewee c**p that I am not sure where to put
 global_db_proxy = Proxy()
 
-USE_AUTO: bool = False
+USE_AUTO: bool = True
+
 
 
 

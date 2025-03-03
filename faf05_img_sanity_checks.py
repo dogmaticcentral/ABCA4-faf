@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    © 2024 Ivana Mihalek ivana.mihalek@gmail.com
+    © 2024-2025 Ivana Mihalek ivana.mihalek@gmail.com
 
     Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
     You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/
@@ -117,13 +117,12 @@ def check_pairs():
         scream(msg)
         scream(img_pair.left_eye_image_id.image_path)
         scream(img_pair.right_eye_image_id.image_path)
-        exit(1)
     comfort(f"all image pairs match according to the criterion provided in pair_is_match() method.")
 
 
 def main():
     db = db_connect()
-    # check_images()
+    check_images()
     print()
     print("checking image pairs")
     check_pairs()

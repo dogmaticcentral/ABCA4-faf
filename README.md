@@ -189,7 +189,7 @@ GEOMETRY = {
 If the images challenging because of the presence of the artifacts, the artifact-free 
 ('usable') region and the background intensity distribution sampling region might
 have to be determined manually. 
-See [manual_labeling](faf09_manual_preproc/manual_labeliing.md).
+See [manual_labeling](faf04_manual_preproc/manual_labeliing.md).
 
 ## Auto-detection of bg sampling regions
 In high-quality images, the background intensity distribution sampling region can 
@@ -218,7 +218,7 @@ The images  in which the inner ellipse is partly covered by the artifacts will s
 'celan_view' in the 'faf_images' table in the database.
 
 ### Manually delineate background sampling region
-See [faf09_manual_preproc/manual_labeliing.md](faf09_manual_preproc/manual_labeliing.md)
+See [faf09_manual_preproc/manual_labeliing.md](faf04_manual_preproc/manual_labeliing.md)
 
 ### Scripted bg sampling region delineation
 
