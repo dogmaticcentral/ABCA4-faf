@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    © 2024 Ivana Mihalek ivana.mihalek@gmail.com
+    © 2024-2025 Ivana Mihalek ivana.mihalek@gmail.com
 
     Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
     You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/
@@ -64,7 +64,7 @@ class FafCleanView(FafAnalysis):
         height, width = faf_img_dict["height"], faf_img_dict["width"]
         for y, x in product(range(height), range(width)):
             # the problem is if we have outer ellipse points
-            # that fall outside of the mask
+            # that fall outside the mask
             if mask[y, x]:
                 continue
 

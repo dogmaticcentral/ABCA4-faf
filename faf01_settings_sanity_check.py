@@ -139,6 +139,7 @@ def main():
             scream(f"{dbname} does not exists or is empty")
             failed += 1
     else:
+        if not db_pass_defined(): exit()
         for test in [db_pass_defined, db_connection_check, user_can_create_tables]:
             if not test():
                 failed += 1

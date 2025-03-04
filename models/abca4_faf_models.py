@@ -39,6 +39,7 @@ class Case(BaseModel):
     onset_age = FloatField(null=True)
     haplotype_tested = BooleanField(default=False, null=False)
     is_control       = BooleanField(default=False, null=False)
+    in_tvst25_paper  = BooleanField(default=False, null=False)
 
 
 class FafImage(BaseModel):

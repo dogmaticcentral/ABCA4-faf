@@ -1,6 +1,6 @@
 
 """
-    © 2024 Ivana Mihalek ivana.mihalek@gmail.com
+    © 2024-2025 Ivana Mihalek ivana.mihalek@gmail.com
 
     Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
     You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/
@@ -69,7 +69,7 @@ SCORE_PARAMS = {
 # this is pewee c**p that I am not sure where to put
 global_db_proxy = Proxy()
 
-USE_AUTO: bool = True
+USE_AUTO: bool = False
 
 
 

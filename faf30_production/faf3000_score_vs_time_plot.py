@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    © 2024 Ivana Mihalek ivana.mihalek@gmail.com
+    © 2024-2025 Ivana Mihalek ivana.mihalek@gmail.com
 
     Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
     You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/
@@ -31,16 +31,20 @@ from faf00_settings import DATABASES, USE_AUTO
 
 
 def marker_n_color(df, basecolor, faf123=None):
+
     if df["haplotype_tested"].empty:  # these are controls
         marker = ["o"] * len(df["pixel_score"])
         color  = ["orange"] * len(df["pixel_score"])
     else:
         marker = ["o" if h else "x" for h in df["haplotype_tested"]]
-        if "faf123_label" not in df.columns or df["faf123_label"].empty:
-            color = [basecolor if h else "royalblue" for h in df["haplotype_tested"]]
-        else:  # we have FAF1, 2, 3 phenotype labels
+        if faf123:  # we have FAF1, 2, 3 phenotype labels
             label_color = [basecolor, 'green', 'yellow', 'red']
             color = [label_color[f] for f in df["faf123_label"]]
+        else:
+            color = [basecolor if h else "royalblue" for h in df["haplotype_tested"]]
+            for i in range(len(df["is_new"])):
+                if df["is_new"][i]: color[i] = "red"
+
     return marker, color
 
 
@@ -161,7 +165,7 @@ def img_pair_avg_score(faf_img_ids, roi, exercise):
 
 
 def average_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
-    [alias, age, haplotype_tested, time_from_onset, pixel_score] = [[], [], [], [], []]
+    [alias, age, haplotype_tested, time_from_onset, is_new,  pixel_score] = [[] for _ in range(6)]
     # SQL: select case_id, age_acquired, group_concat(id separator ", ")
     # as img_ids from faf_images group by case_id, age_acquired \G
     # I could not find how to pass the separator to peewees GROUP_CONCAT, but "," is the default
@@ -193,6 +197,7 @@ def average_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
         if controls and not faf_img.case_id.is_control: continue
         timepoints += 1
         alias.append(faf_img.case_id.alias)
+        is_new.append(not faf_img.case_id.in_tvst25_paper)
         if isinstance(faf_img.img_ids, int):
             pair_imgs = [faf_img.img_ids]  # this one is actually missing its pair
         else:
@@ -216,6 +221,7 @@ def average_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
         "haplotype_tested": haplotype_tested,
         "time_from_onset": time_from_onset,
         "pixel_score": pixel_score,
+        "is_new": is_new
     }
 
 
@@ -245,12 +251,13 @@ def which_score(score, roi, exercise) -> float:
 
 def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=False) -> dict:
 
-    [age, haplotype_tested, time_from_onset, pixel_score, faf123_labels] = [[], [], [], [], []]
+    [age, haplotype_tested, time_from_onset, pixel_score, faf123_labels, is_new] = [[] for _ in range(6)]
     timepoints = 0
     if exercise is None:
         score_selector = Score.select()
     else:
         score_selector = PlaygroundScore.select()
+
     for score in score_selector:
         case = score.faf_image_id.case_id
         if not controls and score.faf_image_id.case_id.is_control:
@@ -263,6 +270,7 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
         # print("\t", case.alias, case.onset_age)
         age_image_acquired = score.faf_image_id.age_acquired
         onset = case.onset_age
+
         if age_image_acquired is None or onset is None:
             time_from_onset.append(-0.5)
         else:
@@ -270,6 +278,7 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
         age.append(age_image_acquired)
         pixel_score.append(which_score(score, roi, exercise))
         haplotype_tested.append(case.haplotype_tested)
+        is_new.append(not case.in_tvst25_paper)
 
         if not faf123:
             faf123_labels.append(0)
@@ -290,7 +299,8 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
         "haplotype_tested": haplotype_tested,
         "time_from_onset": time_from_onset,
         "pixel_score": pixel_score,
-        "faf123_label": faf123_labels
+        "faf123_label": faf123_labels,
+        "is_new": is_new
     }
 
 
@@ -340,29 +350,7 @@ def construct_title(base, exercise, average) -> str:
 
     return title
 
-
-def main():
-
-    (average, latex, roi, faf123, exercise) = improvized_arg_parser()
-
-    db = db_connect()  # this initializes global proxy
-    if average:
-        ret_dict = average_eye_scores(roi=roi, exercise=exercise)
-        df_cases = pd.DataFrame.from_dict(ret_dict)
-        ret_dict = average_eye_scores(roi=roi, exercise=exercise, controls=True)
-        df_controls = pd.DataFrame.from_dict(ret_dict)
-    else:
-        ret_dict = individual_eye_scores(roi=roi, exercise=exercise, faf123=faf123)
-        df_cases = pd.DataFrame.from_dict(ret_dict)
-        ret_dict = individual_eye_scores(roi=roi, exercise=exercise, controls=True)
-        df_controls = pd.DataFrame.from_dict(ret_dict)
-    db.close()
-
-    print(f"number of points {len(df_cases)}")
-
-    filtered_df = df_cases.loc[df_cases["haplotype_tested"]]
-    print(f"number of points with the haplotype tested {len(filtered_df)}")
-
+def write_stats(df_cases, filtered_df,  latex):
     out_fnm = "stats.tex" if latex else "stats.tsv"
     with open(out_fnm, "w") as outf:
         separator = " & " if latex else "\t"
@@ -412,11 +400,36 @@ def main():
         report_stats(filtered_df["age"], logscore, ["log", "age", "yes"], outf, latex=latex)
         report_stats(filtered_df["time_from_onset"], logscore, ["log", "onset", "yes"], outf, latex=latex)
 
+
+def main():
+
+    (average, latex, roi, faf123, exercise) = improvized_arg_parser()
+
+    db = db_connect()  # this initializes global proxy
+    if average:
+        ret_dict = average_eye_scores(roi=roi, exercise=exercise)
+        df_cases = pd.DataFrame.from_dict(ret_dict)
+        ret_dict = average_eye_scores(roi=roi, exercise=exercise, controls=True)
+        df_controls = pd.DataFrame.from_dict(ret_dict)
+    else:
+        ret_dict = individual_eye_scores(roi=roi, exercise=exercise, faf123=faf123)
+        df_cases = pd.DataFrame.from_dict(ret_dict)
+        ret_dict = individual_eye_scores(roi=roi, exercise=exercise, controls=True)
+        df_controls = pd.DataFrame.from_dict(ret_dict)
+    db.close()
+
+    print(f"number of points {len(df_cases)}")
+
+    filtered_df = df_cases.loc[df_cases["haplotype_tested"]]
+    print(f"number of points with the haplotype tested {len(filtered_df)}")
+
+    write_stats(df_cases, filtered_df,  latex)
+
     title = construct_title(f"Score vs time", exercise, average)
-    plot_score_vs_age(df_cases, df_controls, title=title, show_longitudinal=True)
+    plot_score_vs_age(df_cases, df_controls, title=title, show_longitudinal=False)
 
     title =  construct_title(f"Log score vs time", exercise, average)
-    plot_score_vs_age(df_cases, df_controls, title=title, logscale=True, show_longitudinal=True)
+    plot_score_vs_age(df_cases, df_controls, title=title, logscale=True, show_longitudinal=False)
 
 
 ########################

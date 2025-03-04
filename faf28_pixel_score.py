@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    © 2024 Ivana Mihalek ivana.mihalek@gmail.com
+    © 2024-2025 Ivana Mihalek ivana.mihalek@gmail.com
 
     Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
     You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/
@@ -23,7 +23,6 @@ from faf00_settings import WORK_DIR, GEOMETRY, SCORE_PARAMS, USE_AUTO
 from models.abca4_results  import Score
 from utils.conventions     import construct_workfile_path
 from utils.fundus_geometry import disc_fovea_distance
-from utils.gaussian        import gaussian_mixture
 from utils.image_utils     import grayscale_img_path_to_255_ndarray, ndarray_to_4channel_png
 from utils.utils           import is_nonempty_file, read_simple_hist, scream
 
@@ -169,6 +168,7 @@ class PixelScore(FafAnalysis):
         # check the presence of all input files that we need
         db = db_connect()
         [original_image_path, full_mask_path, bg_distro_params] = self.input_manager(faf_img_dict)
+        print(original_image_path)
         mask  = grayscale_img_path_to_255_ndarray(full_mask_path)
         make_illustration = self.args.make_slides or self.args.make_pdf
         (score, score_matrix) = image_score(original_image_path,
