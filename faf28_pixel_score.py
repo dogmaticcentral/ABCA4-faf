@@ -56,7 +56,7 @@ class PixelScore(FafAnalysis):
         :param faf_img_dict:
         :return: list[Path]
         """
-        if USE_AUTO and not faf_img_dict['clean_view']: return [Path(""), Path(""), (0, 0, 0)]
+        # if USE_AUTO and not faf_img_dict['clean_view']: return [Path(""), Path(""), (0, 0, 0)]
 
         original_image_path = Path(faf_img_dict["image_path"])
         alias = faf_img_dict["case_id"]["alias"]
@@ -164,7 +164,7 @@ class PixelScore(FafAnalysis):
         :return: str
             THe return string indicates success or failure
         """
-        if USE_AUTO and not faf_img_dict['clean_view']: return ""
+        # if USE_AUTO and not faf_img_dict['clean_view']: return ""
         # check the presence of all input files that we need
         db = db_connect()
         [original_image_path, full_mask_path, bg_distro_params] = self.input_manager(faf_img_dict)

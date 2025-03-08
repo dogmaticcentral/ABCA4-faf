@@ -264,7 +264,7 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
             continue
         if controls and not score.faf_image_id.case_id.is_control:
             continue
-        if USE_AUTO and not score.faf_image_id.clean_view: continue
+        # if USE_AUTO and not score.faf_image_id.clean_view: continue
         timepoints += 1
         # print(score, score.faf_image_id, score.pixel_score, score.faf_image_id.age_acquired)
         # print("\t", case.alias, case.onset_age)

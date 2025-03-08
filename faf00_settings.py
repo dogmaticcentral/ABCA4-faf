@@ -44,7 +44,6 @@ DATABASES = {
 }
 DATABASES["default"] = DATABASES["mysql"]
 
-
 # set to empty string or None if not needed
 # (soffice, https://help.libreoffice.org/latest/en-US/text/shared/guide/convertfilters.html,
 # is used here to convert pptx to pdf - see utils/reports.py)
@@ -69,7 +68,7 @@ SCORE_PARAMS = {
 # this is pewee c**p that I am not sure where to put
 global_db_proxy = Proxy()
 
-USE_AUTO: bool = False
+USE_AUTO: bool = True
 
 
 
