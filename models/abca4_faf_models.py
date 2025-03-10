@@ -69,5 +69,5 @@ class ImagePair(BaseModel):
     class Meta:
         table_name = "image_pairs"
 
-    left_eye_image_id  = ForeignKeyField(FafImage, backref='image_pairs')
-    right_eye_image_id = ForeignKeyField(FafImage, backref='image_pairs')
+    left_eye_image_id  = ForeignKeyField(FafImage, backref='image_pairs', on_delete='CASCADE')
+    right_eye_image_id = ForeignKeyField(FafImage, backref='image_pairs', on_delete='CASCADE')

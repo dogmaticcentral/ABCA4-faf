@@ -73,9 +73,8 @@ class PixelScore(FafAnalysis):
 
         return [original_image_path, full_mask_path, bg_distro_params]
 
+
     ###################################################################################
-
-
     @staticmethod
     def cleaned_up(a, b, upper_bound) -> tuple:
         if a >= b:

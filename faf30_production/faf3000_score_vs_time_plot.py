@@ -11,7 +11,6 @@
 """
 
 import math
-from random import sample
 
 import pandas as pd
 from statistics import mean
@@ -173,22 +172,12 @@ def average_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
     # # peewee.fn.string_agg(peewee.fn.cast(FafImage.id, 'TEXT')).alias('img_ids'),
     we_are_using_postgres = DATABASES["default"]["ENGINE"] == 'peewee.postgres'
 
-    if USE_AUTO:
-        query = FafImage.select(
-            FafImage.case_id,
-            FafImage.age_acquired,
-            peewee.fn.array_agg(FafImage.id).alias("img_ids") if we_are_using_postgres
-            else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
-        ).where(FafImage.clean_view == True
-        ).group_by(FafImage.case_id, FafImage.age_acquired)
-
-    else:
-        query = FafImage.select(
-            FafImage.case_id,
-            FafImage.age_acquired,
-            peewee.fn.array_agg(FafImage.id).alias("img_ids") if we_are_using_postgres
-            else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
-        ).group_by(FafImage.case_id, FafImage.age_acquired)
+    query = FafImage.select(
+        FafImage.case_id,
+        FafImage.age_acquired,
+        peewee.fn.array_agg(FafImage.id).alias("img_ids") if we_are_using_postgres
+        else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
+    ).group_by(FafImage.case_id, FafImage.age_acquired)
     # print(query.sql())
     # exit()
     timepoints = 0
@@ -264,7 +253,7 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
             continue
         if controls and not score.faf_image_id.case_id.is_control:
             continue
-        # if USE_AUTO and not score.faf_image_id.clean_view: continue
+
         timepoints += 1
         # print(score, score.faf_image_id, score.pixel_score, score.faf_image_id.age_acquired)
         # print("\t", case.alias, case.onset_age)
@@ -404,6 +393,8 @@ def write_stats(df_cases, filtered_df,  latex):
 def main():
 
     (average, latex, roi, faf123, exercise) = improvized_arg_parser()
+    print(f"averaging: {average}")
+    print(f"using auto bg detection: {USE_AUTO}")
 
     db = db_connect()  # this initializes global proxy
     if average:
@@ -418,9 +409,8 @@ def main():
         df_controls = pd.DataFrame.from_dict(ret_dict)
     db.close()
 
-    print(f"number of points {len(df_cases)}")
-
     filtered_df = df_cases.loc[df_cases["haplotype_tested"]]
+    print(f"number of points {len(df_cases)}")
     print(f"number of points with the haplotype tested {len(filtered_df)}")
 
     write_stats(df_cases, filtered_df,  latex)

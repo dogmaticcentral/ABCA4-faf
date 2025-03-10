@@ -22,7 +22,7 @@ class BaseModel(Model):
 class Score(BaseModel):
     class Meta:
         table_name = "scores"
-    faf_image_id = ForeignKeyField(FafImage, backref='scores')  # what is backref?
+    faf_image_id = ForeignKeyField(FafImage, backref='scores',  on_delete='CASCADE')  # what is backref?
     pixel_score = FloatField(null=True)
     pixel_score_auto = FloatField(null=True)
     pixel_score_peripapillary = FloatField(null=True)
