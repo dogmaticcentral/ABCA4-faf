@@ -9,6 +9,7 @@
     The License is noncommercial - you may not use this material for commercial purposes.
 
 """
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from models.abca4_faf_models import FafImage, ImagePair
@@ -77,9 +78,12 @@ def check_disc_and_macula(filepath: Path, faf_img_dict: dict):
             shrug(f"\tlabeled {filepath.name} as unusable")
 
 
-def check_images():
+def check_images(date_after = None):
     any_useable = False
-    for faf_img_dict in FafImage.select().where(FafImage.usable == True).dicts():
+
+    filter_condition = (FafImage.usable == True)
+    if date_after:  filter_condition = filter_condition & (FafImage.updated_date>date_after)
+    for faf_img_dict in FafImage.select().where(filter_condition).dicts():
 
         any_useable = True
         # does the file exist
@@ -104,9 +108,9 @@ def pair_is_match(path1: str, path2: str) -> bool:
     :return bool:  True if the paths satisfy matching criterion
     """
     # TODO find a way to pass the pattern that should match here
-    shrug("image pairs not checked - please provide the criterion")
-    return True
-    # return path1.replace("OD", "OX").replace("OS", "OX") == path2.replace("OD", "OX").replace("OS", "OX")
+    #shrug("image pairs not checked - please provide the criterion")
+    #return True
+    return path1.replace("OD", "OX").replace("OS", "OX") == path2.replace("OD", "OX").replace("OS", "OX")
 
 
 def check_pairs():
@@ -122,7 +126,12 @@ def check_pairs():
 
 def main():
     db = db_connect()
-    check_images()
+
+    # the checking is a bit slow-ish - check only the latest additions
+    yesterday = datetime.now() - timedelta(days=1)
+    print("checking individual images")
+    check_images(date_after=yesterday)
+
     print()
     print("checking image pairs")
     check_pairs()

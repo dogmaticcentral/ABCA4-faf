@@ -11,6 +11,7 @@
 """
 
 import math
+from datetime import datetime
 
 import pandas as pd
 from statistics import mean
@@ -163,7 +164,7 @@ def img_pair_avg_score(faf_img_ids, roi, exercise):
     return mean(img_scores)
 
 
-def average_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
+def average_eye_scores(roi="elliptic", exercise=None, controls=False, new_is_after=None) -> dict:
     [alias, age, haplotype_tested, time_from_onset, is_new,  pixel_score] = [[] for _ in range(6)]
     # SQL: select case_id, age_acquired, group_concat(id separator ", ")
     # as img_ids from faf_images group by case_id, age_acquired \G
@@ -186,7 +187,9 @@ def average_eye_scores(roi="elliptic", exercise=None, controls=False) -> dict:
         if controls and not faf_img.case_id.is_control: continue
         timepoints += 1
         alias.append(faf_img.case_id.alias)
-        is_new.append(not faf_img.case_id.in_tvst25_paper)
+
+        is_new.append(False if new_is_after is None else (faf_img.updated_date > new_is_after))
+
         if isinstance(faf_img.img_ids, int):
             pair_imgs = [faf_img.img_ids]  # this one is actually missing its pair
         else:
@@ -238,7 +241,7 @@ def which_score(score, roi, exercise) -> float:
             raise Exception(f"Unrecognized exercise score: {exercise}")
 
 
-def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=False) -> dict:
+def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=False, new_is_after=None) -> dict:
 
     [age, haplotype_tested, time_from_onset, pixel_score, faf123_labels, is_new] = [[] for _ in range(6)]
     timepoints = 0
@@ -267,11 +270,12 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
         age.append(age_image_acquired)
         pixel_score.append(which_score(score, roi, exercise))
         haplotype_tested.append(case.haplotype_tested)
-        is_new.append(not case.in_tvst25_paper)
 
+        is_new.append(False if new_is_after is None else (score.faf_image_id.updated_date > new_is_after))
         if not faf123:
             faf123_labels.append(0)
             continue
+
         query = FAF123Label.select().where(FAF123Label.faf_image_id == score.faf_image_id)
         faf123_label = [flb.label  for flb in query]
         if len(faf123_label) == 0:
@@ -396,16 +400,21 @@ def main():
     print(f"averaging: {average}")
     print(f"using auto bg detection: {USE_AUTO}")
 
+    # Get the current year
+    current_year = datetime.now().year
+    # Create a datetime object for the beginning of the current year
+    beginning_of_year = datetime(current_year, 1, 1)
+
     db = db_connect()  # this initializes global proxy
     if average:
-        ret_dict = average_eye_scores(roi=roi, exercise=exercise)
+        ret_dict = average_eye_scores(roi=roi, exercise=exercise, new_is_after=beginning_of_year)
         df_cases = pd.DataFrame.from_dict(ret_dict)
-        ret_dict = average_eye_scores(roi=roi, exercise=exercise, controls=True)
+        ret_dict = average_eye_scores(roi=roi, exercise=exercise, controls=True, new_is_after=beginning_of_year)
         df_controls = pd.DataFrame.from_dict(ret_dict)
     else:
-        ret_dict = individual_eye_scores(roi=roi, exercise=exercise, faf123=faf123)
+        ret_dict = individual_eye_scores(roi=roi, exercise=exercise, faf123=faf123, new_is_after=beginning_of_year)
         df_cases = pd.DataFrame.from_dict(ret_dict)
-        ret_dict = individual_eye_scores(roi=roi, exercise=exercise, controls=True)
+        ret_dict = individual_eye_scores(roi=roi, exercise=exercise, controls=True, new_is_after=beginning_of_year)
         df_controls = pd.DataFrame.from_dict(ret_dict)
     db.close()
 

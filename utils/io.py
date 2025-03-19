@@ -43,7 +43,7 @@ def file_to_list_of_dict(infile, delimiter, obligatory_columns) -> list[dict]:
             if len(fields) != len(header):
                 scream(f"the length of the line:\n{fields} does not match the length of the header:\n{header}.")
                 exit()
-            line_dict = dict(zip(header, fields))
+            line_dict = dict(zip(header, [f.strip() for f in fields]))
             line_dict["eye"] = line_dict["eye"].upper()
             if line_dict["eye"] not in ["OD", "OS"]:
                 msg  = f"Please label the eyes as 'OD' or 'OS'. "
