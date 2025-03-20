@@ -25,7 +25,7 @@ For a simple tryout using sqlite, you can comment out the psycopg2 or mysqldb li
 
 # Trying out a Demo
 
-This brief into assumes that you can find your way around python - using virtual environment, 
+This brief intro assumes that you can find your way around python - using virtual environment, 
 installing missing packages, and running scripts from the command line or from within your favorite IDE.
 
 

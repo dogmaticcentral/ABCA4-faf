@@ -125,13 +125,11 @@ def plot_os_vs_od(df_cases: pd.DataFrame, title="OS vs OD score"):
         )
         ratio = df_cases["od_pixel_score"][i] / df_cases["os_pixel_score"][i]
         if ratio < 0.8 or ratio > 1.5:
-            print(
-                df_cases["alias"][i],
-                df_cases["age"][i],
-                df_cases["od_pixel_score"][i],
-                df_cases["os_pixel_score"][i],
-                ratio,
-            )
+            al = df_cases["alias"][i]
+            ag = df_cases["age"][i]
+            odp = df_cases["od_pixel_score"][i]
+            osp = df_cases["os_pixel_score"][i]
+            print(f"{al:30s} {ag:2.0f} {odp:3.0f} {osp:3.0f}   {ratio:.1f}")
     plt.show()
 
 

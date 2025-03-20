@@ -48,8 +48,10 @@ def find_center_of_circle_img(path, channel) -> list[int]:
     return find_center(vectors)
 
 
-def store_centers(faf_img: FafImage, disc_center, fovea_center):
+def store_centers(faf_img: FafImage, image_size, disc_center, fovea_center):
+
     center_info = {
+        "width": image_size[0], "height": image_size[1],
         "disc_x": disc_center[0], "disc_y": disc_center[1],
         "fovea_x": fovea_center[0], "fovea_y": fovea_center[1]
     }
@@ -65,15 +67,17 @@ def process_disc_and_macula(faf_img: FafImage, expected_extension: str):
     if not sanity_check(faf_img.image_path, disc_and_macula_filepath):
         exit()
 
+    image_size = imagesize.get(disc_and_macula_filepath)
     disc_center  = find_center_of_circle_img(disc_and_macula_filepath, "red")
     fovea_center = find_center_of_circle_img(disc_and_macula_filepath, "green")
-    print(f"\t disc_center {disc_center}  macula_center {fovea_center} ")
+    print(f"\t  image_size {image_size}   disc_center {disc_center}  macula_center {fovea_center} ")
 
-    store_centers(faf_img, disc_center, fovea_center)
+    store_centers(faf_img, image_size, disc_center, fovea_center)
 
 
 def disc_and_macula_locations_known(faf_img: FafImage):
-    if faf_img.disc_x is None: return False
+    if faf_img.width is None: return False
+    if faf_img.width is None: return False
     if faf_img.disc_y is None: return False
     if faf_img.fovea_x is None: return False
     if faf_img.fovea_y is None: return False

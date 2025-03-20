@@ -182,6 +182,7 @@ class FafAutoBg(FafAnalysis):
             width[shell_index][angular_index] = stdevs[0, 0, 0]
             sample_size[shell_index][angular_index] = size
 
+
         if len(peaks) == 0:
             msg = "It looks like the bg histogram heuristics will not work for " + faf_img_dict['image_path']
             msg += ": no sample with single gaussian found"
@@ -221,6 +222,11 @@ class FafAutoBg(FafAnalysis):
                 min_angular_index = angular_index
         if DEBUG:
             print(f"***************\n{min_shell_index:2d} {min_angular_index:2d}")
+
+        if min_shell_index<0 or min_angular_index<0:
+            msg = "It looks like the bg histogram heuristics will not work for " + faf_img_dict['image_path']
+            msg += ": no sample close enough to the average found"
+            scream(msg)
 
         return min_shell_index, min_angular_index
 

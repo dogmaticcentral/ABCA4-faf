@@ -128,7 +128,7 @@ def main():
     db = db_connect()
 
     # the checking is a bit slow-ish - check only the latest additions
-    yesterday = datetime.now() - timedelta(days=1)
+    yesterday = datetime.now() - timedelta(days=7)
     print("checking individual images")
     check_images(date_after=yesterday)
 

@@ -182,29 +182,35 @@ def average_eye_scores(roi="elliptic", exercise=None, controls=False, new_is_aft
     # print(query.sql())
     # exit()
     timepoints = 0
-    for faf_img in query:
-        if not controls and faf_img.case_id.is_control: continue
-        if controls and not faf_img.case_id.is_control: continue
+    for qry_return in query:
+        if not controls and qry_return.case_id.is_control: continue
+        if controls and not qry_return.case_id.is_control: continue
         timepoints += 1
-        alias.append(faf_img.case_id.alias)
-
-        is_new.append(False if new_is_after is None else (faf_img.updated_date > new_is_after))
-
-        if isinstance(faf_img.img_ids, int):
-            pair_imgs = [faf_img.img_ids]  # this one is actually missing its pair
+        alias.append(qry_return.case_id.alias)
+        if isinstance(qry_return.img_ids, int):
+            img_ids = [qry_return.img_ids]
+        elif isinstance(qry_return.img_ids, str):
+            img_ids = [int(im_id) for im_id in qry_return.img_ids.split(",")]
         else:
-            pair_imgs = faf_img.img_ids if we_are_using_postgres else faf_img.img_ids.split(",")
+            raise Exception(f"Unrecognized img_ids: {qry_return}")
+        at_least_one_image_new = any(FafImage.get_by_id(img_id).updated_date > new_is_after for img_id in img_ids)
+        is_new.append(at_least_one_image_new)
+
+        if isinstance(qry_return.img_ids, int):
+            pair_imgs = [qry_return.img_ids]  # this one is actually missing its pair
+        else:
+            pair_imgs = qry_return.img_ids if we_are_using_postgres else qry_return.img_ids.split(",")
 
         avg_score = img_pair_avg_score(pair_imgs, roi, exercise)
         pixel_score.append(avg_score)
-        age_image_acquired = faf_img.age_acquired
-        onset = faf_img.case_id.onset_age
+        age_image_acquired = qry_return.age_acquired
+        onset = qry_return.case_id.onset_age
         if age_image_acquired is None or onset is None:
             time_from_onset.append(-0.5)
         else:
             time_from_onset.append(age_image_acquired - onset)
         age.append(age_image_acquired)
-        haplotype_tested.append(faf_img.case_id.haplotype_tested)
+        haplotype_tested.append(qry_return.case_id.haplotype_tested)
 
     print(f"total timepoints when averaging {'controls' if controls else ''}: {timepoints}")
     return {
@@ -271,7 +277,7 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
         pixel_score.append(which_score(score, roi, exercise))
         haplotype_tested.append(case.haplotype_tested)
 
-        is_new.append(False if new_is_after is None else (score.faf_image_id.updated_date > new_is_after))
+        is_new.append(False if (new_is_after is None) else (score.faf_image_id.updated_date > new_is_after))
         if not faf123:
             faf123_labels.append(0)
             continue
@@ -313,7 +319,7 @@ def report_stats(x, y, labels: list, outf=None, latex=False) -> tuple[float, flo
     return spearman, pearson
 
 
-def improvized_arg_parser() -> tuple:
+def improvised_arg_parser() -> tuple:
     if len(argv) > 1 and argv[1] in ["-h", "--help"]:
         print(f"{argv[0]} [-h/--help] | [-a/--avg] [-p/--peripapillary] [-l/--latex] [--exercise-<type>] [-f/--color_by_faf123]")
         exit()
@@ -396,7 +402,7 @@ def write_stats(df_cases, filtered_df,  latex):
 
 def main():
 
-    (average, latex, roi, faf123, exercise) = improvized_arg_parser()
+    (average, latex, roi, faf123, exercise) = improvised_arg_parser()
     print(f"averaging: {average}")
     print(f"using auto bg detection: {USE_AUTO}")
 

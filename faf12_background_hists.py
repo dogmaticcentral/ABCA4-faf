@@ -45,12 +45,13 @@ class FafBgHistograms(FafAnalysis):
 
         alias = faf_img_dict['case_id']['alias']
         if USE_AUTO:
-
             bg_sample_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "auto_bg", "png")
             # fallback on the manually determined one if auto does not exist
             if not is_nonempty_file(bg_sample_path):
                 shrug(f"{bg_sample_path} does not exist (or may be empty) - falling back on the manual selection.")
                 bg_sample_path = original_2_aux_file_path(original_image_path, ".bg_sample.png")
+            if not is_nonempty_file(bg_sample_path):
+                raise Exception(f"Neither auto (preferred) no manual bg found for {original_image_path}")
         else:
             bg_sample_path = original_2_aux_file_path(original_image_path, ".bg_sample.png")
             if not is_nonempty_file(bg_sample_path):
