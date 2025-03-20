@@ -8,7 +8,7 @@ If you find it useful in your research, please cite
 >Mihalek, Ivana, et al. "Quantifying the Progression of Stargardt Disease in Double-Null ABCA4 
 Carriers Using Fundus Autofluorescence Imaging." 
 Translational Vision Science & Technology 14.3 (2025): 16-16. 
-([journal link](https://tvst.arvojournals.org/article.aspx?articleid=2802701))
+(<a href="https://tvst.arvojournals.org/article.aspx?articleid=2802701" target="_blank">journal link</a>)
 
 # Reporting issues and contributing
 If you would like to help fixing and building on this code, please report any issues in the issue
