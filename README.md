@@ -3,8 +3,12 @@ Work in progress, Oct 22, 2024
 # About
 
 This repo contains a set of tools for the analysis of retinal fundus autofluorescence images.
-So far it has been usd in "Quantifying the progression of Stargardt disease ... etc" by Mihalek at al,
-submitted for publication.
+If you find it useful in your research, please cite 
+
+>Mihalek, Ivana, et al. "Quantifying the Progression of Stargardt Disease in Double-Null ABCA4 
+Carriers Using Fundus Autofluorescence Imaging." 
+Translational Vision Science & Technology 14.3 (2025): 16-16. 
+([journal link](https://tvst.arvojournals.org/article.aspx?articleid=2802701))
 
 # Reporting issues and contributing
 If you would like to help fixing and building on this code, please report any issues in the issue
