@@ -66,14 +66,14 @@ def add_catalog_slide(prs: Presentation, row: list):
 
     composite_png = construct_workfile_path(WORK_DIR, original_img_path, alias, "composite", 'png')
     if USE_AUTO:
-        bg_hist_png   = construct_workfile_path(WORK_DIR, original_img_path, alias, "auto_bg_histogram" , 'png')
+        bg_hist_png = construct_workfile_path(WORK_DIR, original_img_path, alias, "auto_bg_histogram" , 'png')
         if not is_nonempty_file(bg_hist_png):
             shrug(f"{bg_hist_png} does not exist (or may be empty) - falling back on the manual selection.")
-            bg_hist_png   = construct_workfile_path(WORK_DIR, original_img_path, alias, "bg_histogram", 'png')
+            bg_hist_png = construct_workfile_path(WORK_DIR, original_img_path, alias, "bg_histogram", 'png')
     else:
-        bg_hist_png   = construct_workfile_path(WORK_DIR, original_img_path, alias, "bg_histogram", 'png')
-    hist_png      = construct_workfile_path(WORK_DIR, original_img_path, alias, "roi_histogram", 'png')
-    score_png     = construct_workfile_path(WORK_DIR, original_img_path, alias, "pixel_score", 'png')
+        bg_hist_png = construct_workfile_path(WORK_DIR, original_img_path, alias, "bg_histogram", 'png')
+    hist_png  = construct_workfile_path(WORK_DIR, original_img_path, alias, "roi_histogram", 'png')
+    score_png = construct_workfile_path(WORK_DIR, original_img_path, alias, "pixel_score", 'png')
 
     for img in [composite_png, bg_hist_png, hist_png, score_png]:
         if not os.path.exists(img):

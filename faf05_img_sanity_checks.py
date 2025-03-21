@@ -11,6 +11,9 @@
 """
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import List
+
+import peewee
 
 from models.abca4_faf_models import FafImage, ImagePair
 from utils.db_utils import db_connect
@@ -32,7 +35,7 @@ def check_image_path(filepath: Path):
         exit(1)
 
 
-def check_image_dimensions(filepath: Path, faf_img_dict: dict):
+def check_image_dimensions(filepath: Path, faf_img_dict: dict) -> bool:
     image_ndarr = grayscale_img_path_to_255_ndarray(filepath)
     (h, w) = image_ndarr.shape
     image_actual = {'height': h, 'width': w}
@@ -40,7 +43,7 @@ def check_image_dimensions(filepath: Path, faf_img_dict: dict):
     if h < 500 or w < 500:
         scream(f"The dimensions ({h}, {w}) are too small for a reasonable analysis.")
         scream(f"\tConsider flagging {filepath} as unusable in the database.")
-        exit()
+        return False
     # do the image dims correspond to the numbers stored in the database?
     for dim in ['height', 'width']:
         provided = faf_img_dict.get(dim)
@@ -50,16 +53,17 @@ def check_image_dimensions(filepath: Path, faf_img_dict: dict):
                 comfort(f"The image {dim} matches the one found in db. ({image_actual[dim]} px)")
             else:
                 scream(f"The image {dim} does not match the one found in db. ({image_actual[dim]} vs {provided}.)")
-
+                return False
         else:
             shrug(f"image {dim} not provided - will store the {dim} from {filepath.name}")
             # TODO this is untested
             update_dict = {dim: image_actual[dim]}
             FafImage.update(**update_dict).where(FafImage.id == faf_img_dict['id']).execute()
             shrug(f"\t{dim} stored for {filepath.name}")
+    return True
 
 
-def check_disc_and_macula(filepath: Path, faf_img_dict: dict):
+def check_disc_and_macula(filepath: Path, faf_img_dict: dict) -> bool:
     for coordinate in ["disc_x", "disc_y", "fovea_x", "fovea_y"]:
         provided = faf_img_dict.get(coordinate)
         if provided:
@@ -70,35 +74,36 @@ def check_disc_and_macula(filepath: Path, faf_img_dict: dict):
                 comfort(f"{coordinate} value {provided} passes the minimal consistency check.")
             else:
                 scream(f"{coordinate} value {provided} does not seem reasonable given the img dim of {upper}.")
-                exit(1)
+                return False
         else:
             shrug(f"{coordinate} provided: {provided}. Labeling {filepath.name} as unusable.")
             # TODO this is untested
             FafImage.update(usable=False).where(FafImage.id == faf_img_dict['id']).execute()
             shrug(f"\tlabeled {filepath.name} as unusable")
+    return True
 
 
-def check_images(date_after = None):
-    any_useable = False
+def check_images(filter_condition: peewee.Expression) -> bool:
 
-    filter_condition = (FafImage.usable == True)
-    if date_after:  filter_condition = filter_condition & (FafImage.updated_date>date_after)
-    for faf_img_dict in FafImage.select().where(filter_condition).dicts():
+    filtered_image_objects = list(FafImage.select().where(filter_condition).dicts())
+    if len(filtered_image_objects) < 1:
+        scream("No images pass the selection from database criterion")
+        return False
 
-        any_useable = True
+    for faf_img_dict in filtered_image_objects:
+
         # does the file exist
         faf_image_filepath = Path(faf_img_dict['image_path'])
-        check_image_path(faf_image_filepath)
+        if not check_image_path(faf_image_filepath): return False
 
         # do dimensions in the db match the image dims?
-        check_image_dimensions(faf_image_filepath, faf_img_dict)
+        if not check_image_dimensions(faf_image_filepath, faf_img_dict): return False
 
         # are the locations of disc and macula provided and reasonable?
-        check_disc_and_macula(faf_image_filepath, faf_img_dict)
+        if not check_disc_and_macula(faf_image_filepath, faf_img_dict): return False
 
-    if not any_useable:
-        scream("there seem to be no images labeled as 'usable' in the database")
-        exit()
+        comfort(f"{faf_image_filepath} passed sanity checks")
+    return True
 
 
 def pair_is_match(path1: str, path2: str) -> bool:
@@ -124,20 +129,30 @@ def check_pairs():
     comfort(f"all image pairs match according to the criterion provided in pair_is_match() method.")
 
 
-def main():
-    db = db_connect()
-
+def image_sanity_checks(date_after=None):
     # the checking is a bit slow-ish - check only the latest additions
-    yesterday = datetime.now() - timedelta(days=7)
     print("checking individual images")
-    check_images(date_after=yesterday)
+    filter_condition: peewee.Expression
+    if date_after:
+        filter_condition = (FafImage.usable == True) & (FafImage.updated_date>date_after)
+    else:
+        filter_condition = (FafImage.usable == True)
+    check_images(filter_condition)
 
+
+def pair_sanity_checks():
     print()
     print("checking image pairs")
     check_pairs()
     print()
-    db.close()
 
+
+def main():
+    db = db_connect()
+    yesterday = datetime.now() - timedelta(days=7)
+    image_sanity_checks(yesterday)
+    pair_sanity_checks()
+    db.close()
 
 ########################
 if __name__ == "__main__":
