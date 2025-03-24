@@ -249,7 +249,7 @@ def which_score(score, roi, exercise) -> float:
 
 def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=False, new_is_after=None) -> dict:
 
-    [age, haplotype_tested, time_from_onset, pixel_score, faf123_labels, is_new] = [[] for _ in range(6)]
+    [alias, age, haplotype_tested, time_from_onset, eye,  pixel_score, faf123_labels, is_new] = [[] for _ in range(8)]
     timepoints = 0
     if exercise is None:
         score_selector = Score.select()
@@ -258,11 +258,14 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
 
     for score in score_selector:
         case = score.faf_image_id.case_id
+
         if not controls and score.faf_image_id.case_id.is_control:
             continue
         if controls and not score.faf_image_id.case_id.is_control:
             continue
 
+        alias.append(score.faf_image_id.case_id.alias)
+        eye.append(score.faf_image_id.eye)
         timepoints += 1
         # print(score, score.faf_image_id, score.pixel_score, score.faf_image_id.age_acquired)
         # print("\t", case.alias, case.onset_age)
@@ -294,9 +297,11 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
             faf123_labels.append(faf123_label[0])
 
     return {
+        "alias":  alias,
         "age": age,
         "haplotype_tested": haplotype_tested,
         "time_from_onset": time_from_onset,
+        "eye": eye,
         "pixel_score": pixel_score,
         "faf123_label": faf123_labels,
         "is_new": is_new
@@ -420,15 +425,20 @@ def main():
     else:
         ret_dict = individual_eye_scores(roi=roi, exercise=exercise, faf123=faf123, new_is_after=beginning_of_year)
         df_cases = pd.DataFrame.from_dict(ret_dict)
+        df_cases.to_excel("faf_cases.xlsx")
         ret_dict = individual_eye_scores(roi=roi, exercise=exercise, controls=True, new_is_after=beginning_of_year)
         df_controls = pd.DataFrame.from_dict(ret_dict)
+        df_controls.to_excel("faf_controls.xlsx")
     db.close()
+
 
     filtered_df = df_cases.loc[df_cases["haplotype_tested"]]
     print(f"number of points {len(df_cases)}")
     print(f"number of points with the haplotype tested {len(filtered_df)}")
 
     write_stats(df_cases, filtered_df,  latex)
+
+
 
     title = construct_title(f"Score vs time", exercise, average)
     plot_score_vs_age(df_cases, df_controls, title=title, show_longitudinal=False)

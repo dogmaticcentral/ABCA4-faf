@@ -48,8 +48,8 @@ class FafImage(BaseModel):
 
     case_id = ForeignKeyField(Case, backref='faf_images')  # what is backref?
     eye     = CharField(max_length=2, null=False)  # Sqlite has no enum fields, so peewee does not support it either
-    image_path      = CharField(unique=True)
-    age_acquired    = FloatField(null=True)
+    image_path   = CharField(unique=True)
+    age_acquired = FloatField(null=True)
     width   = IntegerField(null=True)
     height  = IntegerField(null=True)
     disc_x  = IntegerField(null=True)
