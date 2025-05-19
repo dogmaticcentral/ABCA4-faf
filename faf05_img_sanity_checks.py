@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 
 """
     © 2024-2025 Ivana Mihalek ivana.mihalek@gmail.com
@@ -11,6 +11,7 @@
 """
 from datetime import datetime, timedelta
 from pathlib import Path
+from pprint import pprint
 from typing import List
 
 import peewee
@@ -27,15 +28,18 @@ and the sampling region are present.
 """
 
 
-def check_image_path(filepath: Path):
+def check_image_path(filepath: Path) -> bool:
+    print(f"\tchecking the {filepath} filepath")
     if is_nonempty_file(filepath):
         comfort(f"{filepath} OK")
     else:
         scream(f"{filepath} not found or may be empty")
-        exit(1)
+        return False
+    return True
 
 
 def check_image_dimensions(filepath: Path, faf_img_dict: dict) -> bool:
+    print(f"\tchecking the image dimensions for {filepath}")
     image_ndarr = grayscale_img_path_to_255_ndarray(filepath)
     (h, w) = image_ndarr.shape
     image_actual = {'height': h, 'width': w}
@@ -64,6 +68,7 @@ def check_image_dimensions(filepath: Path, faf_img_dict: dict) -> bool:
 
 
 def check_disc_and_macula(filepath: Path, faf_img_dict: dict) -> bool:
+    print(f"\tchecking disc and macula locations for {filepath}")
     for coordinate in ["disc_x", "disc_y", "fovea_x", "fovea_y"]:
         provided = faf_img_dict.get(coordinate)
         if provided:
@@ -91,7 +96,7 @@ def check_images(filter_condition: peewee.Expression) -> bool:
         return False
 
     for faf_img_dict in filtered_image_objects:
-
+        print(faf_img_dict['image_path'])
         # does the file exist
         faf_image_filepath = Path(faf_img_dict['image_path'])
         if not check_image_path(faf_image_filepath): return False
@@ -118,6 +123,17 @@ def pair_is_match(path1: str, path2: str) -> bool:
     return path1.replace("OD", "OX").replace("OS", "OX") == path2.replace("OD", "OX").replace("OS", "OX")
 
 
+def image_sanity_checks(date_after=None):
+    # the checking is a bit slow-ish - check only the latest additions
+    print("checking individual images")
+    filter_condition: peewee.Expression
+    if date_after:
+        filter_condition = (FafImage.usable == True)  # & (FafImage.updated_date > date_after)
+    else:
+        filter_condition = (FafImage.usable == True)
+    check_images(filter_condition)
+
+
 def check_pairs():
     for img_pair in ImagePair.select():
         if pair_is_match(img_pair.left_eye_image_id.image_path, img_pair.right_eye_image_id.image_path): continue
@@ -127,17 +143,6 @@ def check_pairs():
         scream(img_pair.left_eye_image_id.image_path)
         scream(img_pair.right_eye_image_id.image_path)
     comfort(f"all image pairs match according to the criterion provided in pair_is_match() method.")
-
-
-def image_sanity_checks(date_after=None):
-    # the checking is a bit slow-ish - check only the latest additions
-    print("checking individual images")
-    filter_condition: peewee.Expression
-    if date_after:
-        filter_condition = (FafImage.usable == True) & (FafImage.updated_date>date_after)
-    else:
-        filter_condition = (FafImage.usable == True)
-    check_images(filter_condition)
 
 
 def pair_sanity_checks():
@@ -150,7 +155,8 @@ def pair_sanity_checks():
 def main():
     db = db_connect()
     yesterday = datetime.now() - timedelta(days=7)
-    image_sanity_checks(yesterday)
+    if not image_sanity_checks(yesterday):
+        exit(1)
     pair_sanity_checks()
     db.close()
 

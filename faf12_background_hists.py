@@ -67,7 +67,12 @@ class FafBgHistograms(FafAnalysis):
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
         alias = faf_img_dict['case_id']['alias']
-        [original_image_path, usable_region_path, bg_sample_path] = self.input_manager(faf_img_dict)
+        try:
+            [original_image_path, usable_region_path, bg_sample_path] = self.input_manager(faf_img_dict)
+        except Exception as e:
+            scream(str(e))
+            return str(e)
+
         if not all([original_image_path, usable_region_path, bg_sample_path]): return "ok"
         hist_path      = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, 'txt')
         hist_img_path  = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, 'png')
