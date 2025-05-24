@@ -178,7 +178,7 @@ def average_eye_scores(roi="elliptic", exercise=None, controls=False, new_is_aft
         FafImage.age_acquired,
         peewee.fn.array_agg(FafImage.id).alias("img_ids") if we_are_using_postgres
         else peewee.fn.GROUP_CONCAT(FafImage.id).alias("img_ids"),
-    ).group_by(FafImage.case_id, FafImage.age_acquired)
+    ).where(FafImage.usable == True).group_by(FafImage.case_id, FafImage.age_acquired)
     # print(query.sql())
     # exit()
     timepoints = 0
