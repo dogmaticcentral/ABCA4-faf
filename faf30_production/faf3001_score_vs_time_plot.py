@@ -420,8 +420,10 @@ def main():
     else:
         ret_dict = individual_eye_scores(roi=roi, exercise=exercise, faf123=faf123, new_is_after=beginning_of_year)
         df_cases = pd.DataFrame.from_dict(ret_dict)
+        df_cases.to_excel("faf_cases.xlsx")
         ret_dict = individual_eye_scores(roi=roi, exercise=exercise, controls=True, new_is_after=beginning_of_year)
         df_controls = pd.DataFrame.from_dict(ret_dict)
+        df_controls.to_excel("faf_controls.xlsx")
     db.close()
 
     filtered_df = df_cases.loc[df_cases["haplotype_tested"]]

@@ -154,8 +154,8 @@ def pair_sanity_checks():
 
 def main():
     db = db_connect()
-    yesterday = datetime.now() - timedelta(days=7)
-    if not image_sanity_checks(yesterday):
+    time_range = datetime.now() - timedelta(days=1)
+    if not image_sanity_checks(time_range):
         exit(1)
     pair_sanity_checks()
     db.close()

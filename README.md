@@ -346,7 +346,7 @@ And, finally, we get to score the FAF images in our set
 
 ```bash
 faf25_pixel_score.py
-faf3000_score_vs_time_plot.py
+faf3001_score_vs_time_plot.py
 faf3002_score_sensitivity_to_fovea_location.py  # note this one takes very long
 faf3005_score_od_vs_os_plot.py
 faf3006_score_comparison.py

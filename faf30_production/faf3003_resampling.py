@@ -26,7 +26,7 @@ import scipy.stats as stats
 from random import sample, uniform
 
 from utils.db_utils import db_connect
-from faf30_production.faf3000_score_vs_time_plot import individual_eye_scores, average_eye_scores
+from faf30_production.faf3001_score_vs_time_plot import individual_eye_scores, average_eye_scores
 
 
 def improvized_arg_parser() -> tuple:
