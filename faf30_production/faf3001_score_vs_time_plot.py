@@ -249,7 +249,8 @@ def which_score(score, roi, exercise) -> float:
 
 def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=False, new_is_after=None) -> dict:
 
-    [age, haplotype_tested, time_from_onset, pixel_score, faf123_labels, is_new] = [[] for _ in range(6)]
+    [alias, age, eye,  haplotype_tested, time_from_onset,
+     pixel_score, faf123_labels, is_new] = [[] for _ in range(8)]
     timepoints = 0
     if exercise is None:
         score_selector = Score.select()
@@ -267,6 +268,8 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
         # print(score, score.faf_image_id, score.pixel_score, score.faf_image_id.age_acquired)
         # print("\t", case.alias, case.onset_age)
         age_image_acquired = score.faf_image_id.age_acquired
+        alias.append(case.alias)
+        eye.append(score.faf_image_id.eye)
         onset = case.onset_age
 
         if age_image_acquired is None or onset is None:
@@ -294,7 +297,9 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
             faf123_labels.append(faf123_label[0])
 
     return {
+        "alias": alias,
         "age": age,
+        "eye": eye,
         "haplotype_tested": haplotype_tested,
         "time_from_onset": time_from_onset,
         "pixel_score": pixel_score,

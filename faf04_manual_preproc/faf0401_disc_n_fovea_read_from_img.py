@@ -88,7 +88,7 @@ def main():
     expected_extension = ".disc_and_macula.png"
 
     db = db_connect()
-    for faf_img in FafImage.select():
+    for faf_img in FafImage.select().where(FafImage.usable==1):
         if disc_and_macula_locations_known(faf_img): continue
         process_disc_and_macula(faf_img, expected_extension)
     db.close()
