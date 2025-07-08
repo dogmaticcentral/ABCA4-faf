@@ -101,7 +101,7 @@ def main():
     db.close()
 
     df = convert_to_pandas(rows)
-    # output_spreadsheet(df)
+    output_spreadsheet(df)
     summarize_info(df)
 
 ########################
