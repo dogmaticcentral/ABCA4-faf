@@ -12,7 +12,9 @@
 
 import math
 from datetime import datetime
+from random import randrange
 
+import numpy as np
 import pandas as pd
 from statistics import mean
 
@@ -22,6 +24,7 @@ from sys import argv
 import matplotlib.pyplot as plt
 import matplotlib.ticker
 import scipy.stats as stats
+from utils.graph_stats import two_scenario_mpd_comparison, two_scenario_p_value_parallel
 
 from models.abca4_faf_models import FafImage
 from models.abca4_results import Score, PlaygroundScore
@@ -308,7 +311,7 @@ def individual_eye_scores(roi="elliptic", exercise=None, controls=False, faf123=
     }
 
 
-def report_stats(x, y, labels: list, outf=None, latex=False) -> tuple[float, float]:
+def report_correlation_stats(x, y, labels: list, outf=None, latex=False):
     spearman = stats.spearmanr(x, y)
     pearson  = stats.pearsonr(x, y)
     print(f"{labels}:   Spearman correlation {spearman.statistic * 100:.1f}%     p-val: {spearman.pvalue:.2e}")
@@ -321,7 +324,7 @@ def report_stats(x, y, labels: list, outf=None, latex=False) -> tuple[float, flo
         print(separator.join(labels + sp_out), file=outf, end=end)
         pear_out = ["Pearson", f"{pearson.statistic * 100:.1f}{pct}", f"{pearson.pvalue:.2e}"]
         print(separator.join(labels + pear_out), file=outf, end=end)
-    return spearman, pearson
+    return
 
 
 def improvised_arg_parser() -> tuple:
@@ -354,56 +357,96 @@ def construct_title(base, exercise, average) -> str:
 
     return title
 
+
+def time_from_onset_generator(df,  rng:  np.random.Generator | None = None):
+    simulated_ages = pd.Series(index=df.index, dtype=float)
+    for alias, group in df.groupby('alias'):
+        min_age = group['age'].min()
+        if rng:
+            # recommended for parallelization
+            simulated_onset = rng.integers(0, min_age + 1)
+        else:
+            simulated_onset = randrange(0, min_age + 1)
+
+        idx = group.index
+        simulated_ages.loc[idx] = group['age'] - simulated_onset
+    return simulated_ages.tolist()
+
+
+def density_stats(df, logscore=False) -> tuple[float, float, float]:
+    absolute_age    = df["age"]
+    time_from_onset = df["time_from_onset"]
+    # pixel_score = [math.log(s) for s in df_cases["pixel_score"]]
+    if logscore:
+        pixel_score = [math.log(s) for s in df["pixel_score"]]
+    else:
+        pixel_score = df["pixel_score"]
+
+    mpd, mpd_onset = two_scenario_mpd_comparison(absolute_age, time_from_onset, pixel_score)
+
+    generator_params = {'df': df}
+    p_val = 0.0
+    n_batches = 10
+    for b in range(n_batches):
+        seed = int(datetime.now().timestamp())
+        p_val += two_scenario_p_value_parallel(absolute_age, time_from_onset, pixel_score,
+                                               time_from_onset_generator, generator_params,
+                                               n_simulations=100, base_seed=seed, verbose=False)
+    p_val /= n_batches
+
+    return mpd, mpd_onset, p_val
+
+
+def report_density_stats(df_cases, labels: list, logscore=False,  outf=None, latex=False):
+    mpd, mpd_onset, p_val = density_stats(df_cases, logscore)
+    print(f"{labels}:   mpd: {mpd:.1f}     mpd: {mpd_onset:.1f}    p-val: {p_val:.2e}")
+    if outf:
+        separator = " & " if latex else "\t"
+        end = "\\\\ \\hline \n" if latex else "\n"
+        mpd_out = ["Mpd", f"{mpd:.1f}", "-"]
+        labels_mpd  = labels[:1] + ["age"] +  labels[1:]
+        print(separator.join(labels_mpd + mpd_out), file=outf, end=end)
+
+        mpd_onset_out = ["Mpd - onset", f"{mpd_onset:.1f}", f"{p_val:.2e}"]
+        labels_onset  = labels[:1] + ["onset"] +  labels[1:]
+        print(separator.join(labels_onset + mpd_onset_out), file=outf, end=end)
+
+
 def write_stats(df_cases, filtered_df,  latex):
-    out_fnm = "stats.tex" if latex else "stats.tsv"
+
+    out_fnm = "stats.tsv"
     with open(out_fnm, "w") as outf:
         separator = " & " if latex else "\t"
-        print(
-            separator.join(
-                [
-                    "scale",
-                    "time frame",
-                    "phased only",
-                    "statistic",
-                    "correlation",
-                    "p-value",
-                ]
-            ),
-            file=outf,
-        )
-        if latex: print("\\\\ \\hline \\hline",  file=outf)
-        print("\nLINEAR SCALE")
-        report_stats(df_cases["age"], df_cases["pixel_score"], ["linear", "age", "no"], outf, latex=latex)
-        report_stats(
-            df_cases["time_from_onset"],
-            df_cases["pixel_score"],
-            ["linear", "onset", "no"],
-            outf,
-            latex=latex
-        )
-        report_stats(
-            filtered_df["age"],
-            filtered_df["pixel_score"],
-            ["linear", "age", "yes"],
-            outf,
-            latex=latex
-        )
-        report_stats(
-            filtered_df["time_from_onset"],
-            filtered_df["pixel_score"],
-            ["linear", "onset", "yes"],
-            outf,
-            latex=latex
+        columns = ["scale",  "time frame", "phased only", "statistic",  "correlation", "p-value",]
 
-        )
+        print( separator.join(columns), file=outf)
+        if latex: print("\\\\ \\hline \\hline",  file=outf)
+
+        print("\nLINEAR SCALE")
+        age = df_cases["age"]
+        time_from_onset  =  df_cases["time_from_onset"]
+        pixel_score = df_cases["pixel_score"]
+        f_age = filtered_df["age"]
+        f_time_from_onset  =  filtered_df["time_from_onset"]
+        f_pixel_score = filtered_df["pixel_score"]
+        report_correlation_stats(age, pixel_score, ["linear", "age", "no"], outf, latex=latex)
+        report_correlation_stats(time_from_onset, pixel_score, ["linear", "onset", "no"], outf, latex=latex)
+        report_density_stats(df_cases, ["linear", "no"],  outf=outf, latex=latex)
+        print("----------------")
+        report_correlation_stats(f_age, f_pixel_score, ["linear", "age", "yes"], outf, latex=latex)
+        report_correlation_stats(f_time_from_onset, f_pixel_score, ["linear", "onset", "yes"], outf, latex=latex)
+        report_density_stats(filtered_df, ["linear", "yes"], outf=outf, latex=latex)
+
         print("\nLOG SCALE")
         logscore = [math.log(s) for s in df_cases["pixel_score"]]
-        report_stats(df_cases["age"], logscore, ["log", "age", "no"], outf, latex=latex)
-        report_stats(df_cases["time_from_onset"], logscore, ["log", "onset", "no"], outf, latex=latex)
+        report_correlation_stats(age, logscore, ["log", "age", "no"], outf, latex=latex)
+        report_correlation_stats(time_from_onset, logscore, ["log", "onset", "no"], outf, latex=latex)
+        report_density_stats(df_cases, ["linear", "no"],  outf=outf, latex=latex, logscore=True)
+        print("----------------")
         logscore = [math.log(s) for s in filtered_df["pixel_score"]]
-        report_stats(filtered_df["age"], logscore, ["log", "age", "yes"], outf, latex=latex)
-        report_stats(filtered_df["time_from_onset"], logscore, ["log", "onset", "yes"], outf, latex=latex)
-
+        report_correlation_stats(f_age, logscore, ["log", "age", "yes"], outf, latex=latex)
+        report_correlation_stats(f_age, logscore, ["log", "onset", "yes"], outf, latex=latex)
+        report_density_stats(filtered_df, ["linear", "yes"], outf=outf, latex=latex, logscore=True)
 
 def main():
 
