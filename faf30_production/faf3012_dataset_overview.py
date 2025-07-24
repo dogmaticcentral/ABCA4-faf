@@ -50,13 +50,14 @@ def summarize_info(df):
 
     # df.groupby('alias')['image acquired'].count() is a series
     img_series = df.groupby('alias')['image acquired'].count()
+    print("The number of images acquired:")
+    print(img_series)
     min_images = img_series.min()
     max_images = img_series.max()
     med_images = img_series.median()
 
-    # avg_imgs_per_patient = df.groupby('alias')['image acquired'].count().mean()
-
     df_list = df.drop(columns=['eye', 'score']).drop_duplicates().set_index('alias').groupby("alias")['image acquired'].apply(list)
+    print(df)
     interval_lengths = []
     first_visits = []
     years_followed = []
@@ -84,11 +85,13 @@ def summarize_info(df):
     min_yrs = min(years_followed)
     max_yrs = max(years_followed)
 
+    explanation = "(single visit)" if min_yrs==0 else ""
     outstr = f"""
     We included images from {number_of_timepoints} visits. 
-    A total of {min_images}-{max_images} images (median {med_images:.0f}) 
-    spanning {min_yrs:.1f}-{max_yrs:.1f} (median {med_yrs:.1f}) were obtained in each patient. The first of these was obtained 
-    at a median age of {med_first_visit:.1f} years (range {min_first_visit:.1f}–{max_first_visit:.1f}). 
+    For each patient we obtained between {min_images} and {max_images} images, median {med_images:.0f}, 
+    The time span through which the patients were followed was from {min_yrs:.1f} {explanation}
+    to {max_yrs:.1f} years,(median {med_yrs:.1f} years. 
+    The first image was obtained at a median age of {med_first_visit:.1f} years (range {min_first_visit:.1f}–{max_first_visit:.1f}). 
     The median interval between follow-up visits was {med_intv:.1f} (range {min_intv:.1f}–{max_intv:.1f}).    
     """
     print(outstr)
@@ -99,6 +102,10 @@ def main():
     db = db_connect()
     rows = rows_from_db()
     db.close()
+
+    # for row in rows:
+    #     print(row)
+    #
 
     df = convert_to_pandas(rows)
     output_spreadsheet(df)
