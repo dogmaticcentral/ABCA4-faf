@@ -112,13 +112,13 @@ class FafBgHistograms(FafAnalysis):
 
         histogram = in_mask_histogram(original_image, mask, hist_path, skip_if_exists)
 
-        (fitted_gaussians, weights) = gaussian_mixture(histogram, n_comps_to_try=[1])
+        # (fitted_gaussians, weights) = gaussian_mixture(histogram, n_comps_to_try=[1])
         plot_histogram(
             histogram,
             hist_img_path,
             title="pixel intensity histogram",
-            fitted_gaussians=fitted_gaussians,
-            weights=weights,
+            fitted_gaussians=None, #fitted_gaussians,
+            weights=None, # weights,
             skip_if_exists=skip_if_exists,
         )
 
