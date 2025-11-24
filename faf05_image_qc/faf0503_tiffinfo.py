@@ -5,16 +5,15 @@ Extract TIFF image metadata using tiffinfo command.
 This script recursively finds all TIFF files in a directory and extracts
 their width, height, and rows/strip information using the tiffinfo command.
 """
-
+import imquality.brisque as brisque
 import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
+import cv2
+from brisque import BRISQUE
 
-from dask.array import result_type
-
-from faf03_image_qc.qc_utils import gradient_by_mod8_x, outliers
-
+from faf05_image_qc.qc_utils.stat_utils import gradient_by_mod8_x, outliers
 
 
 def run_tiffinfo(tiff_path: Path) -> Optional[dict[str, str]]:
@@ -82,7 +81,7 @@ def process_directory(directory: str) -> None:
         sys.exit(1)
 
     # Print header
-    print("image_path\twidth\tlength\trows/strip\tgrad outliers")
+    print("image_path\twidth\tlength\trows/strip\tbrisque score\tgrad outliers")
 
     # Find all TIFF files
     tiff_patterns = ['*.tiff', '*.tif', '*.TIFF', '*.TIF']
@@ -90,9 +89,14 @@ def process_directory(directory: str) -> None:
         for tiff_file in dir_path.rglob(pattern):
             info = run_tiffinfo(tiff_file)
             if info:
+                img_gray = cv2.imread(tiff_file, cv2.IMREAD_GRAYSCALE)
+                img_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2BGR)
+                obj = BRISQUE(url=False)
+                bscore = obj.score(img=img_rgb)
+
                 results = gradient_by_mod8_x(tiff_file)
                 outls = outliers(results)
-                print(f"{tiff_file}\t{info['width']}\t{info['length']}\t{info['rows_strip']}\t{outls}")
+                print(f"{tiff_file}\t{info['width']}\t{info['length']}\t{info['rows_strip']}\t{bscore:.1f}\t{outls}")
 
 
 def main() -> None:
