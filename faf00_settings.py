@@ -26,10 +26,10 @@ DATABASES = {
         "DB_NAME": "abca4_faf",
         "USER": "abca4",
         "PASSWORD": os.environ.get("MARIADB_PASSWD"),
-        # "HOST": "127.0.0.1",
-        # "PORT": 3308,
-       "HOST": "localhost",
-        "PORT": 3306,
+        "HOST": "127.0.0.1",
+        "PORT": 3308,
+       # "HOST": "localhost",
+       #  "PORT": 3306,
 
     },
     "postgres": {

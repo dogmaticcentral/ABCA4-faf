@@ -1,5 +1,7 @@
+import cv2
 import numpy as np
 from PIL import Image
+from brisque import BRISQUE
 
 
 def gradient_by_mod8_x(path):
@@ -38,3 +40,25 @@ def outliers(indict) -> dict:
     mean = np.mean(values)
     std = np.std(values)
     return {k: round(float(z),1) for k, v in indict.items() if (z:=abs(v - mean) / std) > 2}
+
+
+def brisque_score(tiff_file):
+    # the images have big black background, so score only 1/4 in the center
+    img_gray = cv2.imread(tiff_file, cv2.IMREAD_GRAYSCALE)
+    img_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2BGR)
+
+    # Get image dimensions
+    height, width = img_rgb.shape[:2]
+
+    # Calculate crop boundaries (centered, half width and half height)
+    x_start = width // 4
+    x_end = 3 * width // 4
+    y_start = height // 4
+    y_end = 3 * height // 4
+
+    # Crop the image
+    img_rgb_cropped = img_rgb[y_start:y_end, x_start:x_end]
+
+    obj = BRISQUE(url=False)
+    bscore = obj.score(img=img_rgb_cropped)
+    return bscore

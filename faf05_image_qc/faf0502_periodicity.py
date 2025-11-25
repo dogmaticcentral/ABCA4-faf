@@ -4,7 +4,7 @@ from PIL import Image
 from scipy.fft import fft2, fftshift
 import matplotlib.pyplot as plt
 
-from faf03_image_qc.qc_utils import gradient_by_mod8_x, outliers
+from faf05_image_qc.qc_utils.stat_utils import gradient_by_mod8_x, outliers
 
 
 def detect_periodic_components(path, peak_threshold=3.0):

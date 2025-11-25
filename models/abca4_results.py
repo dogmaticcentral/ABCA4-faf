@@ -10,8 +10,8 @@
 """
 
 from peewee import FloatField, ForeignKeyField, Model
-
-from models.abca4_faf_models import FafImage, global_db_proxy
+from faf00_settings import global_db_proxy
+from models.abca4_faf_models import FafImage
 
 
 class BaseModel(Model):
@@ -26,6 +26,7 @@ class Score(BaseModel):
     pixel_score = FloatField(null=True)
     pixel_score_auto = FloatField(null=True)
     pixel_score_peripapillary = FloatField(null=True)
+    brisque_score = FloatField(null=True)
 
 
 class PlaygroundScore(BaseModel):

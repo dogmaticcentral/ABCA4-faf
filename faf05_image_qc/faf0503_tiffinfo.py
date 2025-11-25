@@ -5,15 +5,12 @@ Extract TIFF image metadata using tiffinfo command.
 This script recursively finds all TIFF files in a directory and extracts
 their width, height, and rows/strip information using the tiffinfo command.
 """
-import imquality.brisque as brisque
 import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
-import cv2
-from brisque import BRISQUE
 
-from faf05_image_qc.qc_utils.stat_utils import gradient_by_mod8_x, outliers
+from faf05_image_qc.qc_utils.stat_utils import gradient_by_mod8_x, outliers, brisque_score
 
 
 def run_tiffinfo(tiff_path: Path) -> Optional[dict[str, str]]:
@@ -62,26 +59,6 @@ def run_tiffinfo(tiff_path: Path) -> Optional[dict[str, str]]:
 
     return None
 
-def brisque_score(tiff_file):
-    # the images have big black background, so score only 1/4 in the center
-    img_gray = cv2.imread(tiff_file, cv2.IMREAD_GRAYSCALE)
-    img_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2BGR)
-
-    # Get image dimensions
-    height, width = img_rgb.shape[:2]
-
-    # Calculate crop boundaries (centered, half width and half height)
-    x_start = width // 4
-    x_end = 3 * width // 4
-    y_start = height // 4
-    y_end = 3 * height // 4
-
-    # Crop the image
-    img_rgb_cropped = img_rgb[y_start:y_end, x_start:x_end]
-
-    obj = BRISQUE(url=False)
-    bscore = obj.score(img=img_rgb_cropped)
-    return bscore
 
 def process_directory(directory: str) -> None:
     """
