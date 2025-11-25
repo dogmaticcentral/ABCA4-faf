@@ -62,6 +62,26 @@ def run_tiffinfo(tiff_path: Path) -> Optional[dict[str, str]]:
 
     return None
 
+def brisque_score(tiff_file):
+    # the images have big black background, so score only 1/4 in the center
+    img_gray = cv2.imread(tiff_file, cv2.IMREAD_GRAYSCALE)
+    img_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2BGR)
+
+    # Get image dimensions
+    height, width = img_rgb.shape[:2]
+
+    # Calculate crop boundaries (centered, half width and half height)
+    x_start = width // 4
+    x_end = 3 * width // 4
+    y_start = height // 4
+    y_end = 3 * height // 4
+
+    # Crop the image
+    img_rgb_cropped = img_rgb[y_start:y_end, x_start:x_end]
+
+    obj = BRISQUE(url=False)
+    bscore = obj.score(img=img_rgb_cropped)
+    return bscore
 
 def process_directory(directory: str) -> None:
     """
@@ -85,19 +105,19 @@ def process_directory(directory: str) -> None:
 
     # Find all TIFF files
     tiff_patterns = ['*.tiff', '*.tif', '*.TIFF', '*.TIF']
+    outfnm = f"{Path(directory).name}_tiffinfo.tsv"
+    outf = open(outfnm, 'w')
     for pattern in tiff_patterns:
         for tiff_file in dir_path.rglob(pattern):
             info = run_tiffinfo(tiff_file)
             if info:
-                img_gray = cv2.imread(tiff_file, cv2.IMREAD_GRAYSCALE)
-                img_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2BGR)
-                obj = BRISQUE(url=False)
-                bscore = obj.score(img=img_rgb)
-
+                bscore =  brisque_score(tiff_file)
                 results = gradient_by_mod8_x(tiff_file)
                 outls = outliers(results)
-                print(f"{tiff_file}\t{info['width']}\t{info['length']}\t{info['rows_strip']}\t{bscore:.1f}\t{outls}")
-
+                outln = f"{tiff_file}\t{info['width']}\t{info['length']}\t{info['rows_strip']}\t{bscore:.1f}\t{outls}"
+                print(outln)
+                print(outln, file=outf)
+    outf.close()
 
 def main() -> None:
     """Main entry point."""
