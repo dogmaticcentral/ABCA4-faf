@@ -1,0 +1,31 @@
+# Configuration variables
+bin_width = 1.0;
+data_file = 'all_tiffinfo.tsv';
+
+# Functions to calculate the bin center for each data point
+bin_number(x) = floor(x/bin_width);
+rounded(x) = bin_width * ( bin_number(x) + 0.5 );
+
+UNITY = 1 # Used to count frequency
+
+# --- Normalization Calculations ---
+# Count total data points first
+stats data_file using 5 nooutput
+total_points = STATS_records
+
+# Calculate normalization factor: 1 / (Total points * Bin width)
+normalization_factor = 1.0 / (total_points * bin_width)
+
+# --- Plotting Configuration ---
+set style data histograms
+# Set fill style: "solid 1.0" makes the boxes fully opaque/filled
+set style fill solid 1.0 border
+set boxwidth bin_width absolute
+set xlabel "BRISQUE score"
+set ylabel "Probability Density"
+set title "Patients"
+
+# Plot the data, applying the normalization factor to the Y-axis values
+# Plot the data using column 5 for X, and apply normalization factor to Y values
+plot data_file using (rounded($1)):(UNITY) smooth frequency using 2:(normalization_factor * $2) with boxes notitle
+
