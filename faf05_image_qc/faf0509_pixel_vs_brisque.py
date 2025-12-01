@@ -25,7 +25,7 @@ def fetch_scores() -> list[Tuple[float, float, str]]:
     """Fetch brisque_score, pixel_score, and image_path from database."""
     query = (
         Score
-        .select(Score.brisque_score, Score.pixel_score, FafImage.image_path)
+        .select(Score.brisque_score, Score.pixel_score_auto, FafImage.image_path)
         .join(FafImage)
         .tuples()
     )
@@ -44,6 +44,7 @@ def plot_scores(data: list[tuple[float, float, str]]) -> None:
     colors = []
 
     for brisque, pixel, path in data:
+        # print(brisque, pixel, path)
         if brisque is not None and pixel is not None:
             brisque_scores.append(brisque)
             pixel_scores.append(pixel)

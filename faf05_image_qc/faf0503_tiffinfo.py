@@ -99,7 +99,8 @@ def process_directory(directory: str) -> None:
 def main() -> None:
     """Main entry point."""
     if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <directory_path>", file=sys.stderr)
+        msg = f"Usage: {sys.argv[0]} <directory_path> \n(<directory_path> = path to patient or ctrl imgs - the tiffs should be in the subtree)"
+        print(msg, file=sys.stderr)
         sys.exit(1)
 
     directory = sys.argv[1]

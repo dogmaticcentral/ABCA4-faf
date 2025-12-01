@@ -86,7 +86,7 @@ def plot_histograms(data_a: list[float], data_b: list[float], col2_a: list[int],
 def main() -> None:
     """Main function."""
     if len(sys.argv) != 3:
-        print("Usage: script.py <file_a.tsv> <file_b.tsv>")
+        print(f"Usage: {sys.argv[0]} <file_a.tsv> <file_b.tsv>")
         sys.exit(1)
 
     file_a = sys.argv[1]
