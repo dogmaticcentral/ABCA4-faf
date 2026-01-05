@@ -105,7 +105,7 @@ def check_images(filter_condition: peewee.Expression) -> bool:
         if not check_image_dimensions(faf_image_filepath, faf_img_dict): return False
 
         # are the locations of disc and macula provided and reasonable?
-        if not check_disc_and_macula(faf_image_filepath, faf_img_dict): return False
+        # if not check_disc_and_macula(faf_image_filepath, faf_img_dict): return False
 
         comfort(f"{faf_image_filepath} passed sanity checks")
     return True

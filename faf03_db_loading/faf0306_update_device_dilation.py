@@ -14,11 +14,13 @@ import pandas as pd
 from pathlib import Path
 from sys import argv, stderr
 
+from faf03_db_loading.faf0301_load_image_info import parse_device, parse_boolean
+
 # Add parent directory to path to import local modules
 sys.path.insert(0, "..")
 
 from utils.db_utils import db_connect
-from models.abca4_faf_models import Case, FafImage, Device
+from models.abca4_faf_models import Case, FafImage
 from utils.utils import is_nonempty_file
 
 def arg_parse() -> Path:
@@ -34,25 +36,6 @@ def arg_parse() -> Path:
         exit(1)
     return infile_path
 
-def parse_device(machine_str):
-    if not isinstance(machine_str, str): return None
-    
-    m = machine_str.strip()
-    if "Silverstone" in m:  m = "Silverstone"
-    
-    # Check against Enum values
-    for d in Device:
-        if d.value == m:  return d
-    return None
-
-def parse_dilation(dilation_val):
-    if isinstance(dilation_val, str):
-        d_str = dilation_val.strip().upper()
-        if d_str == 'Y':
-            return True
-        elif d_str == 'N':
-            return False
-    return None
 
 def main():
     infile_path = arg_parse()
@@ -84,7 +67,7 @@ def main():
 
         # Parse Logic
         device_enum = parse_device(machine_raw)
-        dilated_bool = parse_dilation(dilation_raw)
+        dilated_bool = parse_boolean(dilation_raw)
 
         if device_enum is None:
             print(f"Row {index+2}: Uninterpretable Machine value '{machine_raw}' for {alias}. Skipping.", file=stderr)

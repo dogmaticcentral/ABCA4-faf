@@ -51,10 +51,10 @@ def brisque_score(tiff_file):
     height, width = img_rgb.shape[:2]
 
     # Calculate crop boundaries (centered, half width and half height)
-    x_start = width // 4
-    x_end = 3 * width // 4
-    y_start = height // 4
-    y_end = 3 * height // 4
+    x_start = width  // 2 - 1000
+    x_end   = width  // 2 + 1000
+    y_start = height // 2 - 1000
+    y_end   = height // 2 + 1000
 
     # Crop the image
     img_rgb_cropped = img_rgb[y_start:y_end, x_start:x_end]
