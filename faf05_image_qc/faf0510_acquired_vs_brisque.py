@@ -10,6 +10,7 @@
 
 """
 import numpy as np
+from matplotlib.lines import Line2D
 
 from utils.db_utils import db_connect
 
@@ -34,53 +35,56 @@ def fetch_scores() -> list[Tuple[float, float, str]]:
     return list(query)
 
 
-def get_marker_color(image_path: str) -> str:
+def get_marker_style(image_path: str) -> tuple[str, str]:
     """Return color based on whether image_path contains 'control'."""
-    if "control" in image_path.lower():
-        device = FafImage.get(FafImage.image_path == image_path).device.name
-        if device == "Silverstone":
-            return "orange"
-        elif device == "California":
-            return "red"
-        else:
-            return "pink"
+
+    faf_img = FafImage.get(FafImage.image_path == image_path)
+    device = faf_img.device.name
+    if device == "Silverstone":
+        color = "orange"
+    elif device == "California":
+        color =  "red"
     else:
-        return "blue"
+        color =  "pink"
 
+    dilated = faf_img.dilated
+    shape = 'o' if dilated else 'd' # o is circle d is thin diamond
 
-def get_marker_shape(image_path: str) -> str:
-    """Return color based on whether image_path contains 'control'."""
+    return color, shape
 
-    width = FafImage.get(FafImage.image_path == image_path).width
-    if width == 4000:
-        return "s"
-
-    return "o"
-
-
+def get_legend_elements():
+    return [
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='red',
+               markersize=10, label='California'),
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='orange',
+               markersize=10, label='Silverstone'),
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='pink',
+               markersize=10, label='Daytona'),
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='gray',
+               markersize=10, label='dilated'),
+        Line2D([0], [0], marker='d', color='w', markerfacecolor='gray',
+               markersize=8, label='not dilated'),
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='white',
+               markeredgecolor='blue', markeredgewidth=2, markersize=10,
+               label='patient'),
+    ]
 
 def plot_scores(data: list[tuple[float, float, str]]) -> None:
     """Create and display scatter plot of brisque vs age image acquired."""
-    brisque_scores = []
-    age_acquired = []
-    colors = []
-    shapes = []
-    for brisque, age, path in data:
-        # print(brisque, pixel, path)
-        if brisque is not None and age is not None:
-            brisque_scores.append(brisque)
-            age_acquired.append(age)
-            colors.append(get_marker_color(path))
-            shapes.append(get_marker_shape(path))
-    age_acquired   = np.array(age_acquired)
-    brisque_scores = np.array(brisque_scores)
-    colors =  np.array(colors)
-    markers =  np.array(shapes)
-    # Split by marker type
-    mask = {'o':  markers == 'o', 's': markers == 's'}
+
     plt.figure(figsize=(10, 6))
-    for shape in shapes:
-        plt.scatter(age_acquired[mask[shape]], brisque_scores[mask[shape]], c=colors[mask[shape]], marker=shape, alpha=0.6, s=50)
+    for brisque, age, image_path in data:
+        # print(brisque, pixel, path)
+        if brisque is  None or age is  None: continue
+        color, shape = get_marker_style(image_path)
+        # mec = 'markeredgecolor'
+        if "control" in image_path.lower():
+            mec = color
+        else:
+            mec = 'blue'
+        # s = marker size
+        plt.scatter(age, brisque, facecolors=color, edgecolors=mec, linewidths=3, marker=shape,  alpha=0.6, s=80)
+    plt.legend(handles=get_legend_elements(), loc='lower right', fontsize=12)
     plt.xlabel("Age image acquired (years)", fontsize=14)
     plt.ylabel("BRISQUE Score", fontsize=14)
     # plt.title("BRISQUE Score vs Age image acquired")
