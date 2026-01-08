@@ -43,18 +43,19 @@ def outliers(indict) -> dict:
 
 
 def brisque_score(tiff_file):
-    # the images have big black background, so score only 1/4 in the center
+
     img_gray = cv2.imread(tiff_file, cv2.IMREAD_GRAYSCALE)
     img_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2BGR)
 
     # Get image dimensions
     height, width = img_rgb.shape[:2]
 
+    # the images have big black background, so score only the center
     # Calculate crop boundaries (centered, half width and half height)
-    x_start = width // 4
-    x_end = 3 * width // 4
-    y_start = height // 4
-    y_end = 3 * height // 4
+    x_start = width  // 2 - 1000
+    x_end   = width  // 2 + 1000
+    y_start = height // 2 - 1000
+    y_end   = height // 2 + 1000
 
     # Crop the image
     img_rgb_cropped = img_rgb[y_start:y_end, x_start:x_end]

@@ -10,10 +10,11 @@
 """
 
 import datetime
+from enum import Enum
 from faf00_settings import global_db_proxy
 from peewee import (BooleanField, CharField, DateTimeField, FloatField,
                     ForeignKeyField, IntegerField, Model, TextField, Proxy)
-
+from peewee_enum_field import EnumField
 """
 Database tables, aka 'models' defined using peewee (python ORM package).
 See http://docs.peewee-orm.com/en/latest/index.html
@@ -41,6 +42,13 @@ class Case(BaseModel):
     is_control       = BooleanField(default=False, null=False)
 
 
+class Device(Enum):
+    Unk = "Unk"
+    Silverstone = 'Silverstone'
+    California = 'California'
+    Daytona = 'Daytona'
+
+
 
 class FafImage(BaseModel):
     class Meta:
@@ -50,6 +58,8 @@ class FafImage(BaseModel):
     eye     = CharField(max_length=2, null=False)  # Sqlite has no enum fields, so peewee does not support it either
     image_path      = CharField(unique=True)
     age_acquired    = FloatField(null=True)
+    device  = EnumField(Device, default=Device.Unk.value, null=False)
+    dilated = BooleanField(default=False, null=False)
     width   = IntegerField(null=True)
     height  = IntegerField(null=True)
     disc_x  = IntegerField(null=True)

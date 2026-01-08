@@ -10,13 +10,14 @@
 
 """
 import sys
+from pprint import pprint
 
 from utils.db_utils import db_connect
 
 from pathlib import Path
 from sys import argv
 
-from models.abca4_faf_models import Case, FafImage
+from models.abca4_faf_models import Case, FafImage, Device
 from utils.io import guess_delimiter, list_to_quoted_str, file_to_list_of_dict
 from utils.utils import is_nonempty_file
 
@@ -44,6 +45,27 @@ def arg_parse(required_columns, accepted_columns) -> Path:
     return infile_path
 
 
+def parse_device(machine_str):
+    if not isinstance(machine_str, str): return None
+
+    m = machine_str.strip()
+    if "Silverstone" in m:  m = "Silverstone"
+
+    # Check against Enum values
+    for d in Device:
+        if d.value == m:  return d
+    return None
+
+
+def parse_boolean(dilation_val):
+    if isinstance(dilation_val, str):
+        d_str = dilation_val.strip().upper()
+        if d_str in ['Y', '1']:
+            return True
+        elif d_str == ['N', '0']:
+            return False
+    return None
+
 def store_patient_data(data_dict: dict):
     defaults = {}
     if data_dict.get("onset age"):
@@ -70,8 +92,8 @@ def store_image_data(image_info: dict):
 
 def main():
     required_columns = ["patient alias", "image path", "eye"]
-    accepted_columns_patient = ["haplotype tested", "is control", "onset age", "age acquired"]
-    accepted_columns_geometry = [
+    accepted_columns_patient = ["haplotype tested", "is control", "onset age"]
+    accepted_columns_image = [ "age acquired", "device", "dilated",
         "width",
         "height",
         "disc x",
@@ -79,7 +101,7 @@ def main():
         "fovea x",
         "fovea y",
     ]
-    infile_path = arg_parse(required_columns, accepted_columns_patient + accepted_columns_geometry)
+    infile_path = arg_parse(required_columns, accepted_columns_patient + accepted_columns_image)
     delimiter = guess_delimiter(infile_path)
 
     list_of_dict = file_to_list_of_dict(infile_path, delimiter, required_columns)
@@ -97,15 +119,20 @@ def main():
 
         case = store_patient_data(dct)
 
-        image_info = {"case_id": case.id, "eye": dct["eye"]}
-        if dct.get("age acquired"):
-            image_info["age_acquired"] = float(dct["age acquired"])
-        for column in accepted_columns_geometry:
-            if column not in dct:
-                continue
-            image_info[column.replace(" ", "_")] = int(dct[column])
-        image_info["image_path"] = dct["image path"]
+        image_info = {"case_id": case.id, "eye": dct["eye"], "image_path": dct["image path"]}
 
+        for column in accepted_columns_image:
+            if column not in dct: continue
+            if column == "age acquired":
+                image_info["age_acquired"] = float(dct["age acquired"])
+            elif column == "device":
+                image_info["device"] = parse_device(dct["device"])
+            elif column == "dilated":
+                image_info["dilated"] = parse_boolean(dct["dilated"])
+            else:
+                image_info[column.replace(" ", "_")] = int(dct[column])
+
+        image_info["image_path"] = dct["image path"]
         store_image_data(image_info)
 
     db.close()
@@ -114,3 +141,4 @@ def main():
 ########################
 if __name__ == "__main__":
     main()
+
