@@ -13,7 +13,8 @@ import datetime
 from enum import Enum
 from faf00_settings import global_db_proxy
 from peewee import (BooleanField, CharField, DateTimeField, FloatField,
-                    ForeignKeyField, IntegerField, Model, TextField, Proxy)
+                    ForeignKeyField, IntegerField, Model, TextField, Proxy, SqliteDatabase, MySQLDatabase,
+                    PostgresqlDatabase)
 from peewee_enum_field import EnumField
 """
 Database tables, aka 'models' defined using peewee (python ORM package).
@@ -33,10 +34,26 @@ class BaseModel(Model):
         database = global_db_proxy
 
 
+def get_cs_collation(database):
+    """Returns the case-sensitive collation string for the active database."""
+    if isinstance(database, SqliteDatabase):
+        # SQLite is case-sensitive by default (BINARY)
+        return 'BINARY'
+    elif isinstance(database, MySQLDatabase):
+        # MySQL is often case-insensitive by default; use _bin for case-sensitive
+        return 'utf8mb4_bin'
+    elif isinstance(database, PostgresqlDatabase):
+        # Postgres is case-sensitive by default; "C" is standard for byte-comparisons
+        return 'C'
+    return None
+
+
 class Case(BaseModel):
     class Meta:
         table_name = "cases"
-    alias     = CharField(unique=True)
+
+    alias     = CharField(unique=True,
+                          collation=get_cs_collation(BaseModel._meta.database))
     onset_age = FloatField(null=True)
     haplotype_tested = BooleanField(default=False, null=False)
     is_control       = BooleanField(default=False, null=False)

@@ -13,7 +13,7 @@
 import os
 from pathlib import Path
 
-from faf00_settings import WORK_DIR
+from faf00_settings import WORK_DIR, USE_AUTO
 from classes.faf_analysis import FafAnalysis
 from utils.conventions import construct_workfile_path, original_2_aux_file_path
 from utils.image_utils import rgba_255_path_to_255_ndarray, grayscale_img_path_to_255_ndarray
@@ -24,14 +24,21 @@ from utils.utils import is_nonempty_file, scream
 
 class FafHistograms(FafAnalysis):
 
+    def create_parser(self):
+        super().create_parser()
+        self.parser.add_argument("-c", '--ctrl_only', dest="ctrl_only", action="store_true",
+                                 help="Process only control images. Default: False.")
+
+
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         """Check the presence of all input files that we need to create the composite img.
          :param faf_img_dict:
          :return: list[Path]
          """
         original_image_path  = Path(faf_img_dict['image_path'])
-        usable_region_path   = original_2_aux_file_path(original_image_path, ".usable_region.png")
-
+        stem  = "auto_usable" if USE_AUTO else "usable_regions"
+        alias = faf_img_dict["case_id"]['alias']
+        usable_region_path = construct_workfile_path(WORK_DIR, original_image_path, alias, stem, "png")
         for region_png in [original_image_path, usable_region_path]:
             if not is_nonempty_file(region_png):
                 scream(f"{region_png} does not exist (or may be empty).")
@@ -40,7 +47,7 @@ class FafHistograms(FafAnalysis):
         return [original_image_path, usable_region_path]
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
-
+        if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
         [original_image_path, usable_region_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict['case_id']['alias']
         hist_path      = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, 'txt')

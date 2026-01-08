@@ -12,6 +12,7 @@
 from itertools import product
 from statistics import median
 
+import cv2
 import numpy as np
 from skimage.io import ImageCollection
 
@@ -91,10 +92,10 @@ class FafVasculature(FafAnalysis):
         cumulative = np.cumsum(hist)
 
         bottom_fraction = 0.3
-        opening_area_threshold = 100
-        opening_connectivity = 3
-        closing_area_threshold = 500
-        closing_connectivity = 3
+        opening_area_threshold = 500
+        opening_connectivity = 5
+        closing_area_threshold = 50
+        closing_connectivity = 2
 
 
         # find intensity at which the cumulative fn is the closest to bottom_fraction
@@ -192,9 +193,9 @@ class FafVasculature(FafAnalysis):
         :return: str
             THe return string indicates success or failure - generated in compose() function
         """
+        if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
         alias = faf_img_dict["case_id"]["alias"]
         [original_image_path, recal_image_path] = self.input_manager(faf_img_dict)
-
         retstr = self.find_vasculature(original_image_path, recal_image_path, alias, skip_if_exists)
         if "failed" in retstr:
             return retstr

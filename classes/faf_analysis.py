@@ -49,6 +49,8 @@ class FafAnalysis(ABC):
                                  help="Create a set of slides with all images produced. Default: False")
         self.parser.add_argument("-x", '--skip_xisting', dest="skip_xisting", action="store_true",
                                  help="Skip if the resulting image already exists. Default: False")
+        self.parser.add_argument("-c", '--ctrl_only', dest="ctrl_only", action="store_true",
+                                 help="Process only control images. Default: False.")
 
     def argv_parse(self):
         self.args = self.parser.parse_args()

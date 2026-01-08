@@ -9,12 +9,13 @@
 """
 from itertools import product
 from math import cos, sin, atan, pow, pi, sqrt
+from pathlib import Path
 from random import sample
 
 import numpy as np
 
 from utils.image_utils import channel_visualization, gray_read_blur, grayscale_img_path_to_255_ndarray, \
-    ndarray_to_int_png
+    ndarray_to_int_png, rgba_255_path_to_255_ndarray
 from utils.utils import scream
 
 BLACK = 1
@@ -266,12 +267,12 @@ def principal_axes_ratio(cluster: IntPointList, verbose=False) -> float:
     return bigger_to_smaller_ratio(I_xx_principal, I_yy_principal, verbose)
 
 
-def find_circle_like_within_hull(image_in, mask, disc_asym_cutoff, pixel_intensity_cutoff, verbose):
+def find_circle_like_within_mask(image_in: np.ndarray, mask: np.ndarray, disc_asym_cutoff, pixel_intensity_cutoff, verbose):
 
     verbose = True
     # these are RGB images, so in principle this number should go 0-255
     clusters = find_clusters(image_in, mask, cutoffs=(10, pixel_intensity_cutoff))
-    if verbose: print(f"\n found {len(clusters.cluster)} clusters within the hull")
+    if verbose: print(f"\n found {len(clusters.cluster)} clusters within the mask")
 
     # report all clusters for which the center of mass is withing the cluster itself
     sorted_labels = list(sorted(clusters.cluster.keys(), key=lambda k: len(clusters.cluster[k]), reverse=True))
@@ -312,43 +313,6 @@ def distance_to_the_furthest_point(list_of_coords, center) -> float:
     return max([dist(coords, center) for coords in list_of_coords])
 
 
-def rank_labels_by_vasculature_neighborhood(clusters, circle_like_labels:  list[int],
-                                            inverted_vasc_img: np.ndarray, hull: np.ndarray) -> list[int]:
-    if len(circle_like_labels) < 2: return circle_like_labels
-
-    # inverted_vasc_img has 255 in the pixels belonging to vasculature, and 0 elsewhere
-    for cluster_radius_scaling in [1.2, 1.5, 2, 3]:
-        print()
-        print(f"\tcluster_radius_scaling {cluster_radius_scaling}")
-        print("-----------------------------")
-        score = {}
-        for label in circle_like_labels:
-            print(f"\tlabel {label}")
-            cluster_center = find_center(clusters.cluster[label])
-            cluster_radius = distance_to_the_furthest_point(clusters.cluster[label], cluster_center)
-            print(f"\tcluster_center {cluster_center}")
-            print(f"\tcluster_radius {cluster_radius}")
-            # increase the bounding circle radius by the scaling factor
-            big_radius = cluster_radius*cluster_radius_scaling
-            # use the ring as a mask - how many distinct clusters do we have in there?
-            mask = np.zeros(inverted_vasc_img.shape)
-            for iy, ix in np.ndindex(*inverted_vasc_img.shape):
-                if not hull[iy, ix]: continue
-                d =  dist((iy, ix), cluster_center)
-                if d > big_radius: continue
-                if d < cluster_radius: continue
-                mask[iy, ix] = 1
-            # score = number of clusters bigger than some cutoff size
-            min_cluster = 50
-            # find_clusters is looking for black clusters so inverst the vasc image back
-            vasculature_clusters = find_clusters(~inverted_vasc_img, mask, cutoffs=(0, 100))
-            print(f"\tnumber of vasc clusters {len(vasculature_clusters.cluster)}")
-            score[label] = len([1 for vlabel, vclust in  vasculature_clusters.cluster.items() if len(vclust) > min_cluster])
-            print(f"\tscore: {score[label]}")
-        if any([s > 0 for s in score.keys()]): break
-
-    return sorted(score, key=lambda x: score[x], reverse=True)
-
 
 def pointlist2ndarray(point_list: IntPointList, shape) -> np.ndarray:
     bw_image = np.zeros(shape, dtype=np.ndarray)
@@ -365,47 +329,51 @@ def pointlist2ndarray(point_list: IntPointList, shape) -> np.ndarray:
     return bw_image
 
 
-def circular_cluster_detector(original_image_path: str, inverted_vasculature_path: str, hull_path:  str, eye: str, path_to_image_out, verbose=False):
-
+def circular_cluster_detector(original_image_path: Path, usable_region_path:  Path, eye: str, path_to_image_out, verbose=False):
+    # TODO I am here the output of this is nonsense
     # if is_nonzero_file(path_to_image_out):
     #     print(f"found {path_to_image_out}")
     #     return path_to_image_out
-    original_image    = gray_read_blur(original_image_path)
+    original_image  = gray_read_blur(str(original_image_path))
     # the inverted_vasc_img has 255 for the pixels belonging to vessels, otherwise 0
-    inverted_vasc_img = grayscale_img_path_to_255_ndarray(inverted_vasculature_path)
-    hull              = grayscale_img_path_to_255_ndarray(hull_path)
+    mask = rgba_255_path_to_255_ndarray(usable_region_path, channel=2)
 
+    h, w = mask.shape
+    center_y, center_x = h // 2, w // 2
+
+    # Create coordinate grids
+    y, x = np.ogrid[:h, :w]
+
+    # Calculate distance from center
+    distance = np.sqrt((x - center_x)**2 + (y - center_y)**2)
+
+    # keep only positions within 1000px from the center
+    mask[distance > 1000] = 0
 
     # create a mask: the mask will be the hull minus the vasculature
     clusters = []
     circle_like_labels = []
-    mask = hull
+
     assym_ratio_cutoffs = (2.5, 3.0)
     cness_cutoff   = 1.5
-    pixel_cutoffs  = (50, 70, 90, 110)
-    # extrusion_bdrs = (-100, 0, 100)
-    extrusion_bdrs = (-200, -100, 0)
-    # for hull_extrusion, pixel_intensity_cutoff in product(extrusion_bdrs, pixel_cutoffs):
-    for disc_asym, pix_int, hull_extrusion  in product(assym_ratio_cutoffs, pixel_cutoffs, extrusion_bdrs):
-        scan_info  = f"\n*** params scan:  asym_cutoff {disc_asym}   "
-        scan_info += f"pixel_intensity_cutoff {pix_int}  hull_extrusion {hull_extrusion} "
+    pixel_intensity_cutoffs  = (50, 70, 90, 110)
+
+    for disc_asym, pix_int  in product(assym_ratio_cutoffs, pixel_intensity_cutoffs):
+        scan_info  = f"\n*** params scan:  asym_cutoff {disc_asym}   pixel_intensity_cutoff {pix_int} "
         print(scan_info)
-        extruded_hull = extrude_hull(hull, hull_extrusion)
-        mask = np.logical_and(extruded_hull, ~inverted_vasc_img)
-        [clusters, circle_like_labels] = \
-            find_circle_like_within_hull(original_image, mask, disc_asym, pix_int, verbose)
+        [clusters, circle_like_labels] = find_circle_like_within_mask(original_image, mask, disc_asym, pix_int, verbose)
         if len(circle_like_labels) > 0:
             print(f"found {len(circle_like_labels)} clusters ", end="")
-            print(f"at pixel_intensity_cutoff {pix_int}  hull_extrusion {hull_extrusion} ")
+            print(f"at  asym_cutoff {disc_asym}  pixel_intensity_cutoff {pix_int} ")
             print()
             break
 
     ranked_labels = circle_like_labels
     print(f'unsorted {ranked_labels}')
-    if len(circle_like_labels) > 1:
-        print("re-ranking by vasculature neighborhood")
-        ranked_labels = rank_labels_by_vasculature_neighborhood(clusters, circle_like_labels, inverted_vasc_img, hull)
-        print(f're-ranked labels {ranked_labels}')
+    # if len(circle_like_labels) > 1:
+    #     print("re-ranking by vasculature neighborhood")
+    #     ranked_labels = rank_labels_by_vasculature_neighborhood(clusters, circle_like_labels, inverted_vasc_img, hull)
+    #     print(f're-ranked labels {ranked_labels}')
 
     # clusters are lists of points (x, y coords) - turn back to matrix representation
     number_of_circle_like = len(ranked_labels)

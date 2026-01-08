@@ -17,6 +17,7 @@ import os
 import numpy as np
 
 from pathlib import Path
+from scipy.ndimage import median_filter
 from skimage import exposure
 from statistics import mean
 
@@ -33,29 +34,13 @@ class FafRecalibration(FafAnalysis):
         super().__init__(name_stem)
         self.new_max_location = new_max_location
 
-    def find_avg_location_of_max(self):
-        all_faf_img_dicts = self.get_all_faf_dicts()
-        hist_paths = []
-        for faf_img_dict in all_faf_img_dicts:
-            original_image_path  = Path(faf_img_dict['image_path'])
-            alias = faf_img_dict['case_id']['alias']
-            purpose = "auto_bg_histogram" if USE_AUTO else "bg_histogram"
-            hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, purpose, 'txt')
-            if not is_nonempty_file(hist_path):
-                raise Exception(f"{hist_path} does not exist or is empty")
-            hist_paths.append(hist_path)
-        self.new_max_location = int(mean([histogram_max(hist_path) for hist_path in hist_paths]))
-
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         original_image_path = Path(faf_img_dict['image_path'])
-        alias = faf_img_dict['case_id']['alias']
-        purpose = "auto_bg_histogram" if USE_AUTO else "bg_histogram"
-        histogram_path = construct_workfile_path(WORK_DIR, original_image_path, alias, purpose, 'txt')
-        for region_png in [original_image_path, histogram_path]:
+        for region_png in [original_image_path]:
             if not is_nonempty_file(region_png):
                 scream(f"{region_png} does not exist (or may be empty).")
                 exit()
-        return [original_image_path, histogram_path]
+        return [original_image_path]
 
     def rescale(self, old_max_location: int, intensity: int) -> int:
         if intensity < old_max_location:
@@ -70,16 +55,17 @@ class FafRecalibration(FafAnalysis):
             rescaled_intensity = 255 -  (255 - self.new_max_location)/(255 - old_max_location)*(255 - intensity)
         return rescaled_intensity
 
-    def recalibrate(self, input_filepath: Path | str, hist_path: Path | str, alias: str,
-                    shift_max_only=True, skip_if_exists=False) -> str:
-
+    def recalibrate(self, input_filepath: Path | str, alias: str, skip_if_exists=False) -> str:
+        print(f"recalibrating {input_filepath}")
         outpng = construct_workfile_path(WORK_DIR, input_filepath, alias, self.name_stem, 'png')
         if skip_if_exists and is_nonempty_file(outpng):
             print(f"{os.getpid()} {outpng} found")
             return str(outpng)
         orig_img = grayscale_img_path_to_255_ndarray(input_filepath)
-        recal_image = exposure.equalize_adapthist(orig_img)*255  # CLAHE
+        med_filtered = median_filter(orig_img, size=3)
+        recal_image = exposure.equalize_adapthist(med_filtered)*255  # CLAHE
         ndarray_to_int_png(recal_image, outpng)
+        print(f"wrote output to {outpng}")
         return str(outpng)
 
     #######################################################################
@@ -91,19 +77,18 @@ class FafRecalibration(FafAnalysis):
         :return: str
             THe return string indicates success or failure - generated in compose() function
         """
-        [original_image_path, histogram_path] = self.input_manager(faf_img_dict)
+        if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
+        [original_image_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict['case_id']['alias']
 
-        return self.recalibrate(original_image_path, histogram_path, alias,
-                                shift_max_only=False, skip_if_exists=skip_if_exists)
+
+        return self.recalibrate(original_image_path, alias, skip_if_exists=skip_if_exists)
 
 
 def main():
     db = db_connect()
     faf_analysis = FafRecalibration()
-    faf_analysis.find_avg_location_of_max()
     db.close()
-    print(f"moving all maxima to {faf_analysis.new_max_location}")
     faf_analysis.run()
 
 

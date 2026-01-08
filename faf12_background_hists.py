@@ -31,6 +31,8 @@ class FafBgHistograms(FafAnalysis):
         self.parser.add_argument("-v", '--clean_view_only',
                                  dest="clean_view_only", action="store_true",
                                  help="Use only images with the clean view of the ROI. Default: False")
+        self.parser.add_argument("-c", '--ctrl_only', dest="ctrl_only", action="store_true",
+                                 help="Process only control images. Default: False.")
 
     def input_manager(self, faf_img_dict: dict) -> list[Path | None]:
         """Check the presence of all input files that we need to create the composite img.
@@ -66,6 +68,8 @@ class FafBgHistograms(FafAnalysis):
         return [original_image_path, usable_region_path, bg_sample_path]
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
+        if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
+
         alias = faf_img_dict['case_id']['alias']
         try:
             [original_image_path, usable_region_path, bg_sample_path] = self.input_manager(faf_img_dict)

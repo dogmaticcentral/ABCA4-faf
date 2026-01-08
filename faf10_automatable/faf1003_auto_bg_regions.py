@@ -23,7 +23,7 @@ from utils.gaussian import gaussian_mixture
 
 from itertools import product
 from math import sqrt, pi
-from faf00_settings import GEOMETRY, WORK_DIR, DEBUG
+from faf00_settings import GEOMETRY, WORK_DIR, DEBUG, USE_AUTO
 from utils.vector import Vector
 
 
@@ -55,8 +55,9 @@ class FafAutoBg(FafAnalysis):
         :return: list[Path]
         """
         original_image_path = Path(faf_img_dict["image_path"])
-        usable_region_path  = original_2_aux_file_path(original_image_path, ".usable_region.png")
-
+        stem  = "auto_usable" if USE_AUTO else "usable_regions"
+        alias = faf_img_dict["case_id"]['alias']
+        usable_region_path = construct_workfile_path(WORK_DIR, original_image_path, alias, stem, "png")
         for region_png in [original_image_path, usable_region_path]:
             if not is_nonempty_file(region_png):
                 scream(f"{region_png} does not exist (or may be empty).")
@@ -281,7 +282,7 @@ class FafAutoBg(FafAnalysis):
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
 
-        if self.args.clean_view_only and not faf_img_dict['clean_view']: return "ok"
+        # if self.args.clean_view_only and not faf_img_dict['clean_view']: return "ok"
         if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
 
         [original_image_path, usable_region_path] = self.input_manager(faf_img_dict)
