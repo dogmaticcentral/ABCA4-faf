@@ -32,35 +32,37 @@ class FafFoveaDisc(FafAnalysis):
          :return: list[Path]
          """
         original_image_path  = Path(faf_img_dict['image_path'])
-        stem  = "auto_usable" if USE_AUTO else "usable_regions"
         alias = faf_img_dict["case_id"]['alias']
-        usable_region_path = construct_workfile_path(WORK_DIR, original_image_path, alias, stem, "png")
-        for region_png in [original_image_path, usable_region_path]:
+        eye = faf_img_dict['eye']
+        recal_image_path = construct_workfile_path(WORK_DIR, original_image_path, alias,'recal', eye=eye, filetype="png")
+        stem  = "auto_usable" if USE_AUTO else "usable_regions"
+        usable_region_path = construct_workfile_path(WORK_DIR, original_image_path, alias, stem, eye=eye, filetype="png")
+        for region_png in [original_image_path, recal_image_path, usable_region_path]:
             if not is_nonempty_file(region_png):
                 scream(f"{region_png} does not exist (or may be empty).")
                 exit()
 
-        return [original_image_path, usable_region_path]
+        return [original_image_path, recal_image_path, usable_region_path]
 
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
         # if not faf_img_dict['clean_view']: return "ok"
-        [original_image_path, usable_region_path] = self.input_manager(faf_img_dict)
+        [original_image_path, recal_image_path, usable_region_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict['case_id']['alias']
-        outpng = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, "png")
+        eye = faf_img_dict['eye']
+        outpng = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, eye=eye, filetype="png")
         if skip_if_exists and is_nonempty_file(outpng):
             print(f"{os.getpid()} {outpng} found")
             return str(outpng)
 
-        print(f"looking for disc in {original_image_path}")
-        eye = faf_img_dict['eye']
-        circular_cluster_detector(original_image_path, usable_region_path, eye, outpng)
+        print(f"looking for circular clusters in {recal_image_path}")
+        circular_cluster_detector(recal_image_path, usable_region_path, eye, outpng)
         return f"{outpng} ok"
 
 
 def main():
 
-    faf_analysis = FafFoveaDisc(name_stem="fovea_n_disc")
+    faf_analysis = FafFoveaDisc(name_stem="auto_fovea_n_disc")
     faf_analysis.run()
 
 

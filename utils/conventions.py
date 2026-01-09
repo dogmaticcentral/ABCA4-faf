@@ -51,9 +51,10 @@ def construct_report_filepath(workdir: Path | str,  name_stem: str,  filetype: s
     return file_path
 
 
-def construct_workfile_path(workdir: Path | str, orig_img_path: Path | str,
-                            alias: str, purpose: str, filetype: str, should_exist: bool = False) -> Path:
+def construct_workfile_path(workdir: Path | str, orig_img_path: Path | str, alias: str, purpose: str, filetype: str,
+                            eye: str="", should_exist: bool = False) -> Path:
     """Creates conventional name for a file with particular purpose in the workdir.
+    :param eye:
     :param workdir: Path | str
         Full path to the work directory
     :param orig_img_path:  Path | str
@@ -64,6 +65,8 @@ def construct_workfile_path(workdir: Path | str, orig_img_path: Path | str,
         The purpose of the file. (E.g. 'overlay', or 'histogram'.)
     :param filetype: str
         The expected file type (not checked; e.g. 'png', 'svg', or 'txt')
+     :param eye: str
+        Eye laterality ("OD", "OS", or ""); default ""
     :param should_exist:
         Specify whether the file should already exist, or if we want to create a new one.
         In the latter case the parent directory will be created if it does not exist.
@@ -76,9 +79,11 @@ def construct_workfile_path(workdir: Path | str, orig_img_path: Path | str,
     workdir = Path(workdir)
     orig_img_path = Path(orig_img_path)
     alias = alias.replace(" ", "_")  # just in case
-    purpose_dir   = Path(PurePath(workdir, alias, purpose + 's'))
+    path_parts = [workdir, alias, purpose + 's']
+    if eye: path_parts.append(eye)
+    purpose_dir   = Path(PurePath(*path_parts))
     workfile_name = orig_img_path.stem + f".{purpose}.{filetype}"
-    workfile_path =  purpose_dir.joinpath(workfile_name)
+    workfile_path = purpose_dir.joinpath(workfile_name)
     if should_exist:
         if not purpose_dir.exists():
             scream(f"Directory {purpose_dir} not found.")

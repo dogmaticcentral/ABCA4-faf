@@ -245,7 +245,7 @@ To create recalibrated images in the WORKDIR specified in `faf00_settings.py`, r
 
 Blood vessel detection is currently a simple heuristic using traditional image processing tools
 from Piillow and scikit-image:
-[faf15_blood_vessel_detection.py](faf15_blood_vessel_detection.py). The heuristic is rather fragile,
+[faf15_blood_vessel_detection.py](faf10_automatable/faf15_blood_vessel_detection.py). The heuristic is rather fragile,
 and will likely be replaced in the future.
 
 ## Blood vessel detection and mask creation

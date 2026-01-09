@@ -40,8 +40,8 @@ class FafOverlay(FafAnalysis):
         disc_center  = (faf_img_dict['disc_x'], faf_img_dict['disc_y'])
         fovea_center = (faf_img_dict['fovea_x'], faf_img_dict['fovea_y'])
 
-        svg_filepath = construct_workfile_path(WORK_DIR, faf_img_dict['image_path'],
-                                                faf_img_dict['case_id']['alias'], 'overlay', 'svg')
+        svg_filepath = construct_workfile_path(WORK_DIR, faf_img_dict['image_path'], faf_img_dict['case_id']['alias'],
+                                               'overlay', 'svg')
         if skip_if_exists and is_nonempty_file(svg_filepath):
             if DEBUG: print(f"found {svg_filepath}")
             return str(svg_filepath)
@@ -78,8 +78,8 @@ class FafOverlay(FafAnalysis):
         # (For some reason, inkscape does not interpret the svg coordinated correctly, and they
         #  end up shifted wrt to the original tff image. N.B. gimp does not have this problem,
         #  However, if we convert to png, then the geometry works as intended.)
-        png_filepath  = construct_workfile_path(WORK_DIR, faf_img_dict['image_path'],
-                                                faf_img_dict['case_id']['alias'], 'overlay', 'png')
+        png_filepath  = construct_workfile_path(WORK_DIR, faf_img_dict['image_path'], faf_img_dict['case_id']['alias'],
+                                                'overlay', 'png')
         if skip_if_exists and is_nonempty_file(png_filepath):
             if DEBUG: print(f"found {png_filepath}")
             return str(png_filepath)

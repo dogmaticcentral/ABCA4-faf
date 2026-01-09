@@ -45,7 +45,8 @@ class FafComposite(FafAnalysis):
         ellipse_overlay = construct_workfile_path(WORK_DIR, original_image, alias, 'overlay', 'png', should_exist=True)
         usable_region   = original_2_aux_file_path(original_image, ".usable_region.png")
         bgsample_region = original_2_aux_file_path(original_image, ".bg_sample.png")
-        blood_vessels   = construct_workfile_path(WORK_DIR, original_image, alias, 'vasculature', 'png', should_exist=True)
+        blood_vessels   = construct_workfile_path(WORK_DIR, original_image, alias, 'vasculature', 'png',
+                                                  should_exist=True)
 
         for region_png in [original_image, usable_region, bgsample_region, blood_vessels]:
             if not is_nonempty_file(region_png):

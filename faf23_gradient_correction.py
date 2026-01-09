@@ -37,7 +37,8 @@ class FafGradCorrection(FafAnalysis):
         original_image_path = Path(faf_img_dict["image_path"])
         alias = faf_img_dict["case_id"]["alias"]
         inner_ellipse_hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "roi_histogram", "txt")
-        outer_ellipse_hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "outer_roi_histogram", "txt")
+        outer_ellipse_hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "outer_roi_histogram",
+                                                          "txt")
         dependencies = [inner_ellipse_hist_path, outer_ellipse_hist_path]
 
         for region_png in dependencies:

@@ -68,14 +68,8 @@ class FafBgHistograms(FafAnalysis):
         """
         original_image_path = Path(faf_img_dict["image_path"])
         alias = faf_img_dict["case_id"]["alias"]
-        inner_ellipse_mask_path = construct_workfile_path(
-            WORK_DIR,
-            original_image_path,
-            alias,
-            "elliptic_mask",
-            "png",
-            should_exist=True,
-        )
+        inner_ellipse_mask_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "elliptic_mask", "png",
+                                                          should_exist=True)
         dependencies = [original_image_path, inner_ellipse_mask_path]
         if self.args.outer_ellipse:
             outer_ellipse_mask_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "outer_mask", "png")

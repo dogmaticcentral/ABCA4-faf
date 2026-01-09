@@ -30,6 +30,7 @@ def fetch_scores() -> list[Tuple[float, float, str]]:
         Score
         .select(Score.brisque_score, FafImage.age_acquired,  FafImage.image_path)
         .join(FafImage)
+        .where(FafImage.usable == True)
         .tuples()
     )
     return list(query)
@@ -45,7 +46,7 @@ def get_marker_style(image_path: str) -> tuple[str, str]:
     elif device == "California":
         color =  "red"
     else:
-        color =  "pink"
+        color =  "green"
 
     dilated = faf_img.dilated
     shape = 'o' if dilated else 'd' # o is circle d is thin diamond
@@ -58,7 +59,7 @@ def get_legend_elements():
                markersize=10, label='California'),
         Line2D([0], [0], marker='o', color='w', markerfacecolor='orange',
                markersize=10, label='Silverstone'),
-        Line2D([0], [0], marker='o', color='w', markerfacecolor='pink',
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='green',
                markersize=10, label='Daytona'),
         Line2D([0], [0], marker='o', color='w', markerfacecolor='gray',
                markersize=10, label='dilated'),
@@ -83,7 +84,7 @@ def plot_scores(data: list[tuple[float, float, str]]) -> None:
         else:
             mec = 'blue'
         # s = marker size
-        plt.scatter(age, brisque, facecolors=color, edgecolors=mec, linewidths=3, marker=shape,  alpha=0.6, s=80)
+        plt.scatter(age, brisque, facecolors=color, edgecolors=mec, linewidths=2, marker=shape,  alpha=0.6, s=120)
     plt.legend(handles=get_legend_elements(), loc='lower right', fontsize=12)
     plt.xlabel("Age image acquired (years)", fontsize=14)
     plt.ylabel("BRISQUE Score", fontsize=14)

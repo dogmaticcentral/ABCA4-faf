@@ -58,7 +58,7 @@ class FafBgHistograms(FafAnalysis):
             bg_sample_path = original_2_aux_file_path(original_image_path, ".bg_sample.png")
             if not is_nonempty_file(bg_sample_path):
                 shrug(f"{bg_sample_path} does not exist (or may be empty) - falling back on the automated selection.")
-                bg_sample_path =  construct_workfile_path(WORK_DIR, original_image_path, alias, "auto_bg", "png")
+                bg_sample_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "auto_bg", "png")
 
         usable_region_path = original_2_aux_file_path(original_image_path, ".usable_region.png")
         for region_png in [original_image_path, usable_region_path, bg_sample_path]:

@@ -17,7 +17,7 @@ import os
 import numpy as np
 
 from pathlib import Path
-from scipy.ndimage import median_filter
+from scipy.ndimage import median_filter, gaussian_filter
 from skimage import exposure
 from statistics import mean
 
@@ -55,22 +55,23 @@ class FafRecalibration(FafAnalysis):
             rescaled_intensity = 255 -  (255 - self.new_max_location)/(255 - old_max_location)*(255 - intensity)
         return rescaled_intensity
 
-    def recalibrate(self, input_filepath: Path | str, alias: str, skip_if_exists=False) -> str:
+    def recalibrate(self, input_filepath: Path | str, alias: str, eye: str, skip_if_exists=False) -> str:
         print(f"recalibrating {input_filepath}")
-        outpng = construct_workfile_path(WORK_DIR, input_filepath, alias, self.name_stem, 'png')
+        outpng = construct_workfile_path(WORK_DIR, input_filepath, alias, self.name_stem, eye=eye, filetype='png')
         if skip_if_exists and is_nonempty_file(outpng):
             print(f"{os.getpid()} {outpng} found")
             return str(outpng)
-        orig_img = grayscale_img_path_to_255_ndarray(input_filepath)
+        orig_img     = grayscale_img_path_to_255_ndarray(input_filepath)
         med_filtered = median_filter(orig_img, size=3)
-        recal_image = exposure.equalize_adapthist(med_filtered)*255  # CLAHE
+        gauss_filtered = gaussian_filter(med_filtered, sigma=3)
+        recal_image  = exposure.equalize_adapthist(gauss_filtered)*255  # CLAHE
         ndarray_to_int_png(recal_image, outpng)
         print(f"wrote output to {outpng}")
         return str(outpng)
 
     #######################################################################
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
-        """ Inner content of the loop over  faf image data - a convenience for parallelization
+        """ Inner content of the loop over faf image data - a convenience for parallelization
         :param faf_img_dict: bool
         :param skip_if_exists:
             if a nonempty file with the expected name already exists, skip the job
@@ -80,9 +81,8 @@ class FafRecalibration(FafAnalysis):
         if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
         [original_image_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict['case_id']['alias']
-
-
-        return self.recalibrate(original_image_path, alias, skip_if_exists=skip_if_exists)
+        eye   = faf_img_dict['eye']
+        return self.recalibrate(original_image_path, alias, eye,  skip_if_exists=skip_if_exists)
 
 
 def main():
