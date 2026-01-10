@@ -13,7 +13,7 @@ import os
 import sys
 sys.path.insert(0, "..")
 
-from utils.clustering import  circular_cluster_detector
+from utils.clustering import  disc_and_fovea_detector
 from utils.image_utils import grayscale_img_path_to_255_ndarray
 from faf00_settings import WORK_DIR, USE_AUTO
 
@@ -35,19 +35,18 @@ class FafFoveaDisc(FafAnalysis):
         alias = faf_img_dict["case_id"]['alias']
         eye = faf_img_dict['eye']
         recal_image_path = construct_workfile_path(WORK_DIR, original_image_path, alias,'recal', eye=eye, filetype="png")
-        stem  = "auto_usable" if USE_AUTO else "usable_regions"
-        usable_region_path = construct_workfile_path(WORK_DIR, original_image_path, alias, stem, eye=eye, filetype="png")
-        for region_png in [original_image_path, recal_image_path, usable_region_path]:
+        for region_png in [original_image_path, recal_image_path]:
             if not is_nonempty_file(region_png):
                 scream(f"{region_png} does not exist (or may be empty).")
                 exit()
 
-        return [original_image_path, recal_image_path, usable_region_path]
+        return [original_image_path, recal_image_path]
 
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
         # if not faf_img_dict['clean_view']: return "ok"
-        [original_image_path, recal_image_path, usable_region_path] = self.input_manager(faf_img_dict)
+        if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
+        [original_image_path, recal_image_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict['case_id']['alias']
         eye = faf_img_dict['eye']
         outpng = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, eye=eye, filetype="png")
@@ -56,12 +55,13 @@ class FafFoveaDisc(FafAnalysis):
             return str(outpng)
 
         print(f"looking for circular clusters in {recal_image_path}")
-        circular_cluster_detector(recal_image_path, usable_region_path, eye, outpng)
+        disc_and_fovea_detector(recal_image_path, None, eye, outpng, verbose=False)
         return f"{outpng} ok"
 
 
 def main():
-
+    # TODO store to db
+    # extend faf 12 so that the slides show the ovelays over each iamge
     faf_analysis = FafFoveaDisc(name_stem="auto_fovea_n_disc")
     faf_analysis.run()
 

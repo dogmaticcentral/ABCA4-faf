@@ -1,3 +1,4 @@
+import numpy as np
 from scipy.integrate import quad
 from math import pi, sin, cos, sqrt
 
@@ -44,3 +45,21 @@ def find_equipart_angles(a, b, num_arcs):
         lower_bound = upper_bound
 
     return angles
+
+def elliptical_mask(height, width, radius_x, radius_y) -> np.ndarray:
+    outmatrix = np.zeros((height, width), dtype=np.uint8)
+
+    # Calculate center and half-dimensions
+    center_y, center_x = height // 2, width // 2
+
+    # Create coordinate grids
+    y, x = np.ogrid[:height, :width]
+
+    # Ellipse equation
+    inside_ellipse = ((x - center_x)**2 / radius_x**2 +
+                      (y - center_y)**2 / radius_y**2) <= 1
+
+    # Set blue (channel 2) and alpha (channel 3) to 255 inside ellipse
+    outmatrix[inside_ellipse] = 255
+
+    return outmatrix

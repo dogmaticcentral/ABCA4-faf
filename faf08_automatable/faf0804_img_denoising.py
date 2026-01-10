@@ -43,19 +43,6 @@ class FafDenoising(FafAnalysis):
                 exit()
         return [original_image_path]
 
-    def rescale(self, old_max_location: int, intensity: int) -> int:
-        if intensity < old_max_location:
-            if intensity == 0: return 0
-            if old_max_location < 0: return 0  # not sure how this could have happened
-            # rescaled_intensity / intensity = new_max / old_max
-            rescaled_intensity = int(self.new_max_location/old_max_location*intensity)
-        else:
-            if intensity >= 255: return 255
-            if old_max_location >= 255: return 255  # not sure how this could have happened
-            # (255 - rescaled_intensity) / (255 - intensity) = (255 - new_max) /(255 - old_max)
-            rescaled_intensity = 255 -  (255 - self.new_max_location)/(255 - old_max_location)*(255 - intensity)
-        return rescaled_intensity
-
     def denoise(self, input_filepath: Path | str, alias: str, eye: str, skip_if_exists=False) -> str:
         print(f"denoising {input_filepath}")
         outpng = construct_workfile_path(WORK_DIR, input_filepath, alias, self.name_stem, eye=eye, filetype='png')
@@ -63,6 +50,7 @@ class FafDenoising(FafAnalysis):
             print(f"{os.getpid()} {outpng} found")
             return str(outpng)
         orig_img  = imread(input_filepath, as_gray=True) # should be an array of floats, not ints
+        # orig_img = grayscale_img_path_to_255_ndarray(input_filepath)
         # 'mysize' defines the window size (e.g., 3x3, 5x5, etc.)
         # If 'noise' is None, it is estimated from the local variance
         # h, w = orig_img.shape[:2]
@@ -70,9 +58,12 @@ class FafDenoising(FafAnalysis):
         # core_img = orig_img[y_center-300:y_center+300, x_center-500:x_center+500]
         # print(f"Min: {core_img.min()}, Max: {core_img.max()}, Mean: {core_img.mean()}")
         # looks the best without mysize
-        filtered = wiener(orig_img,)
-        print(f"Min: {filtered.min()}, Max: {filtered.max()}, Mean: {filtered.mean()}")
+        filtered = wiener(orig_img)
+        # print(f"Min: {filtered.min()}, Max: {filtered.max()}, Mean: {filtered.mean()}")
         denoised_image = np.clip(filtered*255, 0, 255).astype(np.uint8)
+        # to check the difference (there is some)
+        # orig_img = grayscale_img_path_to_255_ndarray(input_filepath)
+        # ndarray_to_int_png(np.abs(denoised_image-orig_img), outpng)
         ndarray_to_int_png(denoised_image, outpng)
         print(f"wrote output to {outpng}")
         return str(outpng)

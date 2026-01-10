@@ -14,8 +14,9 @@ from random import sample
 
 import numpy as np
 
+from utils.elliptic import elliptical_mask
 from utils.image_utils import channel_visualization, gray_read_blur, grayscale_img_path_to_255_ndarray, \
-    ndarray_to_int_png, rgba_255_path_to_255_ndarray
+    ndarray_to_int_png, rgba_255_path_to_255_ndarray, ndarray_boolean_to_255_png
 from utils.utils import scream
 
 BLACK = 1
@@ -276,18 +277,22 @@ def principal_axes_ratio(cluster: IntPointList, verbose=False) -> float:
     return bigger_to_smaller_ratio(I_xx_principal, I_yy_principal, verbose)
 
 
-def find_circle_like_within_mask(image_in: np.ndarray, mask: np.ndarray, disc_asym_cutoff, pixel_intensity_cutoff, verbose):
+def find_circle_like_within_mask(image_in: np.ndarray, mask: np.ndarray,
+                                 disc_asym_cutoff, pix_int_upper_cutoff, verbose) -> ClusterBookkeeping | None:
 
     # these are RGB images, so in principle this number should go 0-255
-    clusters = find_clusters(image_in, mask, cutoffs=(10, pixel_intensity_cutoff))
-    if verbose: print(f"\n found {len(clusters.cluster)} clusters within the mask")
+    clusters = find_clusters(image_in, mask, cutoffs=(10, pix_int_upper_cutoff))
+    if verbose:
+        print(f"found {len(clusters.cluster)} clusters within the mask")
+    if len(clusters.cluster) == 0:
+        return None
 
-    # report all clusters for which the center of mass is withing the cluster itself
+    # sort cluster labels by cluster size in pixels
     sorted_labels = list(sorted(clusters.cluster.keys(), key=lambda k: len(clusters.cluster[k]), reverse=True))
 
     # from all clusters findd those that are most circle-like
-    axes_ratio = {}  # axes ration, for labels that are cicle like
-    min_cluster = 1*1e3
+    axes_ratio = {}  # axes ratio, for labels that are cicle like
+    min_cluster = 500 # 1*1e3
     max_cluster = 10*1e3
     for label in sorted_labels:
         if len(clusters.cluster[label]) < min_cluster or len(clusters.cluster[label]) > max_cluster: continue
@@ -301,8 +306,8 @@ def find_circle_like_within_mask(image_in: np.ndarray, mask: np.ndarray, disc_as
             axes_ratio[label] = ratio
 
     if verbose: print(f"number of circle-like clusters: {len(axes_ratio)}")
-    labels_of_circle_like_clusters = sorted(axes_ratio.keys(), key=lambda l: axes_ratio[l])
-    return clusters, labels_of_circle_like_clusters
+    clusters.selected = sorted(axes_ratio.keys(), key=lambda l: axes_ratio[l])
+    return clusters
 
 
 def find_center(list_of_coords) -> list[int]:
@@ -336,63 +341,103 @@ def pointlist2ndarray(point_list: IntPointList, shape) -> np.ndarray:
             exit()
     return bw_image
 
+def content_range(img: np.ndarray, direction: int, verbose=False) -> int:
+    # direction 0 = y
+    # direction 1 = x
+    row_means = np.mean(img, axis=direction)
+    center = np.argmax(row_means)
 
-def circular_cluster_detector(original_image_path: Path, usable_region_path:  Path, eye: str, path_to_image_out, verbose=True):
+    # Get intensity profile along that row
+    if direction == 0:
+        profile = img[:, center]
+    elif direction == 1:
+        profile = img[center, :]
+    else:
+        raise Exception(f"direction {direction} is not supported")
+
+    threshold = (profile.min() + 1)*1.2 # for the cases where black is off black
+    # Find where profile exceeds the threshold
+    edge_indices = np.where(profile > threshold)[0]
+    if len(edge_indices) == 0:
+        raise Exception(f"No edge indices  detected. Try adjusting the threshold.")
+
+    # Find left and right edges
+    start_edge = edge_indices[0]
+    end_edge = edge_indices[-1]
+
+    # Calculate radius and center
+    distance = int(end_edge - start_edge)
+    if verbose:
+        print(f"Circle detected (1D method):")
+        print(f"  Scan direction: {'x' if direction == 1 else 'y'}")
+        print(f"  Start edge: {start_edge}")
+        print(f"  End edge: {end_edge}")
+        print(f"  Radius: {distance} pixels")
+
+    return distance
+
+
+
+def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path | None, eye: str, path_to_image_out, verbose=True):
 
     original_image  = gray_read_blur(str(original_image_path))
-    # the inverted_vasc_img has 255 for the pixels belonging to vessels, otherwise 0
-    mask = rgba_255_path_to_255_ndarray(usable_region_path, channel=2)
-
+    if usable_region_path is not None:
+        mask = rgba_255_path_to_255_ndarray(usable_region_path, channel=2)
+    else:
+        # use an elliptical mask to reduce the search area
+        # find roughly where the boundaries of the actual image are
+        x_range = content_range(original_image, 1, verbose=False)
+        y_range = content_range(original_image, 0, verbose=False)
+        height, width = original_image.shape
+        mask =  elliptical_mask(height, width, radius_x=x_range//8, radius_y=y_range//8)
+        # ndarray_boolean_to_255_png(mask, path_to_image_out)
+        # print(f"wrote mask to {path_to_image_out}")
+        # exit()
     h, w = mask.shape
     center_y, center_x = h // 2, w // 2
 
-    # Create coordinate grids
-    y, x = np.ogrid[:h, :w]
-
-    # Calculate distance from center
-    distance = np.sqrt((x - center_x)**2 + (y - center_y)**2)
-
-    # keep only positions within 1000px from the center
-    mask[distance > 400] = 0
-    mask_size = np.count_nonzero(mask> 0)
-    print(f"height {h}, width {w}")
-    print(f"center {center_y}, {center_x}")
-    print(f"mask size: {mask_size}, full array size = {h*w}")
-    print()
-
     cluster_candidates = []
     assym_ratio_cutoffs = (2.5, 3.0)
-    cness_cutoff   = 1.5
     pixel_intensity_cutoffs  = (50, 70, 90, 110)
 
-    for disc_asym, pix_int  in product(assym_ratio_cutoffs, pixel_intensity_cutoffs):
-        # print(f"*** params scan:  asym_cutoff {disc_asym}   pixel_intensity_cutoff {pix_int} ")
-        [clusters, labels_of_circle_like_clusters] = find_circle_like_within_mask(original_image, mask,
-                                                                                  disc_asym, pix_int, verbose=False)
-        if len(labels_of_circle_like_clusters) > 1:
-            if verbose:
-                print(f"found {len(labels_of_circle_like_clusters)} circle-ish clusters ", end="")
-                print(f"at asym_cutoff {disc_asym}  pixel_intensity_cutoff {pix_int} ")
-                print()
-            clusters.selected = labels_of_circle_like_clusters
-            clusters.parametrization = {"disc_asym": disc_asym, "pix_int": pix_int}
-            cluster_candidates.append(clusters)
-            # TODO: I am here, decide based on the eye which one should be ONH, and which one fovea
-            # if the ONH is bigger,  break; otherwise proceed by hand
-            break
-        else:
+    for disc_asym, pix_int_upper_cutoff  in product(assym_ratio_cutoffs, pixel_intensity_cutoffs):
+        if verbose: print(f"*** params scan:  asym_cutoff {disc_asym}   pix int upper cutoff {pix_int_upper_cutoff} ")
+        cluster_book = find_circle_like_within_mask(original_image, mask, disc_asym, pix_int_upper_cutoff, verbose=verbose)
+        if cluster_book is None:
             if verbose: print(f"no clusters found")
+            continue
 
+        if verbose:
+            print(f"found {len(cluster_book.selected)} circle-ish clusters ", end="")
+            print(f"at asym_cutoff {disc_asym}  pixel_intensity_cutoff {pix_int_upper_cutoff} ")
+            print()
+        if len(cluster_book.selected) < 2: continue
+        cluster_book.parametrization = {"disc_asym": disc_asym, "pix_int": pix_int_upper_cutoff}
+        cluster_candidates.append(cluster_book)
+        break
+
+
+    if len(cluster_candidates) == 0:
+        print(f"no disc + fovea found for {original_image_path}")
+        return ""
+    #i = 0
     for cluster_data in cluster_candidates:
         cluster_as_nd_array = []
+        dist_to_img_center = []
         cluster_data: ClusterBookkeeping
         for label in cluster_data.selected[:2]:
             coords = cluster_data.cluster[label]
             cluster_center = find_center(coords)
-            dist_to_img_cetner = dist(cluster_center, (center_y, center_x))
-            print(label, f"number of pixels: {len(coords)}   center: {cluster_center}   dist: {dist_to_img_cetner}")
+            dist_to_img_center.append(dist(cluster_center, (center_y, center_x)))
+            # print(label, f"number of pixels: {len(coords)}   center: {cluster_center}   dist: {dist_to_img_cetner}")
             cluster_as_nd_array.append(pointlist2ndarray(coords, original_image.shape))
-        channel_visualization(cluster_as_nd_array[0],  cluster_as_nd_array[1], mask, path_to_image_out)
-        print(f"clusters written to {path_to_image_out}")
+        # i += 1
+        outnm = str(path_to_image_out) # .replace(".png", f".{i}.png")
+        # red should be the ONH, green the fovea
+        if dist_to_img_center[0] > dist_to_img_center[1]:
+            channel_visualization(cluster_as_nd_array[0],  cluster_as_nd_array[1], None, outnm, alpha=True)
+        else:
+            channel_visualization(cluster_as_nd_array[1],  cluster_as_nd_array[0], None, outnm, alpha=True)
+        print(f"clusters written to {outnm}")
 
     return path_to_image_out

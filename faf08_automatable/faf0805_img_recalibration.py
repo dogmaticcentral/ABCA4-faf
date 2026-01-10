@@ -36,32 +36,23 @@ class FafRecalibration(FafAnalysis):
 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         original_image_path = Path(faf_img_dict['image_path'])
-        for region_png in [original_image_path]:
+        alias = faf_img_dict['case_id']['alias']
+        eye   = faf_img_dict['eye']
+        denoised_img_path = construct_workfile_path(WORK_DIR, original_image_path, alias, 'denoised',
+                                                    eye=eye, filetype='png')
+        for region_png in [original_image_path, denoised_img_path]:
             if not is_nonempty_file(region_png):
                 scream(f"{region_png} does not exist (or may be empty).")
                 exit()
-        return [original_image_path]
+        return [original_image_path, denoised_img_path]
 
-    def rescale(self, old_max_location: int, intensity: int) -> int:
-        if intensity < old_max_location:
-            if intensity == 0: return 0
-            if old_max_location < 0: return 0  # not sure how this could have happened
-            # rescaled_intensity / intensity = new_max / old_max
-            rescaled_intensity = int(self.new_max_location/old_max_location*intensity)
-        else:
-            if intensity >= 255: return 255
-            if old_max_location >= 255: return 255  # not sure how this could have happened
-            # (255 - rescaled_intensity) / (255 - intensity) = (255 - new_max) /(255 - old_max)
-            rescaled_intensity = 255 -  (255 - self.new_max_location)/(255 - old_max_location)*(255 - intensity)
-        return rescaled_intensity
-
-    def recalibrate(self, input_filepath: Path | str, alias: str, eye: str, skip_if_exists=False) -> str:
+    def recalibrate(self, input_filepath: Path | str, denoised_img_path: Path | str, alias: str, eye: str, skip_if_exists=False) -> str:
         print(f"recalibrating {input_filepath}")
         outpng = construct_workfile_path(WORK_DIR, input_filepath, alias, self.name_stem, eye=eye, filetype='png')
         if skip_if_exists and is_nonempty_file(outpng):
             print(f"{os.getpid()} {outpng} found")
             return str(outpng)
-        orig_img     = grayscale_img_path_to_255_ndarray(input_filepath)
+        orig_img     = grayscale_img_path_to_255_ndarray(denoised_img_path)
         med_filtered = median_filter(orig_img, size=3)
         gauss_filtered = gaussian_filter(med_filtered, sigma=3)
         recal_image  = exposure.equalize_adapthist(gauss_filtered)*255  # CLAHE
@@ -79,10 +70,10 @@ class FafRecalibration(FafAnalysis):
             THe return string indicates success or failure - generated in compose() function
         """
         if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
-        [original_image_path] = self.input_manager(faf_img_dict)
+        [original_image_path, denoised_img_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict['case_id']['alias']
         eye   = faf_img_dict['eye']
-        return self.recalibrate(original_image_path, alias, eye,  skip_if_exists=skip_if_exists)
+        return self.recalibrate(original_image_path, denoised_img_path, alias, eye,  skip_if_exists=skip_if_exists)
 
 
 def main():

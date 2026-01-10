@@ -25,18 +25,27 @@ from skimage.io import imread, imsave
 from skimage.util import img_as_ubyte
 
 
-def channel_visualization(r_channel: np.ndarray, g_channel: np.ndarray, b_channel: np.ndarray,
+def channel_visualization(r_channel: np.ndarray | None, g_channel: np.ndarray| None, b_channel: np.ndarray| None,
                           outname: str, alpha: bool = False):
 
-    if g_channel.shape != r_channel.shape or b_channel.shape != r_channel.shape:
-        print("all image arrays must be of the same shape for the channel hack to work")
-        exit(1)
-    nr, nc = r_channel.shape
+    if all(channel is None for channel in [r_channel, g_channel, b_channel]):
+        print("in channel_visualization(): no channel given; not visualizing")
+        return
+
+    channel_shapes = list(channel.shape for channel in [r_channel, g_channel, b_channel] if channel is not None)
+    if len(set(channel_shapes)) != 1:
+        print("in channel_visualization(): channels not of the same shape; not visualizing")
+        return
+
+    nr, nc =channel_shapes[0]
 
     image_array = np.zeros((nr, nc, 4 if alpha else 3))
-    image_array[..., 0] = np.divide(r_channel,  np.amax(r_channel)) if np.amax(r_channel) > 0 else 0
-    image_array[..., 1] = np.divide(g_channel,  np.amax(g_channel)) if np.amax(g_channel) > 0 else 0
-    image_array[..., 2] = np.divide(b_channel,  np.amax(b_channel)) if np.amax(b_channel) > 0 else 0
+    if r_channel is not None:
+        image_array[..., 0] = np.divide(r_channel,  np.amax(r_channel)) if np.amax(r_channel) > 0 else 0
+    if g_channel is not None:
+        image_array[..., 1] = np.divide(g_channel,  np.amax(g_channel)) if np.amax(g_channel) > 0 else 0
+    if b_channel is not None:
+        image_array[..., 2] = np.divide(b_channel,  np.amax(b_channel)) if np.amax(b_channel) > 0 else 0
     if alpha:
         for r in range(nr):
             for c in range(nc):
