@@ -378,7 +378,8 @@ def content_range(img: np.ndarray, direction: int, verbose=False) -> int:
 
 
 
-def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path | None, eye: str, path_to_image_out, verbose=True):
+def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path | None,
+                            eye: str, path_to_image_out, verbose=True) -> tuple[tuple, tuple] | None:
 
     original_image  = gray_read_blur(str(original_image_path))
     if usable_region_path is not None:
@@ -420,7 +421,8 @@ def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path
     if len(cluster_candidates) == 0:
         print(f"no disc + fovea found for {original_image_path}")
         return ""
-    #i = 0
+
+    cluster_centers = []
     for cluster_data in cluster_candidates:
         cluster_as_nd_array = []
         dist_to_img_center = []
@@ -428,6 +430,7 @@ def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path
         for label in cluster_data.selected[:2]:
             coords = cluster_data.cluster[label]
             cluster_center = find_center(coords)
+            cluster_centers.append(tuple(cluster_center))
             dist_to_img_center.append(dist(cluster_center, (center_y, center_x)))
             # print(label, f"number of pixels: {len(coords)}   center: {cluster_center}   dist: {dist_to_img_cetner}")
             cluster_as_nd_array.append(pointlist2ndarray(coords, original_image.shape))
@@ -436,8 +439,12 @@ def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path
         # red should be the ONH, green the fovea
         if dist_to_img_center[0] > dist_to_img_center[1]:
             channel_visualization(cluster_as_nd_array[0],  cluster_as_nd_array[1], None, outnm, alpha=True)
+            disc_center, fovea_center = cluster_centers[:2]
         else:
             channel_visualization(cluster_as_nd_array[1],  cluster_as_nd_array[0], None, outnm, alpha=True)
-        print(f"clusters written to {outnm}")
+            fovea_center, disc_center = cluster_centers[:2]
 
-    return path_to_image_out
+        print(f"clusters written to {outnm}")
+        return disc_center, fovea_center
+
+    return None

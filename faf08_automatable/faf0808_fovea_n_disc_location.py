@@ -26,6 +26,11 @@ from utils.utils import is_nonempty_file, scream
 
 class FafFoveaDisc(FafAnalysis):
 
+    def create_parser(self):
+        super().create_parser()
+        self.parser.add_argument("-d", '--db-store', dest="store_to_db", action="store_true",
+                                 help="Store the fovea and disc locations to database. Default: False.")
+
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         """Check the presence of all input files that we need to create the composite img.
          :param faf_img_dict:
@@ -55,12 +60,15 @@ class FafFoveaDisc(FafAnalysis):
             return str(outpng)
 
         print(f"looking for circular clusters in {recal_image_path}")
-        disc_and_fovea_detector(recal_image_path, None, eye, outpng, verbose=False)
+        disc_center, fovea_center = disc_and_fovea_detector(recal_image_path, None, eye, outpng, verbose=False)
+        if self.args.store_to_db:
+            # TODO store to db
+            pass
         return f"{outpng} ok"
 
 
 def main():
-    # TODO store to db
+    # TODO
     # extend faf 12 so that the slides show the ovelays over each iamge
     faf_analysis = FafFoveaDisc(name_stem="auto_fovea_n_disc")
     faf_analysis.run()

@@ -135,6 +135,7 @@ class FafAnalysis(ABC):
 
     @staticmethod
     def get_all_faf_dicts():
+        # TODO add selction for controls and silverstone only
         return list(model_to_dict(f) for f in FafImage.select().where(FafImage.usable == True))
 
     def run(self):
