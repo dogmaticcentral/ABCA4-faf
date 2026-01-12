@@ -41,7 +41,7 @@ class FafOverlay(FafAnalysis):
         fovea_center = (faf_img_dict['fovea_x'], faf_img_dict['fovea_y'])
 
         svg_filepath = construct_workfile_path(WORK_DIR, faf_img_dict['image_path'], faf_img_dict['case_id']['alias'],
-                                               'overlay', 'svg')
+                                                eye=faf_img_dict['eye'], purpose='overlay',  filetype='svg')
         if skip_if_exists and is_nonempty_file(svg_filepath):
             if DEBUG: print(f"found {svg_filepath}")
             return str(svg_filepath)
@@ -79,7 +79,7 @@ class FafOverlay(FafAnalysis):
         #  end up shifted wrt to the original tff image. N.B. gimp does not have this problem,
         #  However, if we convert to png, then the geometry works as intended.)
         png_filepath  = construct_workfile_path(WORK_DIR, faf_img_dict['image_path'], faf_img_dict['case_id']['alias'],
-                                                'overlay', 'png')
+                                                eye=faf_img_dict['eye'], purpose='overlay',  filetype='png')
         if skip_if_exists and is_nonempty_file(png_filepath):
             if DEBUG: print(f"found {png_filepath}")
             return str(png_filepath)

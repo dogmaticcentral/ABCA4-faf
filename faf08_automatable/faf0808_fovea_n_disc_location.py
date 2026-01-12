@@ -11,6 +11,10 @@
 """
 import os
 import sys
+
+from models.abca4_faf_models import FafImage, Device
+from utils.db_utils import db_connect
+
 sys.path.insert(0, "..")
 
 from utils.clustering import  disc_and_fovea_detector
@@ -50,7 +54,6 @@ class FafFoveaDisc(FafAnalysis):
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
         # if not faf_img_dict['clean_view']: return "ok"
-        if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
         [original_image_path, recal_image_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict['case_id']['alias']
         eye = faf_img_dict['eye']
@@ -60,16 +63,20 @@ class FafFoveaDisc(FafAnalysis):
             return str(outpng)
 
         print(f"looking for circular clusters in {recal_image_path}")
-        disc_center, fovea_center = disc_and_fovea_detector(recal_image_path, None, eye, outpng, verbose=False)
-        if self.args.store_to_db:
-            # TODO store to db
-            pass
+        ret = disc_and_fovea_detector(recal_image_path, None, eye, outpng, verbose=False)
+        if self.args.store_to_db and ret is not None:
+            disc_center, fovea_center = ret
+            print(f"storing fovea and disc locations to db for {outpng}, image id {faf_img_dict['id']}")
+            db = db_connect()
+            update_dict = {"disc_x": disc_center[1], "disc_y": disc_center[0],
+                           "fovea_x": fovea_center[1], "fovea_y": fovea_center[0]}
+            FafImage.update(**update_dict).where(FafImage.id == faf_img_dict['id']).execute()
+            db.close()
         return f"{outpng} ok"
 
 
 def main():
-    # TODO
-    # extend faf 12 so that the slides show the ovelays over each iamge
+    # extend faf 12 so that the slides show the ovelays over each image
     faf_analysis = FafFoveaDisc(name_stem="auto_fovea_n_disc")
     faf_analysis.run()
 

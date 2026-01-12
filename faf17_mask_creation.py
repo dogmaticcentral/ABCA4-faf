@@ -76,8 +76,8 @@ class FafFullMask(FafAnalysis):
 
         usable_region = original_2_aux_file_path(original_image, ".usable_region.png")
         if faf_img_dict["vasculature_detectable"]:
-            blood_vessels = construct_workfile_path(WORK_DIR, original_image, alias, "vasculature", "png",
-                                                    should_exist=True)
+            blood_vessels = construct_workfile_path(WORK_DIR, original_image, alias, "vasculature",
+                                                    "png", should_exist=True)
             files_to_check.append(blood_vessels)
         else:
             blood_vessels = None  # if not available, we can do without it
@@ -132,8 +132,6 @@ class FafFullMask(FafAnalysis):
         :return: str
             THe return string indicates success or failure - generated in compose() function
         """
-        if self.args.ctrl_only and not faf_img_dict["case_id"]["is_control"]:
-            return ""
         return self.create_full_mask(faf_img_dict, outer_ellipse=self.args.outer_ellipse, skip_if_exists=skip_if_exists)
 
 

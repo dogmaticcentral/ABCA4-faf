@@ -46,9 +46,7 @@ class FafAutoBg(FafAnalysis):
         self.parser.add_argument("-v", '--clean_view_only',
                                  dest="clean_view_only", action="store_true",
                                  help="Use only images with the clean view of the ROI. Default: False")
-        self.parser.add_argument("-c", '--ctrl_only', dest="ctrl_only", action="store_true",
-                                 help="Process only control images. Default: False.")
-
+ 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         """Check the presence of all input files that we need to create the composite img.
         :param faf_img_dict:

@@ -420,7 +420,7 @@ def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path
 
     if len(cluster_candidates) == 0:
         print(f"no disc + fovea found for {original_image_path}")
-        return ""
+        return None
 
     cluster_centers = []
     for cluster_data in cluster_candidates:

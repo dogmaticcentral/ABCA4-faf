@@ -42,13 +42,14 @@ class FafComposite(FafAnalysis):
         """
         original_image  = Path(faf_img_dict['image_path'])
         alias = faf_img_dict['case_id']['alias']
-        ellipse_overlay = construct_workfile_path(WORK_DIR, original_image, alias, 'overlay', 'png', should_exist=True)
+        ellipse_overlay = construct_workfile_path(WORK_DIR, original_image, alias, 'overlay',
+                                                 eye=faf_img_dict['eye'], filetype= 'png', should_exist=True)
         usable_region   = original_2_aux_file_path(original_image, ".usable_region.png")
         bgsample_region = original_2_aux_file_path(original_image, ".bg_sample.png")
         blood_vessels   = construct_workfile_path(WORK_DIR, original_image, alias, 'vasculature', 'png',
                                                   should_exist=True)
 
-        for region_png in [original_image, usable_region, bgsample_region, blood_vessels]:
+        for region_png in [original_image, usable_region,bgsample_region, blood_vessels]:
             if not is_nonempty_file(region_png):
                 scream(f"{region_png} does not exist (or may be empty).")
                 exit()
@@ -81,7 +82,7 @@ class FafComposite(FafAnalysis):
                 composite[y, x][0] = 255  # grayscale to red
             elif bg_sample_outline[y, x] >  0:
                 composite[y, x][1] = 255  # grayscale to green
-            elif usable_region_outline[y, x] >  0 or bg_sample_outline[y, x] >  0:
+            elif usable_region_outline[y, x]:
                 composite[y, x][2] = 255  # grayscale to blue
             elif fovea[y, x] >  0:
                 composite[y, x][1] = 255  # grayscale to green

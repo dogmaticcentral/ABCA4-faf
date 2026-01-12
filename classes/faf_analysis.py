@@ -1,15 +1,18 @@
+import json
 from abc import ABC, abstractmethod
+from enum import Enum
 from pprint import pprint
 from argparse import ArgumentParser, RawDescriptionHelpFormatter as RDF, Namespace
 from pathlib import Path
 from sys import argv
 from typing import Callable
 
+import peewee
 from distributed import Client, LocalCluster
 from playhouse.shortcuts import model_to_dict
 
 from faf00_settings import WORK_DIR
-from models.abca4_faf_models import FafImage, ImagePair
+from models.abca4_faf_models import FafImage, ImagePair, Case, Device
 from faf00_settings import DATABASES
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
@@ -23,10 +26,14 @@ class FafAnalysis(ABC):
     args: Namespace = None
     parser: ArgumentParser = None
 
-    def __init__(self, name_stem: str = "faf_analysis", description: str = "Description not provided."):
+    def __init__(self, name_stem: str = "faf_analysis",
+                 description: str = "Description not provided.",
+                 additional_selection_rules= None):
         self.name_stem = name_stem
         self.description = description
         self.cluster = None
+        # I don't understand what type should the selection rules be in peewee
+        self.additional_selection_rules = additional_selection_rules
 
     @abstractmethod
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
@@ -51,6 +58,10 @@ class FafAnalysis(ABC):
                                  help="Skip if the resulting image already exists. Default: False")
         self.parser.add_argument("-c", '--ctrl_only', dest="ctrl_only", action="store_true",
                                  help="Process only control images. Default: False.")
+        helpstr = "Db selection rule as JSON '{\"field\": \"value\"}'."
+        self.parser.add_argument("-f", '--filter', dest="query_filter",
+                                 type=json.loads, help=helpstr)
+
 
     def argv_parse(self):
         self.args = self.parser.parse_args()
@@ -81,8 +92,8 @@ class FafAnalysis(ABC):
             left_orig_image  = image_pair.left_eye_image_id.image_path
             right_orig_image = image_pair.right_eye_image_id.image_path
             alias = image_pair.left_eye_image_id.case_id.alias
-            left_png  = str(construct_workfile_path(WORK_DIR, left_orig_image, alias, self.name_stem, 'png'))
-            right_png = str(construct_workfile_path(WORK_DIR, right_orig_image, alias, self.name_stem, 'png'))
+            left_png  = str(construct_workfile_path(WORK_DIR, left_orig_image, alias, self.name_stem, eye='OS', filetype='png'))
+            right_png = str(construct_workfile_path(WORK_DIR, right_orig_image, alias, self.name_stem, eye='OD', filetype='png'))
             should_be_pair_of[left_png]  = right_png
             should_be_pair_of[right_png] = left_png
 
@@ -91,9 +102,10 @@ class FafAnalysis(ABC):
         for faf_img_dict in all_faf_img_dicts:
             this_orig_img_path = faf_img_dict['image_path']
             alias = faf_img_dict['case_id']['alias']
-            this_png = str(construct_workfile_path(WORK_DIR, this_orig_img_path, alias, self.name_stem, 'png'))
-            if this_png not in pngs_remaining: continue
 
+            this_png = str(construct_workfile_path(WORK_DIR, this_orig_img_path, alias,
+                                                   self.name_stem, eye=faf_img_dict['eye'], filetype='png'))
+            if this_png not in pngs_remaining: continue
             pngs_remaining.remove(this_png)
 
             paired_png = should_be_pair_of.get(this_png)
@@ -116,7 +128,6 @@ class FafAnalysis(ABC):
                 produced_pairs[alias].append((paired_png, this_png))
 
         pairs_sorted = {alias: produced_pairs[alias] for alias in sorted(produced_pairs.keys())}
-
         return pairs_sorted
 
     def report(self, all_faf_img_dicts, pngs_produced, name_stem, title):
@@ -134,9 +145,53 @@ class FafAnalysis(ABC):
         db.close()
 
     @staticmethod
-    def get_all_faf_dicts():
-        # TODO add selction for controls and silverstone only
-        return list(model_to_dict(f) for f in FafImage.select().where(FafImage.usable == True))
+    def selection_rule_parser(key, value):
+
+        key = key.strip()
+        value = value.strip()
+
+        # Parse left side (key)
+        if '.' in key:
+            object_name, field_name = key.split('.', 1)
+            left = getattr(globals()[object_name], field_name)
+        else:
+            left = getattr(FafImage, key)
+
+        # Parse right side (value)
+        if '.' in value:
+            object_name, field_name = value.split('.', 1)
+            # Check if it's an Enum
+            if (object_name in globals() and isinstance(globals()[object_name], type)
+                    and issubclass(globals()[object_name], Enum)):
+                right = globals()[object_name][field_name]
+            else:
+                # It's a model attribute
+                right = getattr(globals()[object_name], field_name)
+        else:
+            right = value
+         # Return the comparison
+        return left==right
+
+
+    def get_all_faf_dicts(self) -> list:
+        # Start with the base query.
+        qry = FafImage.select()
+
+        # Build WHERE conditions.
+        where_clause = (FafImage.usable == True)
+
+        # If we need control-only, join Cases and filter on it.
+        if self.args.ctrl_only:
+            qry = qry.join(Case)
+            where_clause &= (Case.is_control == True)
+
+        # Apply any extra rules.
+        if self.args.query_filter is not None and not self.args.query_filter=={}:
+            for key, value in  self.args.query_filter.items():
+                where_clause &= self.selection_rule_parser(key, value)
+
+        qry = qry.where(where_clause)
+        return list(model_to_dict(f) for f in qry)
 
     def run(self):
 
