@@ -18,7 +18,7 @@ from pprint import pprint
 
 import numpy as np
 
-from classes.faf_analysis  import FafAnalysis
+from faf_classes.faf_analysis  import FafAnalysis
 from faf00_settings import WORK_DIR, GEOMETRY, SCORE_PARAMS, USE_AUTO
 from models.abca4_results  import Score
 from utils.conventions     import construct_workfile_path

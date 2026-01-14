@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image as PilImage
 from PIL import ImageDraw
 
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from faf00_settings import WORK_DIR, GEOMETRY, DEBUG
 from utils.conventions import construct_workfile_path
 from utils.fundus_geometry import disc_fovea_distance

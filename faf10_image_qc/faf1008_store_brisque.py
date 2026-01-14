@@ -11,7 +11,7 @@
 """
 from pathlib import Path
 
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from utils.db_utils import db_connect
 
 from models.abca4_results  import Score

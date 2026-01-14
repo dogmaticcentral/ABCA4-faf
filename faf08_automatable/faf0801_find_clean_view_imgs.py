@@ -25,7 +25,7 @@ from utils.vector import Vector
 
 from pathlib import Path
 
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from utils.conventions import original_2_aux_file_path
 from utils.image_utils import rgba_255_path_to_255_ndarray, grayscale_img_path_to_255_ndarray
 from utils.utils import is_nonempty_file, scream

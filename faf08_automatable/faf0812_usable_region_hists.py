@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 from faf00_settings import WORK_DIR, USE_AUTO
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from utils.conventions import construct_workfile_path, original_2_aux_file_path
 from utils.image_utils import rgba_255_path_to_255_ndarray, grayscale_img_path_to_255_ndarray
 from utils.ndarray_utils import in_mask_histogram

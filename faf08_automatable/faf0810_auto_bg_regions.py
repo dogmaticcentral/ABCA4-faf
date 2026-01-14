@@ -29,7 +29,7 @@ from utils.vector import Vector
 
 from pathlib import Path
 
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from utils.conventions import construct_workfile_path, original_2_aux_file_path
 from utils.ndarray_utils import elliptic_mask
 from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png, rgba_255_path_to_255_ndarray

@@ -81,10 +81,11 @@ def check_disc_and_macula(filepath: Path, faf_img_dict: dict) -> bool:
                 scream(f"{coordinate} value {provided} does not seem reasonable given the img dim of {upper}.")
                 return False
         else:
-            shrug(f"{coordinate} provided: {provided}. Labeling {filepath.name} as unusable.")
-            # TODO this is untested
-            FafImage.update(usable=False).where(FafImage.id == faf_img_dict['id']).execute()
-            shrug(f"\tlabeled {filepath.name} as unusable")
+            scream(f"\t\tdisc and macula locations not provided")
+            # shrug(f"{coordinate} provided: {provided}. Labeling {filepath.name} as unusable.")
+            # # TODO this is untested
+            # FafImage.update(usable=False).where(FafImage.id == faf_img_dict['id']).execute()
+            # shrug(f"\tlabeled {filepath.name} as unusable")
     return True
 
 
@@ -105,7 +106,7 @@ def check_images(filter_condition: peewee.Expression) -> bool:
         if not check_image_dimensions(faf_image_filepath, faf_img_dict): return False
 
         # are the locations of disc and macula provided and reasonable?
-        # if not check_disc_and_macula(faf_image_filepath, faf_img_dict): return False
+        if not check_disc_and_macula(faf_image_filepath, faf_img_dict): return False
 
         comfort(f"{faf_image_filepath} passed sanity checks")
     return True
@@ -120,7 +121,8 @@ def pair_is_match(path1: str, path2: str) -> bool:
     # TODO find a way to pass the pattern that should match here
     #shrug("image pairs not checked - please provide the criterion")
     #return True
-    return path1.replace("OD", "OX").replace("OS", "OX") == path2.replace("OD", "OX").replace("OS", "OX")
+    return (path1.replace("OD", "OX").replace("OS", "OX")
+            == path2.replace("OD", "OX").replace("OS", "OX"))
 
 
 def image_sanity_checks(date_after=None):
@@ -128,7 +130,7 @@ def image_sanity_checks(date_after=None):
     print("checking individual images")
     filter_condition: peewee.Expression
     if date_after:
-        filter_condition = (FafImage.usable == True)  # & (FafImage.updated_date > date_after)
+        filter_condition = (FafImage.usable == True)  & (FafImage.updated_date > date_after)
     else:
         filter_condition = (FafImage.usable == True)
     check_images(filter_condition)
@@ -155,7 +157,7 @@ def pair_sanity_checks():
 def main():
     db = db_connect()
     time_range = datetime.now() - timedelta(days=800)
-    if not image_sanity_checks(time_range):
+    if not image_sanity_checks(None):
         exit(1)
     pair_sanity_checks()
     db.close()

@@ -16,7 +16,7 @@ from pathlib import Path
 from playhouse.shortcuts import model_to_dict
 
 from faf00_settings import WORK_DIR
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from models.abca4_faf_models import FafImage, Case
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect

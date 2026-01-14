@@ -23,7 +23,7 @@ from faf00_settings import WORK_DIR, USE_AUTO
 
 from pathlib import Path
 
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from utils.conventions import construct_workfile_path
 from utils.utils import is_nonempty_file, scream
 

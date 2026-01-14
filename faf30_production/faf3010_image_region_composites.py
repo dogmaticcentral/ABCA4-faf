@@ -24,7 +24,7 @@ from itertools import product
 from matplotlib import pyplot as plt
 from pathlib import Path
 
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from faf00_settings    import WORK_DIR
 from utils.conventions import construct_workfile_path, original_2_aux_file_path
 from utils.image_utils import grayscale_img_path_to_255_ndarray

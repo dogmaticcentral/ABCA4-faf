@@ -21,7 +21,7 @@ from scipy.ndimage import median_filter, gaussian_filter
 from skimage import exposure
 from statistics import mean
 
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from faf00_settings import WORK_DIR, USE_AUTO
 from utils.conventions import construct_workfile_path
 from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png

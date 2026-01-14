@@ -35,7 +35,7 @@ from PIL import ImageFilter, ImageOps
 from skimage import morphology, exposure, filters
 from skimage.transform import resize
 
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from faf00_settings import WORK_DIR, DEBUG, USE_AUTO
 from utils.conventions import construct_workfile_path
 from utils.pil_utils import extremize_pil

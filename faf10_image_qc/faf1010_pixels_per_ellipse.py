@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 from playhouse.shortcuts import model_to_dict
 
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from faf00_settings import WORK_DIR
 from models.abca4_faf_models import FafImage, Case
 from utils.ndarray_utils import elliptic_mask

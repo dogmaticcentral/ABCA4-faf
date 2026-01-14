@@ -12,6 +12,8 @@ from peewee import Proxy
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent
@@ -25,20 +27,17 @@ DATABASES = {
         "ENGINE": "peewee.mysql",
         "DB_NAME": "abca4_faf",
         "USER": "abca4",
-        "PASSWORD": os.environ.get("MARIADB_PASSWD"),
-        "HOST": "127.0.0.1",
-        "PORT": 3308,
-       # "HOST": "localhost",
-       #  "PORT": 3306,
-
+        "PASSWORD": os.getenv("MARIADB_PASSWD"),
+        "HOST": os.getenv("MARIADB_HOST"),
+        "PORT": int(os.getenv("MARIADB_PORT")),
     },
     "postgres": {
         "ENGINE": "peewee.postgres",
         "DB_NAME": "abca4_faf",
         "USER": "abca4",
-        "PASSWORD": os.environ.get("POSTGRES_PASSWD"),
-        "HOST": "127.0.0.1",
-        "PORT": 5432,
+        "PASSWORD": os.getenv("POSTGRES_PASSWD"),
+        "HOST": os.getenv("POSTGRES_HOST"),
+        "PORT": int(os.getenv("POSTGRES_PORT")),
     },
     "sqlite": {
         "ENGINE": "peewee.sqlite",  # note that peewee can also run on top of sqlite3

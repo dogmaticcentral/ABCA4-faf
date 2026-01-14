@@ -15,7 +15,7 @@ from pathlib import Path
 from pprint import pprint
 
 from faf00_settings import WORK_DIR, USE_AUTO, DEBUG
-from classes.faf_analysis import FafAnalysis
+from faf_classes.faf_analysis import FafAnalysis
 from utils.conventions import construct_workfile_path, original_2_aux_file_path
 from utils.gaussian import gaussian_mixture
 from utils.image_utils import rgba_255_path_to_255_ndarray, grayscale_img_path_to_255_ndarray

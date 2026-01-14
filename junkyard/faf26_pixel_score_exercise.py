@@ -14,7 +14,7 @@ from utils.score import image_score, collect_bg_distro_params
 
 from pathlib import Path
 
-from classes.faf_analysis  import FafAnalysis
+from faf_classes.faf_analysis  import FafAnalysis
 from faf00_settings import WORK_DIR, GEOMETRY, SCORE_PARAMS, USE_AUTO
 from models.abca4_results import PlaygroundScore
 from utils.conventions     import construct_workfile_path
