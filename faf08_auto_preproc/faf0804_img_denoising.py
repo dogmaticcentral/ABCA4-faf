@@ -9,31 +9,27 @@
     The License is noncommercial - you may not use this material for commercial purposes.
 
 """
-from pprint import pprint
 
-from utils.db_utils import db_connect
 import os
+from pathlib import Path
 
 import numpy as np
-
-from pathlib import Path
 from scipy.signal import wiener
 from skimage.io import imread
-from skimage import exposure
-from statistics import mean
 
+from faf00_settings import WORK_DIR
 from faf_classes.faf_analysis import FafAnalysis
-from faf00_settings import WORK_DIR, USE_AUTO
 from utils.conventions import construct_workfile_path
-from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
-from utils.utils import is_nonempty_file, read_simple_hist, scream, histogram_max
+from utils.db_utils import db_connect
+from utils.image_utils import ndarray_to_int_png
+from utils.utils import is_nonempty_file, scream
 
 
 class FafDenoising(FafAnalysis):
 
-    def __init__(self, new_max_location: int = 90, name_stem: str = "recal"):
+    def __init__(self,  name_stem: str = "denoised"):
         super().__init__(name_stem)
-        self.new_max_location = new_max_location
+        self.description = "Wiener denoising."
 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         original_image_path = Path(faf_img_dict['image_path'])
@@ -49,17 +45,11 @@ class FafDenoising(FafAnalysis):
         if skip_if_exists and is_nonempty_file(outpng):
             print(f"{os.getpid()} {outpng} found")
             return str(outpng)
-        orig_img  = imread(input_filepath, as_gray=True) # should be an array of floats, not ints
-        # orig_img = grayscale_img_path_to_255_ndarray(input_filepath)
+        orig_img  = imread(input_filepath, as_gray=True) # to use Wiener should be an array of floats, not ints
         # 'mysize' defines the window size (e.g., 3x3, 5x5, etc.)
         # If 'noise' is None, it is estimated from the local variance
-        # h, w = orig_img.shape[:2]
-        # y_center, x_center = h//2, w//2
-        # core_img = orig_img[y_center-300:y_center+300, x_center-500:x_center+500]
-        # print(f"Min: {core_img.min()}, Max: {core_img.max()}, Mean: {core_img.mean()}")
         # looks the best without mysize
         filtered = wiener(orig_img)
-        # print(f"Min: {filtered.min()}, Max: {filtered.max()}, Mean: {filtered.mean()}")
         denoised_image = np.clip(filtered*255, 0, 255).astype(np.uint8)
         # to check the difference (there is some)
         # orig_img = grayscale_img_path_to_255_ndarray(input_filepath)

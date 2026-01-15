@@ -10,8 +10,8 @@ from typing import Any, Generic, TypeVar
 
 from prefect import task, get_run_logger
 
+from faf28_workflows.config import PipelineConfig
 from faf_classes.faf_analysis import FafAnalysis
-from faf28_workflows.config import get_config
 
 InputT = TypeVar("InputT")
 OutputT = TypeVar("OutputT")
@@ -57,7 +57,7 @@ def wrap_faf_analysis_step_as_task(
     def wrapped_task(input_data: Any, **job_init_kwargs: Any) -> FafStepResult[OutputT]:
         logger = get_run_logger()
 
-        config = get_config()
+        config = PipelineConfig()
         if config.log_level != "OFF":
             logger.info(f"Starting {name} with input: {input_data}")
 

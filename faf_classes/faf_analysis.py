@@ -5,7 +5,7 @@ from pprint import pprint
 from argparse import ArgumentParser, RawDescriptionHelpFormatter as RDF, Namespace
 from pathlib import Path
 from sys import argv
-from typing import Callable
+from typing import Callable, Sequence
 
 import peewee
 from distributed import Client, LocalCluster
@@ -27,13 +27,14 @@ class FafAnalysis(ABC):
     parser: ArgumentParser = None
 
     def __init__(self, name_stem: str = "faf_analysis",
-                 description: str = "Description not provided.",
-                 additional_selection_rules= None):
+                 additional_selection_rules=None, internal_args:dict|None=None):
+        # internal_args: we are bypassing the sys.argv
         self.name_stem = name_stem
-        self.description = description
+        self.description = "Description not provided."
         self.cluster = None
         # I don't understand what type should the selection rules be in peewee
         self.additional_selection_rules = additional_selection_rules
+        self.internal_args: dict|None= internal_args
 
     @abstractmethod
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
@@ -64,7 +65,14 @@ class FafAnalysis(ABC):
 
 
     def argv_parse(self):
-        self.args = self.parser.parse_args()
+        if self.internal_args is None:
+            self.args = self.parser.parse_args()
+        else:
+            args_list = []
+            for key, value in self.internal_args.items():
+                args_list.extend([f'--{key}', str(value)])
+            self.args = self.parser.parse_args(args=args_list)
+
         if self.args.n_cpus < 0:
             print(f"{self.args.n_cpus} is not a reasonable number of cpus.")
             exit()
@@ -131,9 +139,9 @@ class FafAnalysis(ABC):
         return pairs_sorted
 
     def report(self, all_faf_img_dicts, pngs_produced, name_stem, title):
-        db = db_connect()
-        if not self.args.make_pdf and not self.args.make_slides: return
 
+        if not self.args.make_pdf and not self.args.make_slides: return
+        db = db_connect()
         filepath_pairs = self.find_left_and_right_image_pairs(all_faf_img_dicts, pngs_produced)
         if self.args.make_pdf:
             created_file = make_paired_pdf(filepath_pairs, name_stem=name_stem,
@@ -172,7 +180,6 @@ class FafAnalysis(ABC):
          # Return the comparison
         return left==right
 
-
     def get_all_faf_dicts(self) -> list:
         # Start with the base query.
         qry = FafImage.select()
@@ -193,26 +200,29 @@ class FafAnalysis(ABC):
         qry = qry.where(where_clause)
         return list(model_to_dict(f) for f in qry)
 
+    def get_requested_faf_dicts(self) -> list:
+        img_path = self.args.image_path
+        db = db_connect()
+        if img_path:
+            faf_img_dicts = list(model_to_dict(f) for f in FafImage.select().where(FafImage.image_path == img_path))
+        else:
+            faf_img_dicts = self.get_all_faf_dicts()
+        db.close()
+        return faf_img_dicts
+
+
     def run(self):
 
         self.create_parser()
         self.argv_parse()
 
-        number_of_cpus = self.args.n_cpus
-        img_path = self.args.image_path
+        requested_faf_dicts = self.get_requested_faf_dicts()
+        if len(requested_faf_dicts) == 0:
+            print("No faf images selected for analysis.")
+            return
+        number_of_cpus = max(len(requested_faf_dicts), self.args.n_cpus)
 
-        db = db_connect()
-        if img_path:
-            all_faf_img_dicts = list(model_to_dict(f) for f in FafImage.select().where(FafImage.image_path == img_path))
-            number_of_cpus = 1
-        else:
-            all_faf_img_dicts = self.get_all_faf_dicts()
-        db.close()
-
-        # run one round through all images, so we can fail early if something is missing
-        # for faf_img_dict in all_faf_img_dicts:  self.input_manager(faf_img_dict)
-
-        # enforce cpu if we are using sqlite
+        # enforce a single cpu if we are using sqlite
         if DATABASES["default"] == DATABASES["sqlite"] and number_of_cpus > 1:
             shrug("Note: sqlite cannot handle multiple access.")
             shrug("The current implementation does not know how to deal with this.")
@@ -222,7 +232,7 @@ class FafAnalysis(ABC):
 
         # if we got to here, the input is ok
         if number_of_cpus == 1:
-            pngs_produced = [self.single_image_job(fd, self.args.skip_xisting) for fd in all_faf_img_dicts]
+            pngs_produced = [self.single_image_job(fd, self.args.skip_xisting) for fd in requested_faf_dicts]
         else:
             # parallelization # start local workers as processes
             # the cluster should probably created some place else if I can have multiple instatncec of FafAnalysis
@@ -230,7 +240,7 @@ class FafAnalysis(ABC):
             cluster = LocalCluster(n_workers=number_of_cpus, processes=True, threads_per_worker=1)
             dask_client = cluster.get_client()
             other_args = {'skip_if_exists': self.args.skip_xisting}
-            futures  = dask_client.map(self.single_image_job, all_faf_img_dicts, **other_args)
+            futures  = dask_client.map(self.single_image_job, requested_faf_dicts, **other_args)
             pngs_produced = dask_client.gather(futures)
             dask_client.close()
 
@@ -238,6 +248,6 @@ class FafAnalysis(ABC):
             map(print, filter(lambda r: "failed" in r, pngs_produced))
         else:
             print(f"no failure reported while creating images.")
-            self.report(all_faf_img_dicts, pngs_produced,
+            self.report(requested_faf_dicts, pngs_produced,
                         name_stem=self.name_stem,
                         title=f"{self.name_stem.capitalize()} images")
