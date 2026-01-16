@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """Command-line interface for the pipeline."""
 
 from __future__ import annotations
@@ -8,30 +9,31 @@ from pathlib import Path
 
 import click
 
-from faf28_workflows.flows.pipeline_runner import PipelineRunner
+from faf28_workflows.flows.pipeline_flow import PipelineRunner
+from utils.utils import shrug
 
+
+def get_logging_level_names():
+    return list(logging.getLevelNamesMapping().keys())
 
 def configure_logging(log_level: str) -> None:
     """Configure logging based on the specified level."""
-    if log_level == "OFF":
-        logging.disable(logging.CRITICAL)
-        logging.getLogger("prefect").setLevel(logging.CRITICAL + 10)
-    else:
-        logging.disable(logging.NOTSET)
-        numeric_level = getattr(logging, log_level)
-        logging.basicConfig(
-            level=numeric_level,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        logging.getLogger("prefect").setLevel(numeric_level)
+    logging.disable(logging.NOTSET)
+    numeric_level = logging.getLevelNamesMapping().get(log_level.upper(), "unrecognized")
+    if numeric_level == "unrecognized":
+        shrug("Logging level {} not recognized, setting log level to ERROR")
+        numeric_level = logging.ERROR
+
+    logging.basicConfig(level=numeric_level,format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.getLogger("prefect").setLevel(numeric_level)
 
 
-@click.group()
+@click.group(context_settings=dict(help_option_names=['-h', '--help']))
 @click.option(
     "--log-level", "-l",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "OFF"]),
+    type=click.Choice(get_logging_level_names()),
     default="INFO",
-    help="Set logging level. Use 'OFF' to disable logging entirely.",
+    help="Set logging level.",
 )
 @click.pass_context
 def main(
@@ -39,9 +41,7 @@ def main(
         log_level: str,
 ) -> None:
     """
-    Prefect Pipeline CLI.
-
-    Run data processing pipelines with configurable logging and storage.
+    FAF analysis pipeline  CLI.
     """
     configure_logging(log_level)
 
@@ -89,44 +89,43 @@ def run(
     """
     runner: PipelineRunner = ctx.obj["runner"]
 
-    actual_start = start_from or runner.available_jobs[0]
-
-    if actual_start == "C":
-        try:
-            parsed_input: Path | int = int(input_data)
-        except ValueError:
-            txt = f"Error: Job C requires a batch ID (integer), got: {input_data}"
-            click.echo(click.style(txt, fg="red"))
-            sys.exit(1)
-    else:
-        parsed_input = Path(input_data)
-        if not parsed_input.exists():
-            click.echo(
-                click.style(f"Error: File not found: {parsed_input}", fg="red")
-            )
-            sys.exit(1)
-
-    click.echo(f"Running pipeline...")
-    if start_from:
-        click.echo(f"  Starting from: {start_from}")
-    if stop_after:
-        click.echo(f"  Stopping after: {stop_after}")
-
-    result = runner.run(
-        input_data=parsed_input,
-        start_from=start_from,
-        stop_after=stop_after,
-    )
-
-    if result.success:
-        click.echo(click.style("Pipeline completed successfully!", fg="green"))
-        click.echo(f"Result: {result.output}")
-    else:
-        click.echo(click.style(f"Pipeline failed: {result.error}", fg="red"))
+    available_jobs = runner.available_jobs
+    if start_from and start_from not in available_jobs:
+        click.echo(click.style(f"From CLI: Error: Start job '{start_from}' not found.", fg="red"))
+        click.echo("Available jobs:")
+        for job in available_jobs:
+            click.echo(f"  - {job}")
         sys.exit(1)
 
+    if stop_after and stop_after not in available_jobs:
+        click.echo(click.style(f"From CLI: Error: Stop job '{stop_after}' not found.", fg="red"))
+        click.echo("Available jobs:")
+        for job in available_jobs:
+            click.echo(f"  - {job}")
+        sys.exit(1)
 
+    parsed_input = Path(input_data)
+    if not parsed_input.exists():
+        click.echo(click.style(f"From CLI: Error: File not found: {parsed_input}", fg="red"))
+        sys.exit(1)
 
+    click.echo(f"From CLI: Running the pipeline for {parsed_input}")
+    if start_from:
+        click.echo(f"From CLI: Starting from: {start_from}")
+    if stop_after:
+        click.echo(f"From CLI: Stopping after: {stop_after}")
 
+    result = runner.run(input_data=parsed_input, start_from=start_from, stop_after=stop_after)
+
+    if result is None:
+        click.echo(click.style("From CLI: Pipeline stopped!", fg="yellow"))
+    elif result.success:
+        click.echo(click.style("From CLI: Pipeline completed successfully!", fg="green"))
+        click.echo(f"From CLI: Result: {result.output}")
+    else:
+        click.echo(click.style(f"From CLI: Pipeline failed: {result.error}", fg="red"))
+        sys.exit(1)
+
+####################################
 if __name__ == "__main__":
     main()

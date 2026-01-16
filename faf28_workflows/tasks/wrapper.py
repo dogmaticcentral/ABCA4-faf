@@ -10,7 +10,6 @@ from typing import Any, Generic, TypeVar
 
 from prefect import task, get_run_logger
 
-from faf28_workflows.config import PipelineConfig
 from faf_classes.faf_analysis import FafAnalysis
 
 InputT = TypeVar("InputT")
@@ -54,23 +53,30 @@ def wrap_faf_analysis_step_as_task(
     name = task_name or f"{job_class.__name__}_task"
 
     @task(name=name, **task_kwargs)
-    def wrapped_task(input_data: Any, **job_init_kwargs: Any) -> FafStepResult[OutputT]:
+    def wrapped_task(**job_kwargs: Any) -> FafStepResult[OutputT]:
         logger = get_run_logger()
 
-        config = PipelineConfig()
-        if config.log_level != "OFF":
-            logger.info(f"Starting {name} with input: {input_data}")
+        logger.info(f"Running {name}")
 
-        job_instance = job_class(**job_init_kwargs)
-        result = job_instance.execute(input_data)
+        try:
+            job_instance = job_class(internal_kwargs=job_kwargs)
+            job_results = job_instance.run()
 
-        if config.log_level != "OFF":
-            if result.success:
+            # Determine success based on results
+            # Similar to how FafAnalysis checks for "failed" in output
+            has_failure = any("failed" in str(r) for r in job_results)
+
+            if not has_failure:
                 logger.info(f"{name} completed successfully")
+                return FafStepResult(success=True, output=job_results)
             else:
-                logger.error(f"{name} failed: {result.error}")
+                error_msg = f"Job reported failures: {job_results}"
+                logger.error(f"{name} failed: {error_msg}")
+                return FafStepResult(success=False, error=error_msg, output=job_results)
 
-        return result
+        except Exception as e:
+            logger.error(f"{name} crashed: {str(e)}")
+            return FafStepResult(success=False, error=str(e))
 
     return wrapped_task
 

@@ -51,8 +51,7 @@ class FafComposite(FafAnalysis):
 
         for region_png in [original_image, usable_region,bgsample_region, blood_vessels]:
             if not is_nonempty_file(region_png):
-                scream(f"{region_png} does not exist (or may be empty).")
-                exit()
+                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
         return [original_image, ellipse_overlay, usable_region, bgsample_region, blood_vessels]
 
     ########################################################################

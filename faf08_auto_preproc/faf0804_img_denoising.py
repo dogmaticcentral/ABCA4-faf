@@ -27,16 +27,15 @@ from utils.utils import is_nonempty_file, scream
 
 class FafDenoising(FafAnalysis):
 
-    def __init__(self,  name_stem: str = "denoised"):
-        super().__init__(name_stem)
+    def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "denoised"):
+        super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
         self.description = "Wiener denoising."
 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         original_image_path = Path(faf_img_dict['image_path'])
         for region_png in [original_image_path]:
             if not is_nonempty_file(region_png):
-                scream(f"{region_png} does not exist (or may be empty).")
-                exit()
+                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
         return [original_image_path]
 
     def denoise(self, input_filepath: Path | str, alias: str, eye: str, skip_if_exists=False) -> str:
@@ -74,9 +73,17 @@ class FafDenoising(FafAnalysis):
         return self.denoise(original_image_path, alias, eye, skip_if_exists=skip_if_exists)
 
 
+def test():
+    db = db_connect()
+    faf_analysis = FafDenoising(name_stem="denoised",
+                                internal_kwargs={"i":"/media/ivana/portable/abca4/faf/all/Confused_Cloud/OD/CC_OD_12_1.tiff"})
+    db.close()
+    faf_analysis.run()
+
+
 def main():
     db = db_connect()
-    faf_analysis = FafDenoising(name_stem="denoised")
+    faf_analysis = FafDenoising()
     db.close()
     faf_analysis.run()
 

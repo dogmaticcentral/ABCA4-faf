@@ -79,8 +79,7 @@ class FafBgHistograms(FafAnalysis):
 
         for region_png in dependencies:
             if not is_nonempty_file(region_png):
-                scream(f"{region_png} does not exist (or may be empty).")
-                exit()
+                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
 
         return [original_image_path, inner_ellipse_mask_path, outer_ellipse_mask_path]
 

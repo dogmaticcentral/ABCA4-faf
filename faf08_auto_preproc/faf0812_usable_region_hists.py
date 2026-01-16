@@ -41,8 +41,7 @@ class FafHistograms(FafAnalysis):
         usable_region_path = construct_workfile_path(WORK_DIR, original_image_path, alias, stem, "png")
         for region_png in [original_image_path, usable_region_path]:
             if not is_nonempty_file(region_png):
-                scream(f"{region_png} does not exist (or may be empty).")
-                exit()
+                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
 
         return [original_image_path, usable_region_path]
 

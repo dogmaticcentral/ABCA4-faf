@@ -16,7 +16,7 @@ from PIL import Image as PilImage
 from PIL import ImageDraw
 
 from faf_classes.faf_analysis import FafAnalysis
-from faf00_settings import WORK_DIR, GEOMETRY, DEBUG
+from faf00_settings import WORK_DIR, GEOMETRY
 from utils.conventions import construct_workfile_path
 from utils.fundus_geometry import disc_fovea_distance
 from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
@@ -40,19 +40,9 @@ class FafFDVisualization(FafAnalysis):
             List of input file paths required for processing
         """
         original_image_path = Path(faf_img_dict['image_path'])
-        alias = faf_img_dict['case_id']['alias']
-        eye = faf_img_dict['eye']
-        
-        # Get the recalibrated image path
-        recal_img_path = construct_workfile_path(
-            WORK_DIR, original_image_path, alias, 'recal',
-            eye=eye, filetype='png'
-        )
-        
-        if not is_nonempty_file(recal_img_path):
-            raise FileNotFoundError(f"Recalibrated image not found: {recal_img_path}")
-        
-        return [recal_img_path]
+        if not is_nonempty_file(original_image_path):
+            raise FileNotFoundError(f"Recalibrated image not found: {original_image_path}")
+        return [original_image_path]
 
     def create_annotated_image(self, faf_img_dict: dict, skip_if_exists=False) -> str:
         """
@@ -76,8 +66,6 @@ class FafFDVisualization(FafAnalysis):
         )
         
         if skip_if_exists and is_nonempty_file(output_path):
-            if DEBUG:
-                print(f"found {output_path}")
             return str(output_path)
         
         # Check for null coordinates
@@ -90,15 +78,10 @@ class FafFDVisualization(FafAnalysis):
             warning_msg = f"Warning: Missing coordinates for {original_image_path} - skipping"
             shrug(warning_msg)
             return f"skipped: {original_image_path}"
-        
-        # Get recalibrated image path
-        recal_img_path = construct_workfile_path(
-            WORK_DIR, original_image_path, alias, 'recal',
-            eye=eye, filetype='png'
-        )
+
         
         # Load the recalibrated image
-        img_array = grayscale_img_path_to_255_ndarray(recal_img_path)
+        img_array = grayscale_img_path_to_255_ndarray(original_image_path)
         
         # Convert grayscale to RGB for colored circles
         rgb_array = np.stack([img_array, img_array, img_array], axis=-1)
@@ -136,10 +119,7 @@ class FafFDVisualization(FafAnalysis):
         # Convert back to numpy array and save
         annotated_array = np.array(pil_image)
         ndarray_to_int_png(annotated_array, output_path)
-        
-        if DEBUG:
-            print(f"wrote {output_path}")
-        
+
         if is_nonempty_file(output_path):
             return str(output_path)
         else:
@@ -156,15 +136,13 @@ class FafFDVisualization(FafAnalysis):
         Returns:
             Path to created image or status message
         """
-        if DEBUG:
-            print(faf_img_dict['image_path'])
-        
+
         return self.create_annotated_image(faf_img_dict, skip_if_exists)
 
 
 def main():
-    description = "Create visualizations of recalibrated FAF images with fovea (green) and disc (red) circles."
-    faf_analysis = FafFDVisualization(name_stem="fovea_disc_vis", description=description)
+    # description = "Create visualizations of recalibrated FAF images with fovea (green) and disc (red) circles."
+    faf_analysis = FafFDVisualization(name_stem="fovea_disc_vis")
     faf_analysis.run()
 
 

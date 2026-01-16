@@ -84,8 +84,7 @@ class FafFullMask(FafAnalysis):
 
         for region_png in files_to_check:
             if not is_nonempty_file(region_png):
-                scream(f"{region_png} does not exist (or may be empty).")
-                exit()
+                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
 
         if not is_nonempty_file(usable_region):
             shrug(f"{usable_region} is nonexistent or empty - the image will be treated as free of artifacts")

@@ -30,8 +30,8 @@ from utils.utils import is_nonempty_file, read_simple_hist, scream, histogram_ma
 
 class FafRecalibration(FafAnalysis):
 
-    def __init__(self, new_max_location: int = 90, name_stem: str = "recal"):
-        super().__init__(name_stem)
+    def __init__(self,internal_kwargs: dict|None=None, new_max_location: int = 90, name_stem: str = "recal"):
+        super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
         self.new_max_location = new_max_location
 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
@@ -42,8 +42,7 @@ class FafRecalibration(FafAnalysis):
                                                     eye=eye, filetype='png')
         for region_png in [original_image_path, denoised_img_path]:
             if not is_nonempty_file(region_png):
-                scream(f"{region_png} does not exist (or may be empty).")
-                exit()
+                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
         return [original_image_path, denoised_img_path]
 
     def recalibrate(self, input_filepath: Path | str, denoised_img_path: Path | str, alias: str, eye: str, skip_if_exists=False) -> str:

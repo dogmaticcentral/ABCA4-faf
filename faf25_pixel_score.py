@@ -66,8 +66,7 @@ class PixelScore(FafAnalysis):
         bg_histogram_path = construct_workfile_path(WORK_DIR, original_image_path, alias, bg_stem, "txt")
         for region_png in [original_image_path, full_mask_path, bg_histogram_path]:
             if not is_nonempty_file(region_png):
-                scream(f"{region_png} does not exist (or may be empty).")
-                exit()
+                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
 
         bg_distro_params = collect_bg_distro_params(original_image_path, alias, bg_stem)
 

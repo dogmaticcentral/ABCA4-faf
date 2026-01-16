@@ -8,7 +8,6 @@ from typing import Any, Callable, Self
 
 from prefect import flow, task, get_run_logger
 
-from faf28_workflows.config import get_config, PipelineConfig
 from faf_classes.faf_analysis import FafAnalysis
 
 # =============================================================================

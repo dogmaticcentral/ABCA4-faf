@@ -58,8 +58,7 @@ class FafAutoBg(FafAnalysis):
         usable_region_path = construct_workfile_path(WORK_DIR, original_image_path, alias, stem, "png")
         for region_png in [original_image_path, usable_region_path]:
             if not is_nonempty_file(region_png):
-                scream(f"{region_png} does not exist (or may be empty).")
-                exit()
+                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
         # TODO check that the outer ellipse and the orig image actually match
         return [original_image_path, usable_region_path]
 
@@ -72,10 +71,9 @@ class FafAutoBg(FafAnalysis):
             try:
                 canvas[y, x] = color
             except Exception as e:
-                print(e)
                 print(f"row type", type(y))
                 print(f"column type", type(x))
-                exit()
+                raise e
         return
 
     @staticmethod

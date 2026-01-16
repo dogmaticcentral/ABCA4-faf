@@ -27,14 +27,14 @@ class FafAnalysis(ABC):
     parser: ArgumentParser = None
 
     def __init__(self, name_stem: str = "faf_analysis",
-                 additional_selection_rules=None, internal_args:dict|None=None):
+                 additional_selection_rules=None, internal_kwargs:dict|None=None):
         # internal_args: we are bypassing the sys.argv
         self.name_stem = name_stem
         self.description = "Description not provided."
         self.cluster = None
         # I don't understand what type should the selection rules be in peewee
         self.additional_selection_rules = additional_selection_rules
-        self.internal_args: dict|None= internal_args
+        self.internal_kwargs: dict|None= internal_kwargs
 
     @abstractmethod
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
@@ -65,28 +65,25 @@ class FafAnalysis(ABC):
 
 
     def argv_parse(self):
-        if self.internal_args is None:
+        if self.internal_kwargs is None: # get args from sys.argv
             self.args = self.parser.parse_args()
-        else:
+        else: # get args from internal_kwargs
             args_list = []
-            for key, value in self.internal_args.items():
+            for key, value in self.internal_kwargs.items():
                 args_list.extend([f'--{key}', str(value)])
             self.args = self.parser.parse_args(args=args_list)
 
         if self.args.n_cpus < 0:
-            print(f"{self.args.n_cpus} is not a reasonable number of cpus.")
-            exit()
+            raise ValueError(f"{self.args.n_cpus} is not a reasonable number of cpus.")
         if self.args.n_cpus > 10:
-            print(f"if {self.args.n_cpus} is a reasonable number, please change in argv_parse()")
-            exit()
+            raise ValueError(f"if {self.args.n_cpus} is a reasonable number, please change in argv_parse()")
 
         if self.args.image_path:
             cursor = db_connect()
             faf_img_dicts = list(
                 model_to_dict(f) for f in FafImage.select().where(FafImage.image_path == self.args.image_path))
             if len(faf_img_dicts) == 0:  # there cannot be > 1 faf_img_dict for one image path bcs the db field is unique
-                print(f"If {self.args.image_path} is the correct image path, please store in the db first.")
-                exit()
+                raise ValueError(f"If {self.args.image_path} is the correct image path, please store in the db first.")
             if not faf_img_dicts[0]['usable']:
                 shrug(f"Keep in mind that int the db {self.args.image_path} is labeled as not usable.")
             cursor.close()
@@ -219,7 +216,7 @@ class FafAnalysis(ABC):
         requested_faf_dicts = self.get_requested_faf_dicts()
         if len(requested_faf_dicts) == 0:
             print("No faf images selected for analysis.")
-            return
+            return []
         number_of_cpus = max(len(requested_faf_dicts), self.args.n_cpus)
 
         # enforce a single cpu if we are using sqlite
@@ -251,3 +248,4 @@ class FafAnalysis(ABC):
             self.report(requested_faf_dicts, pngs_produced,
                         name_stem=self.name_stem,
                         title=f"{self.name_stem.capitalize()} images")
+        return pngs_produced

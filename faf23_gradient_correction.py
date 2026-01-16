@@ -43,8 +43,7 @@ class FafGradCorrection(FafAnalysis):
 
         for region_png in dependencies:
             if not is_nonempty_file(region_png):
-                scream(f"{region_png} does not exist (or may be empty).")
-                exit()
+                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
 
         return [inner_ellipse_hist_path, outer_ellipse_hist_path]
 
