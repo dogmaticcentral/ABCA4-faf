@@ -1,12 +1,14 @@
+# `dataclasses.field`, explained
+
 In Python’s `dataclasses` module, the `field()` function is the primary tool for customizing how individual attributes behave. While standard dataclass attributes are defined with simple type hints, `field()` allows you to control things like default values, visibility in `repr()`, and whether a field should be used in comparisons.
 
-### Why use `field()`?
+## Why use `field()`?
 
 By default, a dataclass assumes every type-hinted variable should be included in the constructor (`__init__`), the string representation (`__repr__`), and equality checks (`__eq__`). You use `field()` when you want to break those defaults—for example, to create a field that is "hidden" or to safely assign a default list or dictionary.
 
 ---
 
-### Core Parameters of `field()`
+## Core Parameters of `field()`
 
 Here are the most commonly used arguments:
 
@@ -22,7 +24,7 @@ Here are the most commonly used arguments:
 
 ---
 
-### Key Use Cases
+## Key Use Cases
 
 #### 1. The Mutable Default Problem
 
@@ -69,7 +71,7 @@ class Rectangle:
 
 ---
 
-### Complete Example
+## Complete Example
 
 Here is how these pieces look when used together:
 
@@ -101,7 +103,7 @@ print(p1)
 
 ```
 
-### Important Rule
+## Important Rule
 
 A field with a default value (even one defined via `field()`) **cannot** be followed by a field without a default value. This is a standard Python rule for function arguments, as the dataclass generates an `__init__` method where defaults must come last.
 
