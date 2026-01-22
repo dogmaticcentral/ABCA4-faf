@@ -53,14 +53,14 @@ def wrap_faf_analysis_step_as_task(
     name = task_name or f"{job_class.__name__}_task"
 
     @task(name=name, **task_kwargs)
-    def wrapped_task(**job_kwargs: Any) -> FafStepResult[OutputT]:
+    def wrapped_task(job_kwargs: dict|None =None) -> FafStepResult[OutputT]:
+        if job_kwargs is None: job_kwargs = {}
         logger = get_run_logger()
-
         logger.info(f"Running {name}")
 
         try:
             job_instance = job_class(internal_kwargs=job_kwargs)
-            job_results = job_instance.run()
+            job_results  = job_instance.run()
 
             # Determine success based on results
             # Similar to how FafAnalysis checks for "failed" in output
@@ -75,7 +75,7 @@ def wrap_faf_analysis_step_as_task(
                 return FafStepResult(success=False, error=error_msg, output=job_results)
 
         except Exception as e:
-            logger.error(f"{name} crashed: {str(e)}")
+            logger.error(f"{name} crashed: {str(e)}", exc_info=True)
             return FafStepResult(success=False, error=str(e))
 
     return wrapped_task

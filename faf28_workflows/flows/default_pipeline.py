@@ -1,16 +1,13 @@
 from pathlib import Path
 
-from faf28_workflows.flows.pipeline_def import PipelineDefinition
+from faf28_workflows.flows.pipeline_class import Pipeline
 
 
 # =============================================================================
 # Pipeline Factory
 # =============================================================================
 
-def create_default_pipeline(
-        output_dir: Path | None = None,
-        db_path: Path | None = None,
-) -> PipelineDefinition:
+def create_default_pipeline() -> Pipeline:
     """
     Create the default pipeline.
 
@@ -22,7 +19,7 @@ def create_default_pipeline(
     from faf08_auto_preproc.faf0808_fovea_n_disc_location import FafFoveaDisc
     from faf12_fovea_and_disc_vis import FafFDVisualization
 
-    pipeline = PipelineDefinition(name="default_pipeline")
+    pipeline = Pipeline(name="default_pipeline")
 
     # Add jobs in order - scales to any number of jobs
     pipeline.add_job(
@@ -43,6 +40,7 @@ def create_default_pipeline(
         name="FafFoveaDisc",
         job_class=FafFoveaDisc,
         description=description,
+        config_factory=lambda: {"db-store": True}
     )
 
     description  = "For the input image retrieve the fovea and disc locations from the database. "

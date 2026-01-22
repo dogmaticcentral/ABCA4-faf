@@ -63,15 +63,42 @@ class FafAnalysis(ABC):
         self.parser.add_argument("-f", '--filter', dest="query_filter",
                                  type=json.loads, help=helpstr)
 
+    def _create_args_list(self) -> list:
+        args_list = []
+        actions = self.parser._actions
+        for key, value in self.internal_kwargs.items():
+            
+            # Construct the flag
+            prefix = "-" if len(key) == 1 else "--"
+            flag = f"{prefix}{key.replace('_', '-')}"
+
+            if isinstance(value, bool):
+                # For boolean switches
+                # verify if such switch exists in parser actions
+                # (using the constructed flag or the key)
+                action = next(filter(lambda a: flag in a.option_strings, actions), None)
+                if action is None:
+                    # Fallback check: maybe the key was exactly the option string?
+                    fallback_flag = f"--{key}"
+                    if any(fallback_flag in a.option_strings for a in actions):
+                        flag = fallback_flag
+                        action = True
+
+                if action is None:
+                   raise Exception(f"the argument '--{key}' does not seem to be switch")
+
+                if value:
+                    args_list.append(flag)
+
+            else:
+                 args_list.extend([flag, str(value)])
+        return args_list
 
     def argv_parse(self):
         if self.internal_kwargs is None: # get args from sys.argv
             self.args = self.parser.parse_args()
         else: # get args from internal_kwargs
-            args_list = []
-            for key, value in self.internal_kwargs.items():
-                args_list.extend([f'--{key}', str(value)])
-            self.args = self.parser.parse_args(args=args_list)
+            self.args = self.parser.parse_args(args=self._create_args_list())
 
         if self.args.n_cpus < 0:
             raise ValueError(f"{self.args.n_cpus} is not a reasonable number of cpus.")

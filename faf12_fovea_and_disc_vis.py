@@ -69,8 +69,8 @@ class FafFDVisualization(FafAnalysis):
             return str(output_path)
         
         # Check for null coordinates
-        disc_x = faf_img_dict.get('disc_x')
-        disc_y = faf_img_dict.get('disc_y')
+        disc_x  = faf_img_dict.get('disc_x')
+        disc_y  = faf_img_dict.get('disc_y')
         fovea_x = faf_img_dict.get('fovea_x')
         fovea_y = faf_img_dict.get('fovea_y')
         
@@ -95,7 +95,7 @@ class FafFDVisualization(FafAnalysis):
         fovea_center = (fovea_x, fovea_y)
         dist = disc_fovea_distance(disc_center, fovea_center)
         
-        disc_radius = int(round(dist * GEOMETRY["disc_radius"]))
+        disc_radius  = int(round(dist * GEOMETRY["disc_radius"]))
         fovea_radius = int(round(dist * GEOMETRY["fovea_radius"]))
         
         # Draw red circle around disc
@@ -119,7 +119,7 @@ class FafFDVisualization(FafAnalysis):
         # Convert back to numpy array and save
         annotated_array = np.array(pil_image)
         ndarray_to_int_png(annotated_array, output_path)
-
+        print(f"annotated image written to {output_path}.")
         if is_nonempty_file(output_path):
             return str(output_path)
         else:

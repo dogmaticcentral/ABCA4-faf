@@ -1,5 +1,5 @@
 import pytest
-from utils.fundus_geometry import macula_disc_angle
+from utils.fundus_geometry import fovea_disc_angle
 
 testdata = [
     ((50, 60), (100, 60), 0, "Zero angle"),
@@ -11,7 +11,7 @@ testdata = [
 
 @pytest.mark.parametrize("point_a, point_b, expected, msg", testdata)
 def test_disc_macula_angle(point_a, point_b, expected, msg):
-    assert (macula_disc_angle(point_a, point_b) == expected), msg
+    assert (fovea_disc_angle(point_a, point_b) == expected), msg
 
 
 testdata_anti = [
@@ -22,6 +22,6 @@ testdata_anti = [
 
 @pytest.mark.parametrize("point_a, point_b, expected, msg", testdata_anti)
 def test_disc_macula_angle_anti(point_a, point_b, expected, msg):
-   assert (macula_disc_angle(point_a, point_b) != expected), msg
+   assert (fovea_disc_angle(point_a, point_b) != expected), msg
 
 

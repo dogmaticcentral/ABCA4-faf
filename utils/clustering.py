@@ -417,7 +417,6 @@ def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path
         cluster_candidates.append(cluster_book)
         break
 
-
     if len(cluster_candidates) == 0:
         print(f"no disc + fovea found for {original_image_path}")
         return None
@@ -437,7 +436,7 @@ def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path
         # i += 1
         outnm = str(path_to_image_out) # .replace(".png", f".{i}.png")
         # red should be the ONH, green the fovea
-        if dist_to_img_center[0] > dist_to_img_center[1]:
+        if dist_to_img_center[1] > dist_to_img_center[0]:
             channel_visualization(cluster_as_nd_array[0],  cluster_as_nd_array[1], None, outnm, alpha=True)
             disc_center, fovea_center = cluster_centers[:2]
         else:

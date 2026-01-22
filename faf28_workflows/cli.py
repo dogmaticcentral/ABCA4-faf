@@ -9,7 +9,7 @@ from pathlib import Path
 
 import click
 
-from faf28_workflows.flows.pipeline_flow import PipelineRunner
+from faf28_workflows.flows.pipeline_runner import PipelineRunner
 from utils.utils import shrug
 
 
@@ -24,7 +24,13 @@ def configure_logging(log_level: str) -> None:
         shrug("Logging level {} not recognized, setting log level to ERROR")
         numeric_level = logging.ERROR
 
-    logging.basicConfig(level=numeric_level,format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    # Remove all existing handlers to ensure basicConfig takes effect
+    root = logging.getLogger()
+    if root.handlers:
+        for handler in root.handlers:
+            root.removeHandler(handler)
+
+    logging.basicConfig(level=numeric_level,format="%(asctime)s - [%(filename)s:%(lineno)d] - %(name)s - %(levelname)s - %(message)s", force=True)
     logging.getLogger("prefect").setLevel(numeric_level)
 
 
