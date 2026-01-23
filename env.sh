@@ -6,7 +6,7 @@ mydir=$(dirname "$fullpath")  # directory only
 if [ -z $PYTHONPATH ]
 then
       # if PYTHONPATH not set yet, than it's mydir
-      export PYTHONPATH=$mydir
+      export PYTHONPATH=$mydir/src
 else
       # delete all appearance of :$mydir from the existing path
       PYTHONPATH=${PYTHONPATH//:$mydir/}
@@ -15,7 +15,7 @@ else
       then # do nothing
           :
       else # prepend :$mydir from the existing path
-          export PYTHONPATH=$mydir:$PYTHONPATH
+          export PYTHONPATH=$mydir:$PYTHONPATH/src
       fi
 fi
 echo PYTHONPATH is  set to $PYTHONPATH

@@ -1,0 +1,174 @@
+from utils.utils import shrug
+
+_copyright__ = """
+
+    Copyright 2024 Ivana Mihalek
+
+    Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
+    You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/
+    
+    The License is noncommercial - you may not use this material for commercial purposes.
+
+"""
+__license__ = "CC BY-NC 4.0"
+
+from itertools import product
+from pathlib import Path
+
+import cairosvg
+import numpy as np
+from matplotlib import pyplot as plt
+from PIL import Image as PilImage
+from PIL import ImageFilter, ImageOps
+from skimage import filters, morphology
+from skimage.io import imread, imsave
+from skimage.util import img_as_ubyte
+
+
+def channel_visualization(r_channel: np.ndarray | None, g_channel: np.ndarray| None, b_channel: np.ndarray| None,
+                          outname: str, alpha: bool = False):
+
+    if all(channel is None for channel in [r_channel, g_channel, b_channel]):
+        print("in channel_visualization(): no channel given; not visualizing")
+        return
+
+    channel_shapes = list(channel.shape for channel in [r_channel, g_channel, b_channel] if channel is not None)
+    if len(set(channel_shapes)) != 1:
+        print("in channel_visualization(): channels not of the same shape; not visualizing")
+        return
+
+    nr, nc =channel_shapes[0]
+
+    image_array = np.zeros((nr, nc, 4 if alpha else 3))
+    if r_channel is not None:
+        image_array[..., 0] = np.divide(r_channel,  np.amax(r_channel)) if np.amax(r_channel) > 0 else 0
+    if g_channel is not None:
+        image_array[..., 1] = np.divide(g_channel,  np.amax(g_channel)) if np.amax(g_channel) > 0 else 0
+    if b_channel is not None:
+        image_array[..., 2] = np.divide(b_channel,  np.amax(b_channel)) if np.amax(b_channel) > 0 else 0
+    if alpha:
+        for r in range(nr):
+            for c in range(nc):
+                if sum(image_array[r, c][0:3]) > 0:
+                    image_array[r, c][3]  = 1
+    plt.imsave(outname, image_array)
+
+
+def from_gray(gray_img: np.ndarray, channel=2) -> np.ndarray:
+    y_max, x_max = gray_img.shape[:2]
+    color_arr = np.zeros((y_max, x_max, 4))
+    for y, x  in product(range(y_max), range(x_max)):
+        if gray_img[y, x] == 0: continue
+        color_arr[y, x, 3] = 255
+        color_arr[y, x, channel] = gray_img[y, x]
+    return color_arr
+
+
+def get_image_dimensions(file_path):
+    with PilImage.open(file_path) as img:
+        return img.size  # returns (width, height)
+
+
+def gray_read_blur(path: str) -> np.ndarray:
+    rgba_image = PilImage.open(path).filter(ImageFilter.GaussianBlur(radius=10))
+    return np.array(ImageOps.grayscale(rgba_image))
+
+
+def grayscale_img_path_to_255_ndarray(img_path: Path) -> np.ndarray:
+    if Path(img_path).suffix != ".tiff":
+        with PilImage.open(img_path) as img:
+            if img.mode != 'L':
+                msg = "does not seem to be grayscale, yet we are reading it as such- do we know what we are doing here?"
+                shrug(f"{img_path} {msg}")
+    img_as_array: np.ndarray = imread(str(img_path), as_gray=True)
+    if np.max(img_as_array) < 1.1:
+        return img_as_ubyte(img_as_array)
+    else:
+        return img_as_array
+
+
+def ndarray_to_int_png(ndarray: np.ndarray, outpng: Path | str):
+    imsave(outpng, ndarray.astype(np.uint8))
+
+
+def ndarray_boolean_to_255_png(ndarray: np.ndarray, outpng: Path | str):
+    new_array = np.zeros(ndarray.shape)
+    (height, width) = ndarray.shape
+    for row, col in product(range(height), range(width)):
+        if not ndarray[row, col]: continue
+        new_array[row, col] = 255
+
+    imsave(outpng, new_array.astype(np.uint8))
+
+
+def ndarray_to_4channel_png(ndarray: np.ndarray,  outpng: Path | str):
+    imsave(outpng, ndarray.astype(np.uint8))
+
+
+def pil_image_to_grayscale_png(pil_image: PilImage, outpng: Path | str):
+    PilImage.fromarray(pil_image).save(str(outpng))
+
+
+def read_single_channel(path: str | Path, channel: str) -> np.ndarray:
+    image_in : np.ndarray= imread(path)
+    channel_idx = {"red": 0, "green": 1, "blue": 2}
+    if channel not in list(channel_idx.keys()):
+        print(f"unrecognized channel: '{channel}'")
+        exit()
+
+    if image_in.shape[2] == 4:  # we need to get rid of the alpha channel
+        # print(f"Uh-oh looks like we have an alpha channel in {path} - reading a single channel might be slow")
+        single_channel_image = np.zeros(image_in.shape[:-1], dtype='uint8')
+        for y, x  in product( range(image_in.shape[0]), range(image_in.shape[1])):
+            if not image_in[y, x][3]: continue
+            single_channel_image[y, x] = image_in[y, x][channel_idx[channel]]
+    else:
+        single_channel_image = image_in[:, :, channel_idx[channel]]
+    return single_channel_image
+
+
+def rgba_255_path_to_255_ndarray(img_path: Path | str, channel: int = 0) -> np.ndarray:
+    """ Inputs filepath to a 255  image and returns a single channel as ndarray.
+    :param simple_object_img_path: Path | str
+    :param channel: int
+    :return: numpy.ndarray
+    """
+    simple_object_img_path = str(img_path)
+    # mask as a line
+    # the way inkscape saves transparent points is [255, 255, 255, 0],
+    # which makes turning to grayscale somewhat nontrivial
+    # i.e., this will not work:  [:, :, 2] # keep only the blue channel
+    return to_gray(imread(simple_object_img_path), channel=channel)
+
+
+def rgba_255_path_to_255_outline_ndarray(simple_object_img_path: Path | str, channel: int = 0) -> np.ndarray:
+    """ Inputs filepath to a simple object (e.g polygone) stored in one channel of rgba image adn returns ti as ndarray.
+        It may work for complicated objects, but this is untested.
+    :param simple_object_img_path: Path | str
+    :param channel: int
+    :return: numpy.ndarray
+    """
+    simple_object_img_path = str(simple_object_img_path)
+    # mask as a line
+    # the way inkscape saves transparent points is [255, 255, 255, 0],
+    # which makes turning to grayscale somewhat nontrivial
+    # i.e., this will not work:  [:, :, 2] # keep only the blue channel
+    input_as_ndarray: np.ndarray = to_gray(imread(simple_object_img_path), channel=channel)
+    outline_gray = filters.sobel(input_as_ndarray.astype(float)).astype(np.uint8)
+    outline_gray_thicker = morphology.dilation(outline_gray, footprint=morphology.disk(12))
+    return outline_gray_thicker
+
+
+def svg2png(svg_filepath: Path | str, png_filepath: Path | str):
+    cairosvg.svg2png(url=str(svg_filepath), write_to=str(png_filepath))
+
+
+def to_gray(color_img: np.ndarray, channel=2) -> np.ndarray:
+    y_max, x_max = color_img.shape[:2]
+    alpha  = color_img.shape[2] == 4
+    gray_arr = np.zeros((y_max, x_max))
+    for y, x  in product(range(y_max), range(x_max)):
+        if alpha and color_img[y, x, 3] == 0: continue
+        if color_img[y, x, channel] > 0:
+            gray_arr[y, x] = color_img[y, x, channel]
+    return gray_arr

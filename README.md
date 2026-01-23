@@ -174,7 +174,7 @@ images that should ook like this:
 ![overlay.png](doc/overlay.png)
 
 Note the inner and outerellipses, centered on the fovea, and dimensions specified in
-[faf00_settings.py](faf00_settings.py):
+[faf00_settings.py](src/faf00_settings.py):
 
 ```python
 # geometry parameters used in fundus analysis
@@ -193,7 +193,7 @@ GEOMETRY = {
 If the images challenging because of the presence of the artifacts, the artifact-free 
 ('usable') region and the background intensity distribution sampling region might
 have to be determined manually. 
-See [manual_labeling](faf04_manual_preproc/manual_labeliing.md).
+See [manual_labeling](src/faf04_manual_preproc/manual_labeliing.md).
 
 ## Auto-detection of bg sampling regions
 In high-quality images, the background intensity distribution sampling region can 
@@ -222,7 +222,7 @@ The images  in which the inner ellipse is partly covered by the artifacts will s
 'celan_view' in the 'faf_images' table in the database.
 
 ### Manually delineate background sampling region
-See [faf09_manual_preproc/manual_labeliing.md](faf04_manual_preproc/manual_labeliing.md)
+See [faf09_manual_preproc/manual_labeliing.md](src/faf04_manual_preproc/manual_labeliing.md)
 
 ### Scripted bg sampling region delineation
 
@@ -285,7 +285,7 @@ that represents the background distribution of intensities.
 
 ## Region composites
 
-[faf18_image_region_composites.py](faf30_production/faf55_image_region_composites.py)
+[faf18_image_region_composites.py](src/faf30_production/faf55_image_region_composites.py)
 This step is optional, but advisable - create (for manual inspection) composite images
 consisting of the original image, with the elliptical ROI, fove and optic head, usable and bg sampling regions overlaid:
 
@@ -336,7 +336,7 @@ under very similar conditions), this does not really help.
 
 THis is a strictly optional step, used for producing an illustration
 in the original paper
-[faf25_hist_progression.py](faf30_production/faf53_hist_progression.py)
+[faf25_hist_progression.py](src/faf30_production/faf53_hist_progression.py)
 
 The output should look like
 
@@ -394,7 +394,7 @@ The output should look something like
 #### Case catalog
 
 Note: the following script expects that [faf12_background_hists.py](faf12_background_hists.py) 
-and  [faf22_roi_histograms.py](faf22_roi_histograms.py) 
+and  [faf22_roi_histograms.py](src/faf22_roi_histograms.py) 
 were  run for all cases (just run with the default options, 
 wihtout `-c` option that limits the run to controls). 
 

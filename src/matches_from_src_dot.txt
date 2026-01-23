@@ -1,0 +1,230 @@
+/home/ivana/projects/ABCA4-faf/src/faf_classes/faf_analysis.py:from src.faf00_settings import WORK_DIR
+/home/ivana/projects/ABCA4-faf/src/faf_classes/faf_analysis.py:from src.models.abca4_faf_models import FafImage, ImagePair, Case
+/home/ivana/projects/ABCA4-faf/src/faf_classes/faf_analysis.py:from src.faf00_settings import DATABASES
+/home/ivana/projects/ABCA4-faf/src/faf_classes/faf_analysis.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf_classes/faf_analysis.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf_classes/faf_analysis.py:from src.utils.reports import make_paired_pdf, make_paired_slides
+/home/ivana/projects/ABCA4-faf/src/faf_classes/faf_analysis.py:from src.utils.utils import shrug, is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/junkyard/control_renaming_hack.py:from src.utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/junkyard/control_renaming_hack.py:from src.models import FafImage
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf13_disc_macula_ellipse_overlay.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf13_disc_macula_ellipse_overlay.py:from src.faf00_settings import WORK_DIR, GEOMETRY, DEBUG
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf13_disc_macula_ellipse_overlay.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf13_disc_macula_ellipse_overlay.py:from src.utils import disc_fovea_distance, fovea_disc_angle
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf13_disc_macula_ellipse_overlay.py:from src.utils import svg2png
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf13_disc_macula_ellipse_overlay.py:from src.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf26_pixel_score_exercise.py:from src.utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf26_pixel_score_exercise.py:from src.utils import image_score, collect_bg_distro_params
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf26_pixel_score_exercise.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf26_pixel_score_exercise.py:from src.faf00_settings import WORK_DIR, USE_AUTO
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf26_pixel_score_exercise.py:from src.models import PlaygroundScore
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf26_pixel_score_exercise.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf26_pixel_score_exercise.py:from src.utils import grayscale_img_path_to_255_ndarray
+/home/ivana/projects/ABCA4-faf/src/junkyard/faf26_pixel_score_exercise.py:from src.utils import is_nonempty_file, scream
+/home/ivana/projects/ABCA4-faf/src/faf28_workflows/tasks/wrapper.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf28_workflows/flows/default_pipeline.py:    from src.faf08_auto_preproc.faf0804_img_denoising import FafDenoising
+/home/ivana/projects/ABCA4-faf/src/faf28_workflows/flows/default_pipeline.py:    from src.faf08_auto_preproc.faf0805_img_recalibration import FafRecalibration
+/home/ivana/projects/ABCA4-faf/src/faf28_workflows/flows/default_pipeline.py:    from src.faf08_auto_preproc.faf0808_fovea_n_disc_location import FafFoveaDisc
+/home/ivana/projects/ABCA4-faf/src/faf28_workflows/flows/default_pipeline.py:    from src.faf12_fovea_and_disc_vis import FafFDVisualization
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1013_acquired_vs_brisque_table.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1013_acquired_vs_brisque_table.py:from src.models.abca4_results import Score
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1013_acquired_vs_brisque_table.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1008_store_brisque.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1008_store_brisque.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1008_store_brisque.py:from src.models.abca4_results import Score
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1009_pixel_vs_brisque.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1009_pixel_vs_brisque.py:from src.models.abca4_results import Score
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1009_pixel_vs_brisque.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1012_acquired_vs_brisque.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1012_acquired_vs_brisque.py:from src.models.abca4_results import Score
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1012_acquired_vs_brisque.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1010_pixels_per_ellipse.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1010_pixels_per_ellipse.py:from src.faf00_settings import WORK_DIR
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1010_pixels_per_ellipse.py:from src.models.abca4_faf_models import FafImage, Case
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1010_pixels_per_ellipse.py:from src.utils.ndarray_utils import elliptic_mask
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1010_pixels_per_ellipse.py:from src.utils.vector import Vector
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1010_pixels_per_ellipse.py:        from src.faf00_settings import DATABASES
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1010_pixels_per_ellipse.py:        from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf10_image_qc/faf1010_pixels_per_ellipse.py:        from src.utils.utils import shrug
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0812_usable_region_hists.py:from src.faf00_settings import WORK_DIR, USE_AUTO
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0812_usable_region_hists.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0812_usable_region_hists.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0812_usable_region_hists.py:from src.utils.image_utils import rgba_255_path_to_255_ndarray, grayscale_img_path_to_255_ndarray
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0812_usable_region_hists.py:from src.utils.ndarray_utils import in_mask_histogram
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0812_usable_region_hists.py:from src.utils.plot_utils import plot_histogram
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0812_usable_region_hists.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0830_manual_vs_optos_location.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0830_manual_vs_optos_location.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0830_manual_vs_optos_location.py:from src.utils.fundus_geometry import disc_macula_distance, macula_disc_angle
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0815_blood_vessel_detection.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0815_blood_vessel_detection.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0815_blood_vessel_detection.py:from src.utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0815_blood_vessel_detection.py:from src.utils.vector import Vector
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0815_blood_vessel_detection.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0815_blood_vessel_detection.py:from src.faf00_settings import WORK_DIR, DEBUG
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0815_blood_vessel_detection.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0815_blood_vessel_detection.py:from src.utils.pil_utils import extremize_pil
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0815_blood_vessel_detection.py:from src.utils.utils import is_nonempty_file, scream
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0815_blood_vessel_detection.py:from src.utils.ndarray_utils import elliptic_mask
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0801_find_clean_view_imgs.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0801_find_clean_view_imgs.py:from src.faf00_settings import GEOMETRY
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0801_find_clean_view_imgs.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0801_find_clean_view_imgs.py:from src.utils.vector import Vector
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0801_find_clean_view_imgs.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0801_find_clean_view_imgs.py:from src.utils.conventions import original_2_aux_file_path
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0801_find_clean_view_imgs.py:from src.utils.image_utils import rgba_255_path_to_255_ndarray
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0801_find_clean_view_imgs.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0824_vasculature_hull.py:from src.utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_boolean_to_255_png
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0824_vasculature_hull.py:from src.faf00_settings import WORK_DIR
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0824_vasculature_hull.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0824_vasculature_hull.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0824_vasculature_hull.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0808_fovea_n_disc_location.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0808_fovea_n_disc_location.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0808_fovea_n_disc_location.py:from src.utils.clustering import  disc_and_fovea_detector
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0808_fovea_n_disc_location.py:from src.faf00_settings import WORK_DIR
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0808_fovea_n_disc_location.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0808_fovea_n_disc_location.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0808_fovea_n_disc_location.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0826_load_optos_locations.py:from src.models.abca4_special_tables import OptosLocation
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0826_load_optos_locations.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0826_load_optos_locations.py:from src.models.abca4_faf_models import Case, FafImage
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0826_load_optos_locations.py:from src.utils.io import guess_delimiter, list_to_quoted_str, file_to_list_of_dict
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0826_load_optos_locations.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/old/faf0802_auto_usable_regions.py:from src.faf00_settings import WORK_DIR
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/old/faf0802_auto_usable_regions.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/old/faf0802_auto_usable_regions.py:from src.utils.conventions import construct_workfile_path, original_2_aux_file_path
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/old/faf0802_auto_usable_regions.py:from src.utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/old/faf0802_auto_usable_regions.py:from src.utils.utils import is_nonempty_file, scream
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0810_auto_bg_regions.py:from src.utils.elliptic import find_equipart_angles
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0810_auto_bg_regions.py:from src.utils.gaussian import gaussian_mixture
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0810_auto_bg_regions.py:from src.faf00_settings import GEOMETRY, WORK_DIR, DEBUG, USE_AUTO
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0810_auto_bg_regions.py:from src.utils.vector import Vector
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0810_auto_bg_regions.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0810_auto_bg_regions.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0810_auto_bg_regions.py:from src.utils.ndarray_utils import elliptic_mask
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0810_auto_bg_regions.py:from src.utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png, rgba_255_path_to_255_ndarray
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0810_auto_bg_regions.py:from src.utils.utils import is_nonempty_file, scream
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0804_img_denoising.py:from src.faf00_settings import WORK_DIR
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0804_img_denoising.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0804_img_denoising.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0804_img_denoising.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0804_img_denoising.py:from src.utils.image_utils import ndarray_to_int_png
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0804_img_denoising.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0805_img_recalibration.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0805_img_recalibration.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0805_img_recalibration.py:from src.faf00_settings import WORK_DIR
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0805_img_recalibration.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0805_img_recalibration.py:from src.utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
+/home/ivana/projects/ABCA4-faf/src/faf08_auto_preproc/faf0805_img_recalibration.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0302_fill_pair_info.py:from src.models.abca4_faf_models import FafImage, ImagePair
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0302_fill_pair_info.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0305_load_faf123_label.py:from src.models.abca4_faf_models import Case, FafImage
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0305_load_faf123_label.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0305_load_faf123_label.py:from src.models.abca4_special_tables import FAF123Label
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0305_load_faf123_label.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0306_update_device_dilation.py:from src.faf03_db_loading.faf0301_load_image_info import parse_device, parse_boolean
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0306_update_device_dilation.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0306_update_device_dilation.py:from src.models.abca4_faf_models import Case, FafImage
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0306_update_device_dilation.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0301_load_image_info.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0301_load_image_info.py:from src.models.abca4_faf_models import Case, FafImage, Device
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0301_load_image_info.py:from src.utils.io import guess_delimiter, list_to_quoted_str, file_to_list_of_dict
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0301_load_image_info.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0303_load_image_pair_info.py:from src.models.abca4_faf_models import FafImage, ImagePair
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0303_load_image_pair_info.py:from src.utils.io import guess_delimiter
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0303_load_image_pair_info.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf03_db_loading/faf0303_load_image_pair_info.py:from src.utils.utils import is_nonempty_file, scream
+/home/ivana/projects/ABCA4-faf/src/tests/test_faf_analysis.py:from src.faf_classes.faf_analysis import FafAnalysis  # adjust import path
+/home/ivana/projects/ABCA4-faf/src/tests/test_ndarray_utils.py:from src.utils.ndarray_utils import extremize
+/home/ivana/projects/ABCA4-faf/src/tests/test_fundus_geometry.py:from src.utils.fundus_geometry import fovea_disc_angle
+/home/ivana/projects/ABCA4-faf/src/tests/verify_refactor.py:from src.faf28_workflows import wrap_faf_analysis_step_as_task, FafStepResult
+/home/ivana/projects/ABCA4-faf/src/tests/verify_refactor.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/utils/clustering.py:from src.utils.elliptic import elliptical_mask
+/home/ivana/projects/ABCA4-faf/src/utils/clustering.py:from src.utils.image_utils import channel_visualization, gray_read_blur, rgba_255_path_to_255_ndarray
+/home/ivana/projects/ABCA4-faf/src/utils/clustering.py:from src.utils.utils import scream
+/home/ivana/projects/ABCA4-faf/src/utils/plot_utils.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/utils/io.py:from src.utils.utils import scream
+/home/ivana/projects/ABCA4-faf/src/utils/fundus_geometry.py:from src.utils.vector import Vector
+/home/ivana/projects/ABCA4-faf/src/utils/image_utils.py:from src.utils.utils import shrug
+/home/ivana/projects/ABCA4-faf/src/utils/reports.py:from src.faf00_settings import SOFFICE, WORK_DIR
+/home/ivana/projects/ABCA4-faf/src/utils/reports.py:from src.utils.conventions import construct_report_filepath
+/home/ivana/projects/ABCA4-faf/src/utils/reports.py:from src.utils.processes import run_subprocess
+/home/ivana/projects/ABCA4-faf/src/utils/reports.py:from src.utils.utils import is_nonempty_file, is_runnable, scream, shrug
+/home/ivana/projects/ABCA4-faf/src/utils/pil_utils.py:from src.utils.ndarray_utils import extremize
+/home/ivana/projects/ABCA4-faf/src/utils/ndarray_utils.py:from src.faf00_settings import GEOMETRY
+/home/ivana/projects/ABCA4-faf/src/utils/ndarray_utils.py:from src.utils.utils import is_nonempty_file, read_simple_hist
+/home/ivana/projects/ABCA4-faf/src/utils/ndarray_utils.py:from src.utils.vector import Vector
+/home/ivana/projects/ABCA4-faf/src/utils/db_utils.py:from src.faf00_settings import DATABASES, RECOGNIZED_ENGINES, global_db_proxy
+/home/ivana/projects/ABCA4-faf/src/utils/score.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/utils/score.py:from src.utils.gaussian import gaussian_mixture
+/home/ivana/projects/ABCA4-faf/src/utils/score.py:from src.utils.utils import is_nonempty_file, scream, read_simple_hist
+/home/ivana/projects/ABCA4-faf/src/utils/score.py:from src.faf00_settings import WORK_DIR, SCORE_PARAMS
+/home/ivana/projects/ABCA4-faf/src/utils/score.py:from src.utils.image_utils import grayscale_img_path_to_255_ndarray
+/home/ivana/projects/ABCA4-faf/src/utils/conventions.py:from src.utils.utils import scream, shrug
+/home/ivana/projects/ABCA4-faf/src/faf04_manual_preproc/faf0401_disc_n_fovea_read_from_img.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf04_manual_preproc/faf0401_disc_n_fovea_read_from_img.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf04_manual_preproc/faf0401_disc_n_fovea_read_from_img.py:from src.utils.image_utils import read_single_channel
+/home/ivana/projects/ABCA4-faf/src/faf04_manual_preproc/faf0401_disc_n_fovea_read_from_img.py:from src.utils.ndarray_utils import ndarray2pointlist
+/home/ivana/projects/ABCA4-faf/src/faf04_manual_preproc/faf0401_disc_n_fovea_read_from_img.py:from src.utils.utils import  is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/models/abca4_special_tables.py:from src.models.abca4_faf_models import FafImage, global_db_proxy
+/home/ivana/projects/ABCA4-faf/src/models/abca4_faf_models.py:from src.faf00_settings import global_db_proxy
+/home/ivana/projects/ABCA4-faf/src/models/abca4_results.py:from src.faf00_settings import global_db_proxy
+/home/ivana/projects/ABCA4-faf/src/models/abca4_results.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3002_score_sensitivity_to_fovea_location.py:from src.faf00_settings import WORK_DIR, SCORE_PARAMS
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3002_score_sensitivity_to_fovea_location.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3002_score_sensitivity_to_fovea_location.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3002_score_sensitivity_to_fovea_location.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3002_score_sensitivity_to_fovea_location.py:from src.utils.image_utils import grayscale_img_path_to_255_ndarray
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3002_score_sensitivity_to_fovea_location.py:from src.utils.score import image_score, collect_bg_distro_params
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3002_score_sensitivity_to_fovea_location.py:from src.utils.ndarray_utils import elliptic_mask
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3002_score_sensitivity_to_fovea_location.py:from src.utils.vector import Vector
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3005_score_od_vs_os_plot.py:from src.faf00_settings import USE_AUTO, DATABASES
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3005_score_od_vs_os_plot.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3005_score_od_vs_os_plot.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3005_score_od_vs_os_plot.py:from src.utils.utils import shrug
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3000_names_and_dates_list.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3000_names_and_dates_list.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3018_score_catalog.py:from src.faf00_settings import WORK_DIR, USE_AUTO, DATABASES, DEBUG
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3018_score_catalog.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3018_score_catalog.py:from src.models.abca4_results import Score
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3018_score_catalog.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3018_score_catalog.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3018_score_catalog.py:from src.utils.reports import pptx_to_pdf
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3018_score_catalog.py:from src.utils.utils import is_nonempty_file, shrug
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3003_resampling.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3003_resampling.py:from src.faf30_production.faf3001_score_vs_time_plot import individual_eye_scores, average_eye_scores
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3006_score_comparison.py:from src.faf00_settings import USE_AUTO
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3006_score_comparison.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3006_score_comparison.py:from src.models.abca4_results import Score
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3006_score_comparison.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3012_dataset_overview.py:from src.faf00_settings import USE_AUTO
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3012_dataset_overview.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3012_dataset_overview.py:from src.models.abca4_results import Score
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3016_case_catalog.py:from src.faf00_settings import WORK_DIR, USE_AUTO
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3016_case_catalog.py:from src.models.abca4_results import Score
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3016_case_catalog.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3016_case_catalog.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3016_case_catalog.py:from src.utils.reports import pptx_to_pdf
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3016_case_catalog.py:from src.utils.utils import is_nonempty_file, shrug
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3010_image_region_composites.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3010_image_region_composites.py:from src.faf_classes.faf_analysis import FafAnalysis
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3010_image_region_composites.py:from src.faf00_settings import WORK_DIR
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3010_image_region_composites.py:from src.utils.conventions import construct_workfile_path, original_2_aux_file_path
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3010_image_region_composites.py:from src.utils.image_utils import grayscale_img_path_to_255_ndarray
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3010_image_region_composites.py:from src.utils.image_utils import rgba_255_path_to_255_ndarray
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3010_image_region_composites.py:from src.utils.image_utils import rgba_255_path_to_255_outline_ndarray
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3010_image_region_composites.py:from src.utils.utils import is_nonempty_file
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3008_hist_progression.py:from src.faf00_settings import WORK_DIR
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3008_hist_progression.py:from src.models.abca4_faf_models import FafImage, Case
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3008_hist_progression.py:from src.utils.conventions import construct_workfile_path
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3008_hist_progression.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3008_hist_progression.py:from src.utils.gaussian import gaussian_mixture
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3008_hist_progression.py:from src.utils.utils import read_simple_hist
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3008_hist_progression.py:from src.utils.plot_utils import plot_graph_series
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3001_score_vs_time_plot.py:from src.utils.graph_stats import two_scenario_mpd_comparison, two_scenario_p_value_parallel
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3001_score_vs_time_plot.py:from src.models.abca4_faf_models import FafImage
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3001_score_vs_time_plot.py:from src.models.abca4_results import Score, PlaygroundScore
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3001_score_vs_time_plot.py:from src.models.abca4_special_tables import FAF123Label
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3001_score_vs_time_plot.py:from src.utils.db_utils import db_connect
+/home/ivana/projects/ABCA4-faf/src/faf30_production/faf3001_score_vs_time_plot.py:from src.faf00_settings import DATABASES, USE_AUTO
