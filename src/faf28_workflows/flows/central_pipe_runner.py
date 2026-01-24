@@ -1,10 +1,10 @@
 import os
 # Force ephemeral mode by removing API URL from env if present
-os.environ.pop("PREFECT_API_URL", None)
+# os.environ.pop("PREFECT_API_URL", None)
 
 from typing import Any
 
-from prefect import get_run_logger, flow, tags
+from prefect import get_run_logger, flow
 
 from faf28_workflows.flows.default_pipeline import create_default_pipeline
 from faf28_workflows.flows.pipeline_class import Pipeline
@@ -41,8 +41,7 @@ class CentralPipeRunner:
         """Get list of available job names."""
         return self._pipeline.job_names
 
-    @tags("image_pipe") # need this to establish concurrency limit
-    @flow
+    @flow(name="central_pipe_runner")
     def run(
             self,
             input_data: Any,
@@ -86,9 +85,13 @@ class CentralPipeRunner:
 
             if not result.success:
                 logger.error(f"Pipeline errored out at job '{job_spec.name}': {result.error}")
+                result.metadata["input_data"] = str(input_data)
                 return result
 
         logger.info(f"Pipeline completed successfully")
+
+        if result:
+            result.metadata["input_data"] = str(input_data)
 
         return result
 

@@ -20,5 +20,4 @@ else
 fi
 echo PYTHONPATH is  set to $PYTHONPATH
 
-export PREFECT_ORION_DATABASE_CONNECTION_URL=postgresql+asyncpg://postgres:8chumbera@localhost:5432/orion
 export PREFECT_API_URL=http://127.0.0.1:4200/api

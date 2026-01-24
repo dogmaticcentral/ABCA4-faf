@@ -10,6 +10,7 @@ from pathlib import Path
 import click
 
 from faf28_workflows.flows.central_pipe_runner import CentralPipeRunner
+from faf28_workflows.flows.run_params_class import RunParams
 from utils.utils import shrug
 
 
@@ -67,6 +68,25 @@ def list_jobs(ctx: click.Context) -> None:
         click.echo(f"  {i}. {name}")
 
 
+def run_single_flow(runner, rp: RunParams) -> None:
+    input_image_path = Path(rp.input_data)
+    if not input_image_path.exists():
+        click.echo(click.style(f"From CLI: Error: File not found: {input_image_path}", fg="red"))
+        sys.exit(1)
+    click.echo(f"From CLI: Running the pipeline for {input_image_path}")
+
+    result = runner.run(input_data=input_image_path, start_from=rp.start_from, stop_after=rp.stop_after, skip_existing=rp.skip_existing)
+
+    if result is None:
+        click.echo(click.style("From CLI: Pipeline stopped!", fg="yellow"))
+    elif result.success:
+        click.echo(click.style("From CLI: Pipeline completed successfully!", fg="green"))
+        click.echo(f"From CLI: Result: {result.output}")
+    else:
+        click.echo(click.style(f"From CLI: Pipeline failed: {result.error}", fg="red"))
+        sys.exit(1)
+
+
 @main.command()
 @click.argument("input_data", type=str)
 @click.option(
@@ -82,7 +102,7 @@ def list_jobs(ctx: click.Context) -> None:
     help="Job name to stop after. Default: None.",
 )
 @click.option(
-    "--skip-existing",
+    "--skip-existing", "-x",
     is_flag=True,
     default=False,
     help="Skip existing intermediate results or images. Default: False",
@@ -98,7 +118,8 @@ def run(
     """
     Run the pipeline with flexible start/stop points.
 
-    INPUT_DATA: Input for the starting job (file path, batch ID, etc.)
+    INPUT_DATA: Input for the starting job (file path, batch ID, etc).
+    If 'all' the pipeline runs over all images in the database.
     """
     runner: CentralPipeRunner = ctx.obj["runner"]
 
@@ -117,27 +138,19 @@ def run(
             click.echo(f"  - {job}")
         sys.exit(1)
 
-    parsed_input = Path(input_data)
-    if not parsed_input.exists():
-        click.echo(click.style(f"From CLI: Error: File not found: {parsed_input}", fg="red"))
-        sys.exit(1)
-
-    click.echo(f"From CLI: Running the pipeline for {parsed_input}")
     if start_from:
         click.echo(f"From CLI: Starting from: {start_from}")
     if stop_after:
         click.echo(f"From CLI: Stopping after: {stop_after}")
 
-    result = runner.run(input_data=parsed_input, start_from=start_from, stop_after=stop_after, skip_existing=skip_existing)
+    params = RunParams(input_data=input_data, start_from=start_from,
+                       stop_after=stop_after, skip_existing=skip_existing)
 
-    if result is None:
-        click.echo(click.style("From CLI: Pipeline stopped!", fg="yellow"))
-    elif result.success:
-        click.echo(click.style("From CLI: Pipeline completed successfully!", fg="green"))
-        click.echo(f"From CLI: Result: {result.output}")
+    if input_data=='all':
+        from faf28_workflows.flows.concurrency_driver import deploy_multiple_flows
+        deploy_multiple_flows(params)
     else:
-        click.echo(click.style(f"From CLI: Pipeline failed: {result.error}", fg="red"))
-        sys.exit(1)
+        run_single_flow(runner,params)
 
 ####################################
 if __name__ == "__main__":

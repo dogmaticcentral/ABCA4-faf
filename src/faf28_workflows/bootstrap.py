@@ -82,7 +82,7 @@ def prefect_api_reachable_sync(timeout_s: float = 2.0) -> bool:
         )
         return False
 
-def ensure_concurrency_limit(tag: str, limit: int) -> bool:
+def ensure_work_pool_exists(pool_name: str, limit: int) -> bool:
     """
     Ensure a Prefect concurrency limit exists.
 
@@ -93,28 +93,25 @@ def ensure_concurrency_limit(tag: str, limit: int) -> bool:
     """
 
     if not prefect_api_reachable_sync():
-        logger.error("Prefect server is not reachable. "
-            f"Concurrency limit for '{tag}' cannot be verified or created.")
+        logger.error("Prefect server is not reachable.")
         return False
 
     try:
-        subprocess.run(
-            [
-                "prefect",
-                "concurrency-limit",
-                "create",
-                tag,
-                str(limit),
-            ],
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        logger.info(f"Prefect concurrency limit for the tag '{tag}' ensured (max={limit})")
+        # TODO - this hangs
+        create = ["prefect", "work_pool", "create", pool_name, # this is the pool name we are choosing here
+                "--type",  "process" ]
+        set_limit = ["prefect", "work_pool", "set-concurrency-limit", pool_name,  str(limit)]
+        start_workers = ["prefect", "worker", "start",  "--pool", pool_name,  "--name", "busybee"]
+        for cmd in [create, set_limit, start_workers]:
+            logger.info("Executing as subprocess: %s", " ".join(cmd))
+            subprocess.run(cmd,  stdout=subprocess.DEVNULL,  stderr=subprocess.DEVNULL)
+            logger.info("returned")
+        logger.info(f"Prefect work pool with CPU limit created (max={limit}). Started worker: busybee")
         return True
+
     except subprocess.CalledProcessError:
         # at this point, failure almost certainly means "already exists"
-        logger.info(f"Prefect concurrency for the tag '{tag}' already exists")
+        logger.info(f"Problem setting up the work pool: {pool_name}")
         return False
 
 def main() -> None:
@@ -122,7 +119,7 @@ def main() -> None:
 
     logger.info("Bootstrapping Prefect environment")
 
-    if not  ensure_concurrency_limit(tag="image_pipe", limit=8):
+    if not  ensure_work_pool_exists(pool_name="concurrency-limited-pool", limit=8):
         exit(1)
 
     # Hand off to the real CLI
