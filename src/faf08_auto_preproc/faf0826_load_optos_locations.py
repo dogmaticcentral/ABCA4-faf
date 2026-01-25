@@ -21,6 +21,7 @@ from models.abca4_special_tables import OptosLocation
 from pprint import pprint
 
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 
 from pathlib import Path
 from sys import argv
@@ -157,13 +158,20 @@ def main():
     delimiter = guess_delimiter(infile_path)
     list_of_dict = file_to_list_of_dict(infile_path, delimiter, required_columns)
 
-    db = db_connect()  # this creates db proxy in globals space (that's why we do not use db explicitly)
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     make_optos_table_if_needed(db)
     for dct in list_of_dict:
         process_and_store(dct)
 
     sanity_check()
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 
 ########################

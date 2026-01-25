@@ -15,6 +15,7 @@ import pandas as pd
 
 from faf00_settings import USE_AUTO
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from models.abca4_results import Score
 
 
@@ -99,9 +100,16 @@ def summarize_info(df):
 def main():
 
     # get the score info from the database
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     rows = rows_from_db()
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
     # for row in rows:
     #     print(row)

@@ -10,6 +10,7 @@
 
 """
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from utils.score import image_score, collect_bg_distro_params
 
 from itertools import product
@@ -28,13 +29,16 @@ from utils.utils           import is_nonempty_file, read_simple_hist, scream
 
 
 def make_score_table_if_needed():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     if Score.table_exists():
         print(f"table Score found in {db.database}")
     else:
         print(f"creating table Score in {db.database}")
         db.create_tables([Score])
-    db.close()
 
 
 class PixelScore(FafAnalysis):
@@ -164,7 +168,11 @@ class PixelScore(FafAnalysis):
         """
         # if USE_AUTO and not faf_img_dict['clean_view']: return ""
         # check the presence of all input files that we need
-        db = db_connect()
+        if global_db_proxy.obj is None:
+             db = db_connect()
+        else:
+             db = global_db_proxy
+             db.connect(reuse_if_open=True)
         [original_image_path, full_mask_path, bg_distro_params] = self.input_manager(faf_img_dict)
         print(original_image_path)
         mask  = grayscale_img_path_to_255_ndarray(full_mask_path)
@@ -176,7 +184,6 @@ class PixelScore(FafAnalysis):
                                             bg_distro_params=bg_distro_params,
                                             evaluate_score_matrix=make_illustration)
         self.store_or_update(faf_img_dict["id"], score)
-        db.close()
         if make_illustration:
             alias = faf_img_dict["case_id"]["alias"]
             return self.output_score_png(faf_img_dict, original_image_path, alias, score_matrix, skip_if_exists)

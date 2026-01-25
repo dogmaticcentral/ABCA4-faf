@@ -20,7 +20,7 @@ import numpy as np
 from playhouse.shortcuts import model_to_dict
 import scipy.stats as stats
 
-from faf00_settings import WORK_DIR, SCORE_PARAMS
+from faf00_settings import WORK_DIR, SCORE_PARAMS, global_db_proxy
 from models.abca4_faf_models import FafImage
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
@@ -86,9 +86,16 @@ def experiment(faf_img_dicts, displacement_pct, cluster: LocalCluster | None):
 
 
 def main():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     faf_img_dicts =  list(model_to_dict(f) for f in FafImage.select().where(FafImage.clean_view==True))
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
     faf_img_dicts = [f for f in faf_img_dicts if not f["case_id"]["is_control"]]
 
     # none if we do not want to go parallel

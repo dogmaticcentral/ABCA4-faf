@@ -4,6 +4,7 @@ from imagesize import imagesize
 
 from models.abca4_faf_models import FafImage
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from utils.image_utils import read_single_channel
 from utils.ndarray_utils import ndarray2pointlist
 from utils.utils import  is_nonempty_file
@@ -85,11 +86,18 @@ def disc_and_macula_locations_known(faf_img: FafImage):
 def main():
     expected_extension = ".disc_and_macula.png"
 
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     for faf_img in FafImage.select().where(FafImage.usable==1):
         if disc_and_macula_locations_known(faf_img): continue
         process_disc_and_macula(faf_img, expected_extension)
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 
 ########################################

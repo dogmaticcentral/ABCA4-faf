@@ -30,7 +30,7 @@ from models.abca4_faf_models import FafImage
 from models.abca4_results import Score, PlaygroundScore
 from models.abca4_special_tables import FAF123Label
 from utils.db_utils import db_connect
-from faf00_settings import DATABASES, USE_AUTO
+from faf00_settings import DATABASES, USE_AUTO, global_db_proxy
 
 
 def marker_n_color(df, basecolor, faf123=None):
@@ -459,7 +459,11 @@ def main():
     # Create a datetime object for the beginning of the current year
     beginning_of_year = datetime(current_year, 1, 1)
 
-    db = db_connect()  # this initializes global proxy
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     if average:
         ret_dict = average_eye_scores(roi=roi, exercise=exercise, new_is_after=beginning_of_year)
         df_cases = pd.DataFrame.from_dict(ret_dict)
@@ -472,7 +476,9 @@ def main():
         ret_dict = individual_eye_scores(roi=roi, exercise=exercise, controls=True, new_is_after=beginning_of_year)
         df_controls = pd.DataFrame.from_dict(ret_dict)
         df_controls.to_excel("faf_controls.xlsx")
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
     filtered_df = df_cases.loc[df_cases["haplotype_tested"]]
     print(f"number of points {len(df_cases)}")

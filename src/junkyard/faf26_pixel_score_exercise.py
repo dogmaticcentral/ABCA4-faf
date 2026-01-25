@@ -15,7 +15,7 @@ from utils import image_score, collect_bg_distro_params
 from pathlib import Path
 
 from faf_classes.faf_analysis import FafAnalysis
-from faf00_settings import WORK_DIR, USE_AUTO
+from faf00_settings import WORK_DIR, USE_AUTO, global_db_proxy
 from models import PlaygroundScore
 from utils.conventions import construct_workfile_path
 from utils import grayscale_img_path_to_255_ndarray
@@ -23,13 +23,16 @@ from utils import is_nonempty_file, scream
 
 
 def make_score_table_if_needed():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     if PlaygroundScore.table_exists():
         print(f"table PlaygroundScore found in {db.database}")
     else:
         print(f"creating table PlaygroundScore in {db.database}")
         db.create_tables([PlaygroundScore])
-    db.close()
 
 
 class PixelScore(FafAnalysis):
@@ -90,7 +93,11 @@ class PixelScore(FafAnalysis):
         """
         if USE_AUTO and not faf_img_dict['clean_view']: return ""
         # check the presence of all input files that we need
-        db = db_connect()
+        if global_db_proxy.obj is None:
+             db = db_connect()
+        else:
+             db = global_db_proxy
+             db.connect(reuse_if_open=True)
         [original_image_path, full_mask_path, bg_distro_params] = self.input_manager(faf_img_dict)
         mask  = grayscale_img_path_to_255_ndarray(full_mask_path)
 
@@ -98,7 +105,6 @@ class PixelScore(FafAnalysis):
             print(faf_img_dict["case_id"]["alias"], white_weight, black_weight)
             (score, score_matrix) = image_score(original_image_path, white_weight, black_weight, mask, bg_distro_params)
             self.store_or_update(faf_img_dict["id"], white_weight, black_weight, score)
-        db.close()
         return "ok"
 
 def main():

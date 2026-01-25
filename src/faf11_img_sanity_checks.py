@@ -18,6 +18,7 @@ import peewee
 
 from models.abca4_faf_models import FafImage, ImagePair
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from utils.utils import scream, shrug, comfort, is_nonempty_file
 from utils.image_utils import grayscale_img_path_to_255_ndarray
 
@@ -155,12 +156,19 @@ def pair_sanity_checks():
 
 
 def main():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     time_range = datetime.now() - timedelta(days=800)
     if not image_sanity_checks(None):
         exit(1)
     pair_sanity_checks()
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 ########################
 if __name__ == "__main__":

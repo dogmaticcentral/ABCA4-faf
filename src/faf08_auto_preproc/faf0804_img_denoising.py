@@ -17,7 +17,7 @@ import numpy as np
 from scipy.signal import wiener
 from skimage.io import imread
 
-from faf00_settings import WORK_DIR
+from faf00_settings import WORK_DIR, global_db_proxy
 from faf_classes.faf_analysis import FafAnalysis
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
@@ -74,17 +74,29 @@ class FafDenoising(FafAnalysis):
 
 
 def test():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     faf_analysis = FafDenoising(name_stem="denoised",
                                 internal_kwargs={"i":"/media/ivana/portable/abca4/faf/all/Confused_Cloud/OD/CC_OD_12_1.tiff"})
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
     faf_analysis.run()
 
 
 def main():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     faf_analysis = FafDenoising()
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
     faf_analysis.run()
 
 

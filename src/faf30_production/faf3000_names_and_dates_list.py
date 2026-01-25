@@ -11,12 +11,18 @@
 """
 
 from models.abca4_faf_models import FafImage
+from models.abca4_faf_models import FafImage
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 
 
 def main():
 
-    db = db_connect()  # this initializes global proxy
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
 
     query = (FafImage.select(
             FafImage.case_id,
@@ -30,7 +36,8 @@ def main():
         print("\t".join([str(t) for t in tokens]), file=outf)
     outf.close()
 
-    db.close()
+    if not db.is_closed():
+        db.close()
 
 
 ########################

@@ -18,6 +18,7 @@ from faf00_settings import USE_AUTO
 from models.abca4_faf_models import FafImage
 from models.abca4_results import Score
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 
 
 def paired_roi_scores():
@@ -172,7 +173,11 @@ def plot_individual_cases(avg_scores, avg_scores_pp, haplotype_tested, title="bl
 
 
 def main():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
 
     # scatterplot
     score_elliptic, score_other = paired_roi_scores()
@@ -188,8 +193,9 @@ def main():
             avg_scores[alias], avg_scores_other[alias]
         )
     plot_individual_cases(avg_scores, avg_scores_other, haplotype_tested)
-
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 
 ########################

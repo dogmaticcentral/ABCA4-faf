@@ -41,7 +41,7 @@ class CentralPipeRunner:
         """Get list of available job names."""
         return self._pipeline.job_names
 
-    @flow(name="central_pipe_runner")
+
     def run(
             self,
             input_data: Any,
@@ -112,3 +112,14 @@ class CentralPipeRunner:
         """Run from the beginning until a specific job."""
         return self.run(input_data, stop_after=job_name)
 
+
+@flow(name="central-pipe-runner")
+def central_pipe_flow(input_data: str, start_from: str|None, stop_after: str|None, skip_existing: bool):
+    # This function handles the 'self' by instantiating the class here
+    runner = CentralPipeRunner()
+    return runner.run(
+        input_data=input_data,
+        start_from=start_from,
+        stop_after=stop_after,
+        skip_existing=skip_existing
+    )

@@ -10,6 +10,7 @@
 
 """
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 
 """
 Create composite images consisting of the image being ananlyzed, locations
@@ -109,9 +110,13 @@ class FafComposite(FafAnalysis):
         """
 
         # check the presence of all input files that we need
-        db = db_connect()
+        if global_db_proxy.obj is None:
+             db = db_connect()
+        else:
+             db = global_db_proxy
+             db.connect(reuse_if_open=True)
+
         input_filepaths = self.input_manager(faf_img_dict)
-        db.close()
         alias = faf_img_dict['case_id']['alias']
         return self.compose(input_filepaths, alias, skip_if_exists)
 

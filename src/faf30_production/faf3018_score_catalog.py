@@ -21,6 +21,7 @@ from models.abca4_faf_models import FafImage
 from models.abca4_results import Score
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from utils.reports import pptx_to_pdf
 from utils.utils import is_nonempty_file, shrug
 
@@ -101,8 +102,15 @@ def main():
     out_name = "score_progression.pptx"
 
     # get the score info from the database
-    db = db_connect()  # this initializes global proxy
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     rows = rows_w_avg_score_from_db()
+    
+    if not db.is_closed():
+        db.close()
 
     # initialize the pttx presentation
     prs = Presentation()
@@ -119,7 +127,7 @@ def main():
     for row in rows:
         add_score_progression_slide(prs, row)
 
-    db.close()
+
     prs.save(out_name)
     print(f"Saved as {out_name}. Converting to pdf. (The pptx will be removed.)")
     pptx_to_pdf(out_name)

@@ -15,6 +15,7 @@ import numpy as np
 
 from models.abca4_faf_models import FafImage
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
 from utils.vector import Vector
 
@@ -172,9 +173,12 @@ class FafVasculature(FafAnalysis):
         scream(f'sanity check failed for {vasculature_image_path}')
         scream(f"image size: {area} vasc pixels {vasc_pixels}  fraction {frac:.1E}  {warn}")
         print()
-        db = db_connect()
+        if global_db_proxy.obj is None:
+             db = db_connect()
+        else:
+             db = global_db_proxy
+             db.connect(reuse_if_open=True)
         FafImage.update({"vasculature_detectable": False}).where(FafImage.id == faf_img_dict["id"]).execute()
-        db.close()
 
         return "sanity check failed"
 

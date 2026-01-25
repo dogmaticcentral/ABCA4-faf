@@ -11,6 +11,7 @@
 """
 
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 import os
 
 from pathlib import Path
@@ -72,9 +73,15 @@ class FafRecalibration(FafAnalysis):
 
 
 def main():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     faf_analysis = FafRecalibration()
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
     faf_analysis.run()
 
 

@@ -5,6 +5,7 @@ sys.path.insert(0, "../..")
 
 
 from utils import db_connect
+from faf00_settings import global_db_proxy
 from models import FafImage
 
 
@@ -42,7 +43,11 @@ def rename_files(dir_path, oldname, newname):
 
 
 def main():
-    db = db_connect()  # this creates db proxy in globals space (that's why we do not use db explicitly)
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     # home = "/storage/imaging/abca4_faf/controls"
     home = "/home/ivana/scratch/abca4_faf"
     inf  = open("renaming_table.txt")
@@ -55,8 +60,9 @@ def main():
         rename_files(scratch_path, oldname, newname)
         # ctrl_path =  f"{home}/{base}_{person_idx}/{eye}"
         # rename_db_entry(ctrl_path, oldname, newname)
-
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 
 ########################

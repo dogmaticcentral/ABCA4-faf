@@ -20,6 +20,8 @@ from faf03_db_loading.faf0301_load_image_info import parse_device, parse_boolean
 sys.path.insert(0, "../..")
 
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
+from faf00_settings import global_db_proxy
 from models.abca4_faf_models import Case, FafImage
 from utils.utils import is_nonempty_file
 
@@ -53,7 +55,11 @@ def main():
         print(f"Missing: {missing}", file=stderr)
         exit(1)
 
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     
     updated_count = 0
     errors_count = 0
@@ -83,12 +89,12 @@ def main():
             # Find the image
             # We join with Case to find by alias, and match eye
             query = (FafImage
-                     .select()
-                     .join(Case)
-                     .where(
-                         (Case.alias == alias) &
-                         (FafImage.eye == eye)
-                     ))
+                    .select()
+                    .join(Case)
+                    .where(
+                        (Case.alias == alias) &
+                        (FafImage.eye == eye)
+                    ))
             
             candidates = list(query)
             matched_image = None
@@ -117,8 +123,9 @@ def main():
     print(f"Processing complete.")
     print(f"Updated: {updated_count} rows.")
     print(f"Errors/Skipped: {errors_count} rows.")
-
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 if __name__ == "__main__":
     main()

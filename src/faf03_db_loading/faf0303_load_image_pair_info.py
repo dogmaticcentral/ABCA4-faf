@@ -17,6 +17,7 @@ from sys import argv
 from models.abca4_faf_models import FafImage, ImagePair
 from utils.io import guess_delimiter
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from utils.utils import is_nonempty_file, scream
 
 sys.path.insert(0, "../..")
@@ -81,7 +82,12 @@ def get_img_model(db, img_name):
 def main():
     infile_path = arg_parse()
     delimiter = guess_delimiter(infile_path)
-    db = db_connect()  # this creates db proxy in globals space (that's why we do not use db explicitly)
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     list_of_pairs = file_to_list_of_pairs(infile_path, delimiter)
     for pair in list_of_pairs:
         [left_eye_img, right_eye_img] = pair
@@ -89,7 +95,9 @@ def main():
         image_model_right = get_img_model(db, right_eye_img)
         insert_dict = {'left_eye_image_id': image_model_left.id, 'right_eye_image_id': image_model_right.id}
         ImagePair.create(**insert_dict)
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 
 ########################

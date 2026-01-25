@@ -5,6 +5,7 @@ import argparse
 
 from models.abca4_faf_models import FafImage, ImagePair
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 
 
 def find_matching_pairs(dry_run: bool = False) -> None:
@@ -54,14 +55,20 @@ def find_matching_pairs(dry_run: bool = False) -> None:
 
 
 def main() -> None:
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     parser = argparse.ArgumentParser(description='Find and store image pairs, if the names match.')
     parser.add_argument('--dry-run', action='store_true',
                         help='Print pairs without storing them')
     args = parser.parse_args()
 
     find_matching_pairs(dry_run=args.dry_run)
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 if __name__ == '__main__':
     main()

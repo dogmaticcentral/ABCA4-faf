@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import peewee
 
-from faf00_settings import USE_AUTO, DATABASES
+from faf00_settings import USE_AUTO, DATABASES, global_db_proxy
 from models.abca4_faf_models import FafImage
 from utils.db_utils import db_connect
 from utils.utils import shrug
@@ -133,7 +133,12 @@ def plot_os_vs_od(df_cases: pd.DataFrame, title="OS vs OD score"):
 
 
 def main():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     ret_dict = paired_eye_scores()
     df_cases = pd.DataFrame.from_dict(ret_dict)
     ret_dict = paired_eye_scores(controls=True)
@@ -141,7 +146,9 @@ def main():
 
     title = "OS/OD score consistency"
     plot_os_vs_od(df_cases, title=title)
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 
 ########################

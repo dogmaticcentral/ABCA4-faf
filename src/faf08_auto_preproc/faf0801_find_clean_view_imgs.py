@@ -18,7 +18,7 @@ from models.abca4_faf_models import FafImage
 
 from itertools import product
 
-from faf00_settings import GEOMETRY
+from faf00_settings import GEOMETRY, global_db_proxy
 from utils.db_utils import db_connect
 from utils.vector import Vector
 
@@ -90,9 +90,12 @@ class FafCleanView(FafAnalysis):
         else:
             print(f"{original_image_path} is partly covered by artifacts")
 
-        db = db_connect()
+        if global_db_proxy.obj is None:
+             db = db_connect()
+        else:
+             db = global_db_proxy
+             db.connect(reuse_if_open=True)
         FafImage.update({"clean_view": view_is_clean}).where(FafImage.id == faf_img_dict["id"]).execute()
-        db.close()
 
         return ""
 

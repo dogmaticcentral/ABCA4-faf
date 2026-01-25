@@ -14,6 +14,7 @@ import sys
 
 from models.abca4_faf_models import FafImage
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 
 sys.path.insert(0, "../..")
 
@@ -65,11 +66,14 @@ class FafFoveaDisc(FafAnalysis):
         if self.args.store_to_db and ret is not None:
             disc_center, fovea_center = ret
             print(f"storing fovea and disc locations to db for {outpng}, image id {faf_img_dict['id']}")
-            db = db_connect()
+            if global_db_proxy.obj is None:
+                 db = db_connect()
+            else:
+                 db = global_db_proxy
+                 db.connect(reuse_if_open=True)
             update_dict = {"disc_x": disc_center[1], "disc_y": disc_center[0],
                            "fovea_x": fovea_center[1], "fovea_y": fovea_center[0]}
             FafImage.update(**update_dict).where(FafImage.id == faf_img_dict['id']).execute()
-            db.close()
         return f"{outpng} ok"
 
 

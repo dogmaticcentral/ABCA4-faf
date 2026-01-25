@@ -23,6 +23,7 @@ import scipy.stats as stats
 from random import sample
 
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from faf30_production.faf3001_score_vs_time_plot import individual_eye_scores, average_eye_scores
 
 
@@ -101,14 +102,21 @@ def main():
 
     (average, latex) = improvized_arg_parser()
 
-    db = db_connect()  # this initializes global proxy
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     if average:
         ret_dict = average_eye_scores()
         df_cases = pd.DataFrame.from_dict(ret_dict)
     else:
         ret_dict = individual_eye_scores()
         df_cases = pd.DataFrame.from_dict(ret_dict)
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
     spearman_corr_distros = [subsample(df_cases, subsample_size) for subsample_size in range(10, len(df_cases), 5)]
     plot_whiskas(spearman_corr_distros)

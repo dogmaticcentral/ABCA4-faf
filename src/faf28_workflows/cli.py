@@ -20,6 +20,7 @@ def get_logging_level_names():
 def configure_logging(log_level: str) -> None:
     """Configure logging based on the specified level."""
     logging.disable(logging.NOTSET)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     numeric_level = logging.getLevelNamesMapping().get(log_level.upper(), "unrecognized")
     if numeric_level == "unrecognized":
         shrug("Logging level {} not recognized, setting log level to ERROR")

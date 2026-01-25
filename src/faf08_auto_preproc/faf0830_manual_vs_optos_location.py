@@ -6,17 +6,23 @@ import sys
 sys.path.insert(0, '../..')
 from models.abca4_faf_models import FafImage
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from utils.fundus_geometry import disc_macula_distance, macula_disc_angle
 
 
 def main():
 
     df = pd.read_csv("../optos_fovea.tsv", delimiter="\t")
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     outf = open("fovea_estimates.tsv", "w")
     outline = ["alias", 'age', 'eye', "optos_fovea_x", "optos_fovea_y",
-               "ivana_fovea_x", "ivana_fovea_y",
-               "fovea_diff_x (%)", "fovea_diff_y (%)", "optos fovea confidence"]
+            "ivana_fovea_x", "ivana_fovea_y",
+            "fovea_diff_x (%)", "fovea_diff_y (%)", "optos fovea confidence"]
     print("\t".join(outline), file=outf)
     for faf_img in FafImage.select().where(FafImage.usable == True):
         alias = faf_img.case_id.alias
@@ -42,7 +48,9 @@ def main():
         print("\t".join([str(i) for i in outline]), file=outf)
 
     outf.close()
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 
 ########################

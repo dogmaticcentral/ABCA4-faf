@@ -12,17 +12,25 @@
 
 from models.abca4_faf_models import Case, FafImage, ImagePair
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 
 
 def main():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     for table in [Case, FafImage, ImagePair]:
         if table.table_exists():
             print(f"table {table._meta.table_name} found in {db.database}")
         else:
             print(f"creating {table._meta.table_name} in {db.database}")
             db.create_tables([table])
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 
 ########################

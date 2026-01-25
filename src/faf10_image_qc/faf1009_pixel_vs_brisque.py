@@ -10,6 +10,7 @@
 
 """
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 
 #!/usr/bin/env python3
 """Plot brisque_score vs pixel_score with colors based on image path."""
@@ -61,10 +62,16 @@ def plot_scores(data: list[tuple[float, float, str]]) -> None:
 
 def main() -> None:
     """Fetch data and create scatter plot."""
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     data = fetch_scores()
     plot_scores(data)
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 if __name__ == "__main__":
     main()

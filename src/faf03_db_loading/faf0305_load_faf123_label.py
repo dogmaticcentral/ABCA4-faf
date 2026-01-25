@@ -14,6 +14,7 @@ import sys
 
 from models.abca4_faf_models import Case, FafImage
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from sys import argv
 from models.abca4_special_tables import FAF123Label
 from utils.utils import is_nonempty_file
@@ -33,13 +34,16 @@ def get_alias_to_id_mapping() -> dict:
 
 
 def make_faf123label_table_if_needed():
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
     if FAF123Label.table_exists():
         print(f"table FAF123Label found in {db.database}")
     else:
         print(f"creating table FAF123Label in {db.database}")
         db.create_tables([FAF123Label])
-    db.close()
 
 
 def parse_faf123(faf123_file) -> dict:
@@ -73,7 +77,12 @@ def main():
 
     df = pd.read_csv(faf123_file, sep="\t")
 
-    db = db_connect()  # this initializes global proxy
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     alias_id_map = get_alias_to_id_mapping()
 
     for index,  row in df.iterrows():
@@ -93,7 +102,9 @@ def main():
         print(alias, case_id, img_acquired, row['eye'], image_id, row['FAF label - Ivana'])
         faf123_label =  row['FAF label - Ivana']
         store_or_update(image_id, faf123_label, "ivana")
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
 
 
 ########################

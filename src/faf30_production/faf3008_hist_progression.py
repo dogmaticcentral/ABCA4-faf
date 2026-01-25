@@ -14,6 +14,7 @@ from faf00_settings import WORK_DIR
 from models.abca4_faf_models import FafImage, Case
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 from utils.gaussian import gaussian_mixture
 from utils.utils import read_simple_hist
 from utils.plot_utils import plot_graph_series
@@ -47,21 +48,28 @@ def main():
     alias = "Tony Toothpaste"
     eye = "OS"
     # get the ages from the database
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     query = (FafImage
-             .select(FafImage.case_id, FafImage.age_acquired, FafImage.image_path).join(Case)
-             .where((Case.alias == alias) & (FafImage.eye == eye))
-             .order_by(FafImage.age_acquired)
-             )
+            .select(FafImage.case_id, FafImage.age_acquired, FafImage.image_path).join(Case)
+            .where((Case.alias == alias) & (FafImage.eye == eye))
+            .order_by(FafImage.age_acquired)
+            )
 
     hist_paths = [
         {"main": construct_workfile_path(WORK_DIR, faf_img.image_path, faf_img.case_id.alias, "roi_histogram", 'txt'),
-         "bg": construct_workfile_path(WORK_DIR, faf_img.image_path, faf_img.case_id.alias, "bg_histogram", 'txt'),
-         "age": faf_img.age_acquired
-         }
+        "bg": construct_workfile_path(WORK_DIR, faf_img.image_path, faf_img.case_id.alias, "bg_histogram", 'txt'),
+        "age": faf_img.age_acquired
+        }
         for faf_img in query
     ]
-    db.close()
+    
+    if not db.is_closed():
+        db.close()
     # pprint(hist_paths)
     histograms = list(map(read_and_normalize, hist_paths))
     labels = [f"  age: {hp['age']} yrs  " for hp in hist_paths]

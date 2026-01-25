@@ -20,7 +20,7 @@ from models.abca4_faf_models import FafImage, Case
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
 from utils.utils import shrug, is_nonempty_file, scream, read_simple_hist, histogram_max
-from faf00_settings import SCORE_PARAMS, WORK_DIR, DEBUG
+from faf00_settings import SCORE_PARAMS, WORK_DIR, DEBUG, global_db_proxy
 
 """
 Find the difference in intensity distributions in the inner an the outer ellipse for
@@ -57,9 +57,12 @@ class FafGradCorrection(FafAnalysis):
         )
 
     def run(self):
-        db = db_connect()
+        if global_db_proxy.obj is None:
+             db = db_connect()
+        else:
+             db = global_db_proxy
+             db.connect(reuse_if_open=True)
         faf_img_dicts = self.get_all_faf_dicts()
-        db.close()
 
         differences = []
         for faf_img_dict in faf_img_dicts:

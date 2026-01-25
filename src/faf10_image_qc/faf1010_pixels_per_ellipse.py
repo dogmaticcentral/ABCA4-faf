@@ -119,7 +119,7 @@ class PixelsPerEllipse(FafAnalysis):
         Override parent run method to collect results and write TSV output.
         """
         from distributed import LocalCluster
-        from faf00_settings import DATABASES
+        from faf00_settings import DATABASES, global_db_proxy
         from utils.db_utils import db_connect
         from utils.utils import shrug
         
@@ -129,13 +129,19 @@ class PixelsPerEllipse(FafAnalysis):
         number_of_cpus = self.args.n_cpus
         img_path = self.args.image_path
 
-        db = db_connect()
+        if global_db_proxy.obj is None:
+             db = db_connect()
+        else:
+             db = global_db_proxy
+             db.connect(reuse_if_open=True)
         if img_path:
             all_faf_img_dicts = list(model_to_dict(f) for f in FafImage.select().where(FafImage.image_path == img_path))
             number_of_cpus = 1
         else:
             all_faf_img_dicts = self.get_all_faf_dicts()
-        db.close()
+        
+        if not db.is_closed():
+            db.close()
 
         # Enforce single CPU if using sqlite
         if DATABASES["default"] == DATABASES["sqlite"] and number_of_cpus > 1:

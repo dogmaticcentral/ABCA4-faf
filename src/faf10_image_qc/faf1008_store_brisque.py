@@ -13,6 +13,7 @@ from pathlib import Path
 
 from faf_classes.faf_analysis import FafAnalysis
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 
 from models.abca4_results import Score
 from faf05_image_qc.qc_utils.stat_utils import brisque_score
@@ -43,20 +44,27 @@ class BrisqueScore(FafAnalysis):
         :return: str
             THe return string indicates success or failure - generated in compose() function
         """
-        db = db_connect()
-        original_image_path = self.input_manager(faf_img_dict)
+        if global_db_proxy.obj is None:
+             db = db_connect()
+        else:
+             db = global_db_proxy
+             db.connect(reuse_if_open=True)
         try:
+            original_image_path = self.input_manager(faf_img_dict)
             score = brisque_score(original_image_path)
             self.store_or_update(faf_img_dict["id"], score)
             return "ok"
         except Exception as e:
             return f"failed: {e}"
-        finally:
-            db.close()  # is this ever reached?
 
 
 def is_brisque_in_score_table() -> bool:
-    db = db_connect()
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     ok = True
     if not Score.table_exists():
         print(f"table Score not found found in {db.database}")
@@ -66,7 +74,6 @@ def is_brisque_in_score_table() -> bool:
         if 'brisque_score' not in existing_columns:
             print(f"table Score in {db.database} does not have 'brisque_score' column")
             ok = False
-    db.close()
     return ok
 
 def main():

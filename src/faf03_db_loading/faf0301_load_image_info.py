@@ -12,6 +12,7 @@
 import sys
 
 from utils.db_utils import db_connect
+from faf00_settings import global_db_proxy
 
 from pathlib import Path
 from sys import argv
@@ -104,7 +105,12 @@ def main():
     delimiter = guess_delimiter(infile_path)
 
     list_of_dict = file_to_list_of_dict(infile_path, delimiter, required_columns)
-    db = db_connect()  # this creates db proxy in globals space (that's why we do not use db explicitly)
+    if global_db_proxy.obj is None:
+         db = db_connect()
+    else:
+         db = global_db_proxy
+         db.connect(reuse_if_open=True)
+
     for dct in list_of_dict:
         if len(set([k.lower() for k, v in dct.items() if v]).intersection(required_columns)) != len(required_columns):
             column_names_str = ", ".join([f"'{c}'" for c in required_columns])
@@ -134,7 +140,8 @@ def main():
         image_info["image_path"] = dct["image path"]
         store_image_data(image_info)
 
-    db.close()
+    if not db.is_closed():
+        db.close()
 
 
 ########################

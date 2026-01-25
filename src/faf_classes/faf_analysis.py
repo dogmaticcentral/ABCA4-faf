@@ -10,7 +10,7 @@ from playhouse.shortcuts import model_to_dict
 
 from faf00_settings import WORK_DIR
 from models.abca4_faf_models import FafImage, ImagePair, Case
-from faf00_settings import DATABASES
+from faf00_settings import DATABASES, global_db_proxy
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
 from utils.reports import make_paired_pdf, make_paired_slides
@@ -103,14 +103,18 @@ class FafAnalysis(ABC):
             raise ValueError(f"if {self.args.n_cpus} is a reasonable number, please change in argv_parse()")
 
         if self.args.image_path:
-            cursor = db_connect()
+            if global_db_proxy.obj is None:
+                 cursor = db_connect()
+            else:
+                 cursor = global_db_proxy
+                 cursor.connect(reuse_if_open=True)
+
             faf_img_dicts = list(
                 model_to_dict(f) for f in FafImage.select().where(FafImage.image_path == self.args.image_path))
             if len(faf_img_dicts) == 0:  # there cannot be > 1 faf_img_dict for one image path bcs the db field is unique
                 raise ValueError(f"If {self.args.image_path} is the correct image path, please store in the db first.")
             if not faf_img_dicts[0]['usable']:
                 shrug(f"Keep in mind that int the db {self.args.image_path} is labeled as not usable.")
-            cursor.close()
         return self.args
 
     ################################################################################
@@ -162,7 +166,13 @@ class FafAnalysis(ABC):
     def report(self, all_faf_img_dicts, pngs_produced, name_stem, title):
 
         if not self.args.make_pdf and not self.args.make_slides: return
-        db = db_connect()
+        
+        if global_db_proxy.obj is None:
+             db = db_connect()
+        else:
+             db = global_db_proxy
+             db.connect(reuse_if_open=True)
+
         filepath_pairs = self.find_left_and_right_image_pairs(all_faf_img_dicts, pngs_produced)
         if self.args.make_pdf:
             created_file = make_paired_pdf(filepath_pairs, name_stem=name_stem,
@@ -171,7 +181,7 @@ class FafAnalysis(ABC):
         else:
             created_file = make_paired_slides(filepath_pairs, name_stem=name_stem, title=title)
             print(f"created {created_file}.")
-        db.close()
+
 
     @staticmethod
     def selection_rule_parser(key, value):
@@ -223,12 +233,18 @@ class FafAnalysis(ABC):
 
     def get_requested_faf_dicts(self) -> list:
         img_path = self.args.image_path
-        db = db_connect()
+        
+        if global_db_proxy.obj is None:
+             db = db_connect()
+        else:
+             db = global_db_proxy
+             db.connect(reuse_if_open=True)
+
         if img_path:
             faf_img_dicts = list(model_to_dict(f) for f in FafImage.select().where(FafImage.image_path == img_path))
         else:
             faf_img_dicts = self.get_all_faf_dicts()
-        db.close()
+
         return faf_img_dicts
 
 
