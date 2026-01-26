@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    © 2024 Ivana Mihalek ivana.mihalek@gmail.com
+    © 2024-2026 Ivana Mihalek ivana.mihalek@gmail.com
 
     Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
     You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/

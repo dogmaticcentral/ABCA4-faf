@@ -14,7 +14,7 @@ from random import sample
 
 import numpy as np
 
-from utils.elliptic import elliptical_mask
+from utils.elliptic import elliptical_mask_main_axes_orientation
 from utils.image_utils import channel_visualization, gray_read_blur, rgba_255_path_to_255_ndarray
 from utils.utils import scream
 
@@ -389,7 +389,7 @@ def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path
         x_range = content_range(original_image, 1, verbose=False)
         y_range = content_range(original_image, 0, verbose=False)
         height, width = original_image.shape
-        mask =  elliptical_mask(height, width, radius_x=x_range//8, radius_y=y_range//8)
+        mask =  elliptical_mask_main_axes_orientation(height, width, radius_x=x_range // 8, radius_y=y_range // 8)
         # ndarray_boolean_to_255_png(mask, path_to_image_out)
         # print(f"wrote mask to {path_to_image_out}")
         # exit()
@@ -435,13 +435,16 @@ def disc_and_fovea_detector(original_image_path: Path, usable_region_path:  Path
         # i += 1
         outnm = str(path_to_image_out) # .replace(".png", f".{i}.png")
         # red should be the ONH, green the fovea
-        if dist_to_img_center[1] > dist_to_img_center[0]:
-            channel_visualization(cluster_as_nd_array[0],  cluster_as_nd_array[1], None, outnm, alpha=True)
-            disc_center, fovea_center = cluster_centers[:2]
-        else:
-            channel_visualization(cluster_as_nd_array[1],  cluster_as_nd_array[0], None, outnm, alpha=True)
-            fovea_center, disc_center = cluster_centers[:2]
+        #if dist_to_img_center[1] > dist_to_img_center[0]:
+        # instead of distance to the center use left eye right eye
 
+        if cluster_centers[0][1] < cluster_centers[1][1]:
+            fovea_cluster_index, disc_cluster_index = (0, 1) if eye == "OD" else (1, 0)
+        else:
+            fovea_cluster_index, disc_cluster_index = (1, 0)  if eye == "OD" else (0, 1)
+        fovea_center, disc_center = cluster_centers[fovea_cluster_index], cluster_centers[disc_cluster_index]
+
+        channel_visualization(cluster_as_nd_array[disc_cluster_index],  cluster_as_nd_array[fovea_cluster_index], None, outnm, alpha=True)
         print(f"clusters written to {outnm}")
         return disc_center, fovea_center
 

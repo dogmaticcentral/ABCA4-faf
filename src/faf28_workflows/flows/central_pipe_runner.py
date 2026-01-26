@@ -44,6 +44,7 @@ class CentralPipeRunner:
 
     def run(
             self,
+            logger,
             input_data: Any,
             start_from: str | None = None,
             stop_after: str | None = None,
@@ -55,7 +56,6 @@ class CentralPipeRunner:
         This single flow handles all entry points by specifying
         start_from and stop_after parameters.
         """
-        logger = get_run_logger()
 
         # Get the jobs to run
         jobs_to_run = self._pipeline.get_jobs_in_range(start_from, stop_after)
@@ -117,7 +117,10 @@ class CentralPipeRunner:
 def central_pipe_flow(input_data: str, start_from: str|None, stop_after: str|None, skip_existing: bool):
     # This function handles the 'self' by instantiating the class here
     runner = CentralPipeRunner()
+    logger = get_run_logger()
+
     return runner.run(
+        logger,
         input_data=input_data,
         start_from=start_from,
         stop_after=stop_after,

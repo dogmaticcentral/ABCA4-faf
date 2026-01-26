@@ -364,7 +364,7 @@ faf3008_hist_progression.py
 
 #### An illustration of image regions used in the analysis
 ```bash
-faf3010_image_region_composites.py 
+faf14_img_annot_composites.py 
 ```
 One illustration should look like this (without the blue square in the center):
 

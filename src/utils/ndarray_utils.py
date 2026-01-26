@@ -111,6 +111,41 @@ def elliptic_mask(
     return mask
 
 
+def elliptic_shell_mask(
+        width: int,
+        height: int,
+        disc_center: Vector,
+        fovea_center: Vector,
+        thickness: int,
+        outer_ellipse: bool = False
+) -> np.ndarray:
+
+    mask = np.zeros((height, width))
+    dist = Vector.distance(disc_center, fovea_center)
+    radii = "outer_ellipse_radii" if outer_ellipse else "ellipse_radii"
+    (a, b) = tuple(i * dist for i in GEOMETRY[radii])
+    c = math.sqrt(a**2 - b**2)
+    u: Vector = (fovea_center - disc_center).get_normalized()
+    ellipse_focus_1 = fovea_center + u * c
+    ellipse_focus_2 = fovea_center - u * c
+
+    for y, x in product(range(height), range(width)):
+        point = Vector(x, y)
+
+        # if outside shell, continue
+        d1 = (point - ellipse_focus_1).getLength()
+        d2 = (point - ellipse_focus_2).getLength()
+        outer_bound = thickness//2
+        if d1 + d2 > 2 * a + outer_bound:
+            continue
+        inner_bound = thickness - thickness//2
+        if d1 + d2 < 2 * a - inner_bound:
+            continue
+        mask[y, x] = 255
+
+    return mask
+
+
 def ndarray2pointlist(bw_image: np.ndarray) -> IntPointList:
     point_list: IntPointList = []
     for row, column in np.ndindex(bw_image.shape[:2]):

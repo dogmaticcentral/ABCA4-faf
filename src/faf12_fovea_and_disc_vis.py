@@ -105,7 +105,7 @@ class FafFDVisualization(FafAnalysis):
             disc_x + disc_radius,
             disc_y + disc_radius
         ]
-        draw.ellipse(disc_bbox, outline='red', width=8)
+        draw.ellipse(disc_bbox, outline='red', width=12)
         
         # Draw green circle around fovea
         fovea_bbox = [
@@ -114,11 +114,21 @@ class FafFDVisualization(FafAnalysis):
             fovea_x + fovea_radius,
             fovea_y + fovea_radius
         ]
-        draw.ellipse(fovea_bbox, outline='green', width=8)
+        draw.ellipse(fovea_bbox, outline='green', width=12)
         
         # Convert back to numpy array and save
         annotated_array = np.array(pil_image)
-        ndarray_to_int_png(annotated_array, output_path)
+        w, h = annotated_array.shape[:2]
+
+        # Calculate crop box (left, upper, right, lower)
+        left = w // 4
+        upper = h // 4
+        right = w - w // 4
+        lower = h - h // 4
+        # Calculate crop box (left, upper, right, lower)
+        cropped = annotated_array[left:right, upper:lower]
+
+        ndarray_to_int_png(cropped, output_path)
         print(f"annotated image written to {output_path}.")
         if is_nonempty_file(output_path):
             return str(output_path)

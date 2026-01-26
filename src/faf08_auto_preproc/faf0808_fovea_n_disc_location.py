@@ -25,10 +25,15 @@ from pathlib import Path
 
 from faf_classes.faf_analysis import FafAnalysis
 from utils.conventions import construct_workfile_path
-from utils.utils import is_nonempty_file
+from utils.utils import is_nonempty_file, shrug
 
 
 class FafFoveaDisc(FafAnalysis):
+
+    def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "auto_fovea_n_disc"):
+        super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
+        description = "A heuristic to autodetect disc and fovea locations."
+        self.description = description
 
     def create_parser(self):
         super().create_parser()
@@ -56,12 +61,15 @@ class FafFoveaDisc(FafAnalysis):
         [original_image_path, recal_image_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict['case_id']['alias']
         eye = faf_img_dict['eye']
+        if faf_img_dict['fd_annot_manual']:
+            shrug(f"{original_image_path} have manual annotation for disc and fovea.")
+            return "ok"
         outpng = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, eye=eye, filetype="png")
         if skip_if_exists and is_nonempty_file(outpng):
             print(f"{os.getpid()} {outpng} found")
             return str(outpng)
 
-        print(f"looking for circular clusters in {recal_image_path}")
+        print(f"looking for circular clusters in {recal_image_path}, eye {eye}")
         ret = disc_and_fovea_detector(recal_image_path, None, eye, outpng, verbose=False)
         if self.args.store_to_db and ret is not None:
             disc_center, fovea_center = ret

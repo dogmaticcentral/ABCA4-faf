@@ -46,7 +46,7 @@ def find_equipart_angles(a, b, num_arcs):
 
     return angles
 
-def elliptical_mask(height, width, radius_x, radius_y) -> np.ndarray:
+def elliptical_mask_main_axes_orientation(height, width, radius_x, radius_y) -> np.ndarray:
     outmatrix = np.zeros((height, width), dtype=np.uint8)
 
     # Calculate center and half-dimensions
@@ -63,3 +63,4 @@ def elliptical_mask(height, width, radius_x, radius_y) -> np.ndarray:
     outmatrix[inside_ellipse] = 255
 
     return outmatrix
+

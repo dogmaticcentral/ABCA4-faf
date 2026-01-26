@@ -7,7 +7,7 @@ from utils.db_utils import db_connect
 from faf00_settings import global_db_proxy
 from utils.image_utils import read_single_channel
 from utils.ndarray_utils import ndarray2pointlist
-from utils.utils import  is_nonempty_file
+from utils.utils import is_nonempty_file, shrug
 
 
 def sanity_check(original_path, disc_and_macula_filepath):
@@ -52,7 +52,8 @@ def store_centers(faf_img: FafImage, image_size, disc_center, fovea_center):
     center_info = {
         "width": image_size[0], "height": image_size[1],
         "disc_x": disc_center[0], "disc_y": disc_center[1],
-        "fovea_x": fovea_center[0], "fovea_y": fovea_center[1]
+        "fovea_x": fovea_center[0], "fovea_y": fovea_center[1],
+        "fd_annot_manual": True
     }
     FafImage.update(**center_info).where(FafImage.id == faf_img.id).execute()
     print(f"updated disc and fovea center for {faf_img}")
@@ -64,7 +65,8 @@ def process_disc_and_macula(faf_img: FafImage, expected_extension: str):
 
     print(f"processing {faf_img.image_path}")
     if not sanity_check(faf_img.image_path, disc_and_macula_filepath):
-        exit()
+        shrug(f"{disc_and_macula_filepath} not found")
+        return
 
     image_size = imagesize.get(disc_and_macula_filepath)
     disc_center  = find_center_of_circle_img(disc_and_macula_filepath, "red")

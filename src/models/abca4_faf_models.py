@@ -83,6 +83,7 @@ class FafImage(BaseModel):
     disc_y  = IntegerField(null=True)
     fovea_x = IntegerField(null=True)
     fovea_y = IntegerField(null=True)
+    fd_annot_manual  = BooleanField(default=False, null=False)
     usable  = BooleanField(default=True, null=False)
     vasculature_detectable = BooleanField(default=True, null=False)
     clean_view = BooleanField(default=False, null=False)

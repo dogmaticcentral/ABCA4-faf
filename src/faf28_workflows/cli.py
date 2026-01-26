@@ -9,7 +9,7 @@ from pathlib import Path
 
 import click
 
-from faf28_workflows.flows.central_pipe_runner import CentralPipeRunner
+from faf28_workflows.flows.central_pipe_runner import CentralPipeRunner, central_pipe_flow
 from faf28_workflows.flows.run_params_class import RunParams
 from utils.utils import shrug
 
@@ -76,7 +76,8 @@ def run_single_flow(runner, rp: RunParams) -> None:
         sys.exit(1)
     click.echo(f"From CLI: Running the pipeline for {input_image_path}")
 
-    result = runner.run(input_data=input_image_path, start_from=rp.start_from, stop_after=rp.stop_after, skip_existing=rp.skip_existing)
+    result = central_pipe_flow(input_data=str(input_image_path), start_from=rp.start_from,
+                      stop_after=rp.stop_after, skip_existing=rp.skip_existing)
 
     if result is None:
         click.echo(click.style("From CLI: Pipeline stopped!", fg="yellow"))

@@ -24,7 +24,7 @@ def get_all_image_paths() -> Iterable[str]:
          db = global_db_proxy
          db.connect(reuse_if_open=True)
 
-    query = FafImage.select(FafImage.image_path).where(FafImage.usable == True)
+    query   = FafImage.select(FafImage.image_path).where(FafImage.usable == True)
     retlist = [img.image_path for img in query.execute()]
     return retlist
 
