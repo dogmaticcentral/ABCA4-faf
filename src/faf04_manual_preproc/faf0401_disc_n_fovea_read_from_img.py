@@ -79,6 +79,7 @@ def process_disc_and_macula(faf_img: FafImage, expected_extension: str):
 def disc_and_macula_locations_known(faf_img: FafImage):
     if faf_img.width is None: return False
     if faf_img.width is None: return False
+    if faf_img.disc_x is None: return False
     if faf_img.disc_y is None: return False
     if faf_img.fovea_x is None: return False
     if faf_img.fovea_y is None: return False

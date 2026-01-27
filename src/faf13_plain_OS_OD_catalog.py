@@ -47,13 +47,14 @@ def rows_w_avg_score_from_db() -> list[list]:
 
         age_images_acquired = faf_img.age_acquired
         image_paths = {(entry := FafImage.get_by_id(i)).eye: entry.image_path for i in pair_imgs}
-        rows.append([alias, age_images_acquired, image_paths])
+        manual  = {(entry := FafImage.get_by_id(i)).eye: entry.fd_annot_manual for i in pair_imgs}
+        rows.append([alias, age_images_acquired, image_paths, manual])
 
     rows_sorted = sorted(rows, key=lambda row: row[1])
     return rows_sorted
 
 def add_slide(prs: Presentation, row: list, purpose):
-    [alias, age, orig_images] = row
+    [alias, age, orig_images, manual] = row
     if not orig_images:
         return
     composite_path = {}
@@ -75,9 +76,17 @@ def add_slide(prs: Presentation, row: list, purpose):
 
     if img_path := composite_path.get("OD"):
         slide.shapes.add_picture(img_path, left, top, width=img_width)
+        # Add OD label
+        textbox = slide.shapes.add_textbox(left, top - Pt(30), img_width, Pt(25))
+        textbox.text = f"OD, f/d annotation {'manual' if manual.get('OD') else 'auto'}"
+        textbox.text_frame.paragraphs[0].font.size = Pt(18)
+
     if img_path := composite_path.get("OS"):
         slide.shapes.add_picture(img_path, left + img_width + left / 2, top, width=img_width)
-
+        # Add OS label
+        textbox = slide.shapes.add_textbox(left + img_width + left / 2, top - Pt(30), img_width, Pt(25))
+        textbox.text = f"OS f/d annotation {'manual' if manual.get('OS') else 'auto'}"
+        textbox.text_frame.paragraphs[0].font.size = Pt(18)
     return
 
 
