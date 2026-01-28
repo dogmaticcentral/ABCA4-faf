@@ -45,7 +45,7 @@ class FafFDVisualization(FafAnalysis):
         """
         original_image_path = Path(faf_img_dict['image_path'])
         if not is_nonempty_file(original_image_path):
-            raise FileNotFoundError(f"Recalibrated image not found: {original_image_path}")
+            raise FileNotFoundError(f"Original image not found: {original_image_path}")
         usable_region_path = original_image_path.with_suffix(f".usable_region.png")
         if not is_nonempty_file(usable_region_path):
             shrug(f"manually created usable region for {original_image_path} not found.")

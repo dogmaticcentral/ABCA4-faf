@@ -85,7 +85,7 @@ def add_slide(prs: Presentation, row: list, purpose):
         slide.shapes.add_picture(img_path, left + img_width + left / 2, top, width=img_width)
         # Add OS label
         textbox = slide.shapes.add_textbox(left + img_width + left / 2, top - Pt(30), img_width, Pt(25))
-        textbox.text = f"OS f/d annotation {'manual' if manual.get('OS') else 'auto'}"
+        textbox.text = f"OS f/d {'manual' if manual.get('OS') else 'auto'}  annotation"
         textbox.text_frame.paragraphs[0].font.size = Pt(18)
     return
 
