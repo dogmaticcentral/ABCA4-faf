@@ -78,7 +78,7 @@ def add_slide(prs: Presentation, row: list, purpose):
         slide.shapes.add_picture(img_path, left, top, width=img_width)
         # Add OD label
         textbox = slide.shapes.add_textbox(left, top - Pt(30), img_width, Pt(25))
-        textbox.text = f"OD, f/d annotation {'manual' if manual.get('OD') else 'auto'}"
+        textbox.text = f"OD, f/d {'manual' if manual.get('OD') else 'auto'} annotation"
         textbox.text_frame.paragraphs[0].font.size = Pt(18)
 
     if img_path := composite_path.get("OS"):

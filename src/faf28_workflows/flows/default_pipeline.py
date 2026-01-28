@@ -15,6 +15,7 @@ def create_default_pipeline() -> Pipeline:
     from faf08_auto_preproc.faf0804_img_denoising import FafDenoising
     from faf08_auto_preproc.faf0805_img_recalibration import FafRecalibration
     from faf08_auto_preproc.faf0808_fovea_n_disc_location import FafFoveaDisc
+    from faf08_auto_preproc.faf0810_auto_bg_regions import FafAutoBg
     from faf12_fovea_and_disc_vis import FafFDVisualization
 
     pipeline = Pipeline(name="default_pipeline")
@@ -41,11 +42,20 @@ def create_default_pipeline() -> Pipeline:
         config_factory=lambda: {"db-store": True}
     )
 
+    # TODO this should be a "side job", FafAutoBg does not depend on it
     description  = "For the input image retrieve the fovea and disc locations from the database. "
-    description += "Create visualization, showing the location superpose on te original image"
+    description += "Create visualization, showing the location superimposed on te original image."
     pipeline.add_job(
         name="FafFDVisualization",
         job_class=FafFDVisualization,
+        description=description,
+    )
+
+    description  = "For the input image retrieve the fovea and disc locations from the database. "
+    description += "Use heuristic to find a reference region."
+    pipeline.add_job(
+        name="FafAutoBg",
+        job_class=FafAutoBg,
         description=description,
     )
 

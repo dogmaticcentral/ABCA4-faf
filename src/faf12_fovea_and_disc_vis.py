@@ -9,18 +9,22 @@
     The License is noncommercial - you may not use this material for commercial purposes.
 
 """
+from itertools import product
 from pathlib import Path
 
 import numpy as np
 from PIL import Image as PilImage
 from PIL import ImageDraw
+from scipy.ndimage import binary_erosion
 
 from faf_classes.faf_analysis import FafAnalysis
 from faf00_settings import WORK_DIR, GEOMETRY
 from utils.conventions import construct_workfile_path
 from utils.fundus_geometry import disc_fovea_distance
-from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
+from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png, read_single_channel
+from utils.ndarray_utils import elliptic_shell_mask
 from utils.utils import is_nonempty_file, shrug
+from utils.vector import Vector
 
 
 class FafFDVisualization(FafAnalysis):
@@ -42,9 +46,22 @@ class FafFDVisualization(FafAnalysis):
         original_image_path = Path(faf_img_dict['image_path'])
         if not is_nonempty_file(original_image_path):
             raise FileNotFoundError(f"Recalibrated image not found: {original_image_path}")
-        return [original_image_path]
+        usable_region_path = original_image_path.with_suffix(f".usable_region.png")
+        if not is_nonempty_file(usable_region_path):
+            shrug(f"manually created usable region for {original_image_path} not found.")
+            usable_region_path = None
+        return [original_image_path, usable_region_path]
 
-    def create_annotated_image(self, faf_img_dict: dict, skip_if_exists=False) -> str:
+    @staticmethod
+    def usable_region_outline(usable_region_path) -> np.ndarray:
+        usable_region_filled  = read_single_channel(usable_region_path, channel="blue")
+        binary_shape = usable_region_filled == 255
+        # iterations determines the thickness of the outline
+        eroded: np.ndarray = binary_erosion(binary_shape, iterations=12)
+        outline = binary_shape & ~eroded
+        return (outline * 255).astype(np.uint8)
+
+    def create_annotated_image(self, faf_img_dict: dict, usable_region_path: Path|str|None = None, skip_if_exists=False) -> str:
         """
         Create an annotated image with fovea and disc circles.
         
@@ -115,21 +132,32 @@ class FafFDVisualization(FafAnalysis):
             fovea_y + fovea_radius
         ]
         draw.ellipse(fovea_bbox, outline='green', width=12)
-        
+
+
         # Convert back to numpy array and save
         annotated_array = np.array(pil_image)
-        w, h = annotated_array.shape[:2]
 
+        h, w = annotated_array.shape[:2]
+
+        # draw inner an outer ellipse (ROI and its outer extension)
+        mask = elliptic_shell_mask(w, h, Vector(disc_center), Vector(fovea_center), thickness=12)
+        mask2 = elliptic_shell_mask(w, h, Vector(disc_center), Vector(fovea_center), thickness=12, outer_ellipse=True)
+        mask3 = None if (usable_region_path is None) else (self.usable_region_outline(usable_region_path))
+        for y, x in product(range(h), range(w)):
+            if mask[y, x] > 0 or  mask2[y, x]  > 0: annotated_array[y, x] = [0, 0, 255]
+            if mask3 is not None and mask3[y, x] > 0: annotated_array[y, x] = [255, 0, 255]
         # Calculate crop box (left, upper, right, lower)
-        left = w // 4
+        left = w // 3
         upper = h // 4
-        right = w - w // 4
+        right = w - w // 3
         lower = h - h // 4
-        # Calculate crop box (left, upper, right, lower)
-        cropped = annotated_array[left:right, upper:lower]
 
+        # Calculate crop box (left, upper, right, lower), there is a lot of black
+        # in the original images that I have
+        # TODO make the cropping and cropping dims optional / input variables
+        cropped = annotated_array[upper:lower, left:right]
         ndarray_to_int_png(cropped, output_path)
-        print(f"annotated image written to {output_path}.")
+        print(f"annotated image written to {output_path}")
         if is_nonempty_file(output_path):
             return str(output_path)
         else:
@@ -146,8 +174,10 @@ class FafFDVisualization(FafAnalysis):
         Returns:
             Path to created image or status message
         """
-
-        return self.create_annotated_image(faf_img_dict, skip_if_exists)
+        # we check for the existence of the original image in the input_manager
+        # no need to pass it to create_annotated_image, because the path is present in faf_img_dict
+        [original_image_path, usable_region_path] = self.input_manager(faf_img_dict)
+        return self.create_annotated_image(faf_img_dict, usable_region_path, skip_if_exists)
 
 
 def main():

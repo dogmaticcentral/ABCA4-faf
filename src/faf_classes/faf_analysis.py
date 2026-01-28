@@ -257,7 +257,7 @@ class FafAnalysis(ABC):
         if len(requested_faf_dicts) == 0:
             print("No faf images selected for analysis.")
             return []
-        number_of_cpus = max(len(requested_faf_dicts), self.args.n_cpus)
+        number_of_cpus = min(len(requested_faf_dicts), self.args.n_cpus)
 
         # enforce a single cpu if we are using sqlite
         if DATABASES["default"] == DATABASES["sqlite"] and number_of_cpus > 1:
@@ -280,7 +280,7 @@ class FafAnalysis(ABC):
             futures  = dask_client.map(self.single_image_job, requested_faf_dicts, **other_args)
             pngs_produced = dask_client.gather(futures)
             dask_client.close()
-
+            cluster.close()
         if any("failed" in r for r in pngs_produced):
             map(print, filter(lambda r: "failed" in r, pngs_produced))
         else:

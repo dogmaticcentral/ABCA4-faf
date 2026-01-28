@@ -33,13 +33,15 @@ from faf_classes.faf_analysis import FafAnalysis
 from utils.conventions import construct_workfile_path
 from utils.ndarray_utils import elliptic_mask
 from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png, rgba_255_path_to_255_ndarray
-from utils.utils import is_nonempty_file, scream
+from utils.utils import is_nonempty_file, scream, shrug
 
 
 class FafAutoBg(FafAnalysis):
 
-    def __init__(self, name_stem: str = "faf_analysis", description: str = "Description not provided."):
-        super().__init__(name_stem, description)
+    def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "auto_bg"):
+        super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
+        description = "A heuristic to autodetect a reference region in the input image."
+        self.description = description
 
     def create_parser(self):
         super().create_parser()
@@ -53,13 +55,12 @@ class FafAutoBg(FafAnalysis):
         :return: list[Path]
         """
         original_image_path = Path(faf_img_dict["image_path"])
-        stem  = "auto_usable" if USE_AUTO else "usable_regions"
-        alias = faf_img_dict["case_id"]['alias']
-        usable_region_path = construct_workfile_path(WORK_DIR, original_image_path, alias, stem, "png")
-        for region_png in [original_image_path, usable_region_path]:
-            if not is_nonempty_file(region_png):
-                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
-        # TODO check that the outer ellipse and the orig image actually match
+        if not is_nonempty_file(original_image_path):
+                raise FileNotFoundError(f"{original_image_path} does not exist (or may be empty).")
+        usable_region_path = original_image_path.with_suffix(f".usable_region.png")
+        if not is_nonempty_file(usable_region_path):
+            shrug(f"manually created  usable region for {original_image_path} not found - will use elliptical.")
+            usable_region_path = None
         return [original_image_path, usable_region_path]
 
     @staticmethod
@@ -313,7 +314,7 @@ class FafAutoBg(FafAnalysis):
 
 def main():
 
-    faf_analysis = FafAutoBg(name_stem="auto_bg")
+    faf_analysis = FafAutoBg()
     faf_analysis.run()
 
 
