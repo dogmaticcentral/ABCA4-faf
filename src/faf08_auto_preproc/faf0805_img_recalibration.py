@@ -65,8 +65,8 @@ class FafRecalibration(FafAnalysis):
         :return: str
             THe return string indicates success or failure - generated in compose() function
         """
-        if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
         [original_image_path, denoised_img_path] = self.input_manager(faf_img_dict)
+
         alias = faf_img_dict['case_id']['alias']
         eye   = faf_img_dict['eye']
         return self.recalibrate(original_image_path, denoised_img_path, alias, eye,  skip_if_exists=skip_if_exists)

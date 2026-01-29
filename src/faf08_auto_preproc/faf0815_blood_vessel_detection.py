@@ -49,15 +49,22 @@ class FafVasculature(FafAnalysis):
         recal_image_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "recal",
                                                    eye=eye, filetype="png")
         for region_png in [original_image_path, recal_image_path]:
-            if not is_nonempty_file(region_png):
-                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
+            if is_nonempty_file(region_png): continue
+            msg = f"{region_png} does not exist (or may be empty)."
+            if self.args.dry_run:
+                scream(msg)
+            else:
+                raise FileNotFoundError()
+
         return [original_image_path, recal_image_path]
 
     def find_vasculature(
-        self, original_img_filepath: Path | str, preproc_img_filepath: Path | str, alias: str, skip_if_exists=False
+        self, faf_img_dict: dict, preproc_img_filepath: Path | str,  skip_if_exists=False
     ) -> str:
-        # note we ar using the original image path to construct the new png name
-        outpng = construct_workfile_path(WORK_DIR, original_img_filepath, alias, self.name_stem, "png")
+        original_img_filepath = Path(faf_img_dict["image_path"])
+        alias = faf_img_dict["case_id"]["alias"]
+        eye = faf_img_dict["eye"]
+        outpng = construct_workfile_path(WORK_DIR, original_img_filepath, alias, self.name_stem, eye=eye, filetype="png")
         if skip_if_exists and is_nonempty_file(outpng):
             print(f"{os.getpid()} {outpng} found")
             return str(outpng)
@@ -93,7 +100,6 @@ class FafVasculature(FafAnalysis):
         opening_connectivity = 5
         closing_area_threshold = 50
         closing_connectivity = 2
-
 
         # find intensity at which the cumulative fn is the closest to bottom_fraction
         bottom_n_pct_intensity = (np.abs(cumulative - bottom_fraction)).argmin()
@@ -132,33 +138,7 @@ class FafVasculature(FafAnalysis):
             print(f"{os.getpid()} {outpng} failed")
             return f"vasculature detection in {preproc_img_filepath} failed"
 
-    def inverse_ellipse_mask(self, original_image_path, alias, faf_img_dict):
-        """
-        Set to 0 everything outside the outer ellipse - an abandoned preprocessing step
-        :return: Path
-        """
-        preprocessed_img_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "vasc_preproc", "png")
-        if is_nonempty_file(preprocessed_img_path):
-            print(f"found {preprocessed_img_path}")
-            return preprocessed_img_path
-
-        original_image = grayscale_img_path_to_255_ndarray(original_image_path)
-        (height, width) = original_image.shape
-
-        fovea_center = Vector(faf_img_dict['fovea_x'], faf_img_dict['fovea_y'])
-        disc_center  = Vector(faf_img_dict['disc_x'], faf_img_dict['disc_y'])
-        d = Vector.distance(fovea_center, disc_center)
-
-        outer_ellipse_mask = elliptic_mask(width, height, disc_center, fovea_center, d, outer_ellipse=True)
-        masked_array   = np.zeros(original_image.shape)*255
-        for y, x in product(range(height), range(width)):
-            if not outer_ellipse_mask[y, x]: continue
-            masked_array[y, x] = original_image[y, x]
-        ndarray_to_int_png(masked_array, preprocessed_img_path)
-        if DEBUG: print(f"wrote {preprocessed_img_path}")
-        return preprocessed_img_path
-
-    def vasc_sanity_check(self,  vasculature_image_path: Path, faf_img_dict):
+    def vasc_sanity_check(self,  vasculature_image_path: Path, faf_img_dict) -> str:
 
         # calculate the number of 255 pixels in labeling the vasculature position,
         # and see if we are above some cutoff
@@ -170,7 +150,7 @@ class FafVasculature(FafAnalysis):
         area = (height-200) * (width-200)
         frac = vasc_pixels/area
         warn = " <=========== " if frac < 1.E-4 else ""
-        if not warn: return "OK"
+        if not warn: return str(vasculature_image_path)
 
         scream(f'sanity check failed for {vasculature_image_path}')
         scream(f"image size: {area} vasc pixels {vasc_pixels}  fraction {frac:.1E}  {warn}")
@@ -196,9 +176,10 @@ class FafVasculature(FafAnalysis):
         :return: str
             THe return string indicates success or failure - generated in compose() function
         """
-        alias = faf_img_dict["case_id"]["alias"]
+
         [original_image_path, recal_image_path] = self.input_manager(faf_img_dict)
-        retstr = self.find_vasculature(original_image_path, recal_image_path, alias, skip_if_exists)
+
+        retstr = self.find_vasculature(faf_img_dict, recal_image_path, skip_if_exists)
         if "failed" in retstr: return retstr
 
         return self.vasc_sanity_check(Path(retstr), faf_img_dict)

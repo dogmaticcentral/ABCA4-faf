@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    © 2024-2025 Ivana Mihalek ivana.mihalek@gmail.com
+    © 2024-2026 Ivana Mihalek ivana.mihalek@gmail.com
 
     Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
     You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/
@@ -31,14 +31,19 @@ class FafBgHistograms(FafAnalysis):
         self.parser.add_argument("-v", '--clean_view_only',
                                  dest="clean_view_only", action="store_true",
                                  help="Use only images with the clean view of the ROI. Default: False")
-        self.parser.add_argument("-c", '--ctrl_only', dest="ctrl_only", action="store_true",
-                                 help="Process only control images. Default: False.")
 
     def input_manager(self, faf_img_dict: dict) -> list[Path | None]:
         """Check the presence of all input files that we need to create the composite img.
          :param faf_img_dict:
          :return: list[Path]
          """
+        if not is_nonempty_file(faf_img_dict['image_path']):
+            msg = f"{faf_img_dict['image_path']} not found."
+            if self.args.dry_run:
+                scream(msg)
+            else:
+                raise FileNotFoundError(msg)
+
         original_image_path  = Path(faf_img_dict['image_path'])
         if self.args.clean_view_only:
             if not faf_img_dict['clean_view']:
@@ -53,22 +58,31 @@ class FafBgHistograms(FafAnalysis):
                 shrug(f"{bg_sample_path} does not exist (or may be empty) - falling back on the manual selection.")
                 bg_sample_path = original_2_aux_file_path(original_image_path, ".bg_sample.png")
             if not is_nonempty_file(bg_sample_path):
-                raise Exception(f"Neither auto (preferred) no manual bg found for {original_image_path}")
+                msg = f"Neither auto (preferred) no manual bg found for {original_image_path}"
+                if self.args.dry_run:
+                    scream(msg)
+                else:
+                    raise Exception(msg)
         else:
             bg_sample_path = original_2_aux_file_path(original_image_path, ".bg_sample.png")
             if not is_nonempty_file(bg_sample_path):
                 shrug(f"{bg_sample_path} does not exist (or may be empty) - falling back on the automated selection.")
                 bg_sample_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "auto_bg", "png")
+                if not is_nonempty_file(bg_sample_path):
+                    msg = f"Neither manual (preferred) nor auto bg found for {original_image_path}"
+                    if self.args.dry_run:
+                        scream(msg)
+                    else:
+                        raise Exception(msg)
 
         usable_region_path = original_2_aux_file_path(original_image_path, ".usable_region.png")
-        for region_png in [original_image_path, usable_region_path, bg_sample_path]:
-            if not is_nonempty_file(region_png):
-                scream(f"{region_png} does not exist (or may be empty).")
-                return [None, None, None]
+        if not is_nonempty_file(usable_region_path):
+            shrug (f"{usable_region_path} does not exist (or may be empty). I'll ignore it.")
+            usable_region_path = None
+
         return [original_image_path, usable_region_path, bg_sample_path]
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
-        if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
 
         alias = faf_img_dict['case_id']['alias']
         try:
@@ -87,7 +101,7 @@ class FafBgHistograms(FafAnalysis):
         original_image = grayscale_img_path_to_255_ndarray(original_image_path)
         usable_region  = rgba_255_path_to_255_ndarray(usable_region_path, channel=2)
         bg_region      = rgba_255_path_to_255_ndarray(bg_sample_path, channel=2)
-        mask = usable_region*bg_region
+        mask = usable_region*bg_region if (usable_region is not None) else bg_region
         histogram = in_mask_histogram(original_image, mask, hist_path, skip_if_exists)
         try:
             (fitted_gaussians, weights) = gaussian_mixture(histogram, n_comps_to_try=[1])

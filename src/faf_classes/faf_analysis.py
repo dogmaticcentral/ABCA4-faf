@@ -46,18 +46,20 @@ class FafAnalysis(ABC):
     def create_parser(self):
 
         self.parser = ArgumentParser(prog=Path(argv[0]).name, description=self.description, formatter_class=RDF)
-        self.parser.add_argument("-n", '--n-cpus', dest="n_cpus", type=int, default=1,
-                                 help="WIll run one thread per cpu. Default: 1 cpu.")
+        self.parser.add_argument("-c", '--ctrl_only', dest="ctrl_only", action="store_true",
+                                 help="Process only control images. Default: False.")
         self.parser.add_argument("-i", '--image-path', dest="image_path",
                                  help="Image to process. Default: all images in db.")
+        self.parser.add_argument("-n", '--n-cpus', dest="n_cpus", type=int, default=1,
+                                 help="WIll run one thread per cpu. Default: 1 cpu.")
         self. parser.add_argument("-p", '--pdf', dest="make_pdf", action="store_true",
                                   help="Create a pdf with all images produced. Default: False")
+        self. parser.add_argument("-r", '--dry-run', dest="dry_run", action="store_true",
+                                 help="Dry run - only check the presence of the input data. Default: False.")
         self.parser.add_argument("-s", '--make_slides', dest="make_slides", action="store_true",
                                  help="Create a set of slides with all images produced. Default: False")
         self.parser.add_argument("-x", '--skip_xisting', dest="skip_xisting", action="store_true",
                                  help="Skip if the resulting image already exists. Default: False")
-        self.parser.add_argument("-c", '--ctrl_only', dest="ctrl_only", action="store_true",
-                                 help="Process only control images. Default: False.")
         helpstr = "Db selection rule as JSON '{\"field\": \"value\"}'."
         self.parser.add_argument("-f", '--filter', dest="query_filter",
                                  type=json.loads, help=helpstr)
@@ -121,7 +123,7 @@ class FafAnalysis(ABC):
 
     ################################################################################
     def find_left_and_right_image_pairs(self, all_faf_img_dicts, pngs_produced) -> dict:
-
+        # why is this so complicated?
         should_be_pair_of = {}
         for image_pair in ImagePair.select():
             left_orig_image  = image_pair.left_eye_image_id.image_path
@@ -137,18 +139,16 @@ class FafAnalysis(ABC):
         for faf_img_dict in all_faf_img_dicts:
             this_orig_img_path = faf_img_dict['image_path']
             alias = faf_img_dict['case_id']['alias']
-
             this_png = str(construct_workfile_path(WORK_DIR, this_orig_img_path, alias,
                                                    self.name_stem, eye=faf_img_dict['eye'], filetype='png'))
             if this_png not in pngs_remaining: continue
-            pngs_remaining.remove(this_png)
 
+            pngs_remaining.remove(this_png)
             paired_png = should_be_pair_of.get(this_png)
             if paired_png in pngs_remaining:
                 pngs_remaining.remove(paired_png)
             else:
                 paired_png = None
-
             if this_png and not is_nonempty_file(this_png):
                 this_png = None
             if paired_png and not is_nonempty_file(paired_png):
@@ -176,6 +176,7 @@ class FafAnalysis(ABC):
              db.connect(reuse_if_open=True)
 
         filepath_pairs = self.find_left_and_right_image_pairs(all_faf_img_dicts, pngs_produced)
+
         if self.args.make_pdf:
             created_file = make_paired_pdf(filepath_pairs, name_stem=name_stem,
                                            title=title, keep_pptx=self.args.make_slides)
@@ -257,17 +258,25 @@ class FafAnalysis(ABC):
 
         requested_faf_dicts = self.get_requested_faf_dicts()
         if len(requested_faf_dicts) == 0:
-            print("No faf images selected for analysis.")
+            shrug("No faf images selected for analysis.")
             return []
+
+        if self.args.dry_run:
+            shrug("This is a dry run. Any problems with the input should be reported below.")
+            for fd in requested_faf_dicts: self.input_manager(fd)
+            return []
+
         number_of_cpus = min(len(requested_faf_dicts), self.args.n_cpus)
 
         # enforce a single cpu if we are using sqlite
         if DATABASES["default"] == DATABASES["sqlite"] and number_of_cpus > 1:
             shrug("Note: sqlite cannot handle multiple access.")
             shrug("The current implementation does not know how to deal with this.")
-            shrug("Please use MySQL or PostgreSQL id you'd like to use the multi-cpu version.")
+            shrug("Please use MySQL or PostgreSQL if you'd like to use the multi-cpu version.")
             shrug("For now, I am proceeding with the single cpu version.")
             number_of_cpus = 1
+
+        if self.args.dry_run: number_of_cpus = 1
 
         # if we got to here, the input is ok
         if number_of_cpus == 1:

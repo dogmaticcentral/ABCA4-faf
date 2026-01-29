@@ -242,15 +242,10 @@ class FafAutoBg(FafAnalysis):
 
         # series of shells that r can fall within
         foci_series = self._series_of_foci(radial_steps, a, b, dist, Vector(0, 0), u)
-
-        print()
-        print(faf_img_dict['image_path'])
-        print("collecting histograms")
         histogram = self._collect_region_histograms(fovea_center, u, radial_steps, angular_steps,
                                    angles, foci_series,  original_image, inner_mask, outer_mask)
 
         # which histograms look like nice Gaussians? show very average behavior
-        print("fitting Gaussians")
         min_shell_index, min_angular_index = self._pick_optimal_histogram(radial_steps, angular_steps, histogram, faf_img_dict)
 
         return angles, foci_series, min_shell_index, min_angular_index
@@ -260,7 +255,7 @@ class FafAutoBg(FafAnalysis):
         (height, width) = original_image.shape
         # make empty matrix
         outmatrix = np.zeros((height, width, 4))
-        disc_center   = Vector(faf_img_dict["disc_x"], faf_img_dict["disc_y"])
+        disc_center  = Vector(faf_img_dict["disc_x"], faf_img_dict["disc_y"])
         fovea_center = Vector(faf_img_dict["fovea_x"], faf_img_dict["fovea_y"])
         u: Vector = (fovea_center - disc_center).get_normalized()
         # color blue points at the given index
@@ -290,15 +285,22 @@ class FafAutoBg(FafAnalysis):
             return str(outpng)
 
         original_image = grayscale_img_path_to_255_ndarray(original_image_path)
-        usable_region  = rgba_255_path_to_255_ndarray(usable_region_path, channel=2)
+        # usable_region can be None - we are working within elliptical regions anyway
+        usable_region  =  None if (usable_region_path is None) else rgba_255_path_to_255_ndarray(usable_region_path, channel=2)
 
         (height, width) = original_image.shape
         disc_center  = Vector(faf_img_dict["disc_x"], faf_img_dict["disc_y"])
         fovea_center = Vector(faf_img_dict["fovea_x"], faf_img_dict["fovea_y"])
         dist = Vector.distance(disc_center, fovea_center)
-        inner_mask = elliptic_mask(width, height, disc_center, fovea_center, dist, usable_img_region=usable_region)
-        outer_mask = elliptic_mask(width, height, disc_center, fovea_center, dist,
-                                   usable_img_region=usable_region, outer_ellipse=True)
+        try:
+            inner_mask = elliptic_mask(width, height, disc_center, fovea_center, dist, usable_img_region=usable_region)
+            outer_mask = elliptic_mask(width, height, disc_center, fovea_center, dist,
+                                       usable_img_region=usable_region, outer_ellipse=True)
+        except Exception as e:
+            print(f"Error creating elliptical mask: {e}")
+            print(original_image_path)
+            print(usable_region_path)
+            return f"{outpng} failed"
 
         # search elliptic quadrants for one that might
         # contain a representative background patch
@@ -309,7 +311,7 @@ class FafAutoBg(FafAnalysis):
         # store_region_coords as a png
         self._write_png(original_image, faf_img_dict, inner_mask, outer_mask, angles,
                    foci_series, tgt_angular_index, tgt_shell_index, outpng)
-        return f"{outpng} ok"
+        return f"{outpng}"
 
 
 def main():

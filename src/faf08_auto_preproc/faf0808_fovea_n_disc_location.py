@@ -56,8 +56,9 @@ class FafFoveaDisc(FafAnalysis):
 
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
-        # if not faf_img_dict['clean_view']: return "ok"
         [original_image_path, recal_image_path] = self.input_manager(faf_img_dict)
+        if self.args.dry_run: return "ok"
+
         alias = faf_img_dict['case_id']['alias']
         eye = faf_img_dict['eye']
         if faf_img_dict['fd_annot_manual']:

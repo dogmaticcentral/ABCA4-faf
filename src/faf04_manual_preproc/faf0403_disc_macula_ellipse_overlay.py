@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    © 2024 Ivana Mihalek ivana.mihalek@gmail.com
+    © 2024-2026 Ivana Mihalek ivana.mihalek@gmail.com
 
     Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
     You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/
@@ -16,12 +16,18 @@ import svgwrite
 from faf_classes.faf_analysis import FafAnalysis
 from faf00_settings import WORK_DIR, GEOMETRY, DEBUG
 from utils.conventions import construct_workfile_path
-from utils import disc_fovea_distance, fovea_disc_angle
-from utils import svg2png
-from utils import is_nonempty_file
+from utils.fundus_geometry import disc_fovea_distance, fovea_disc_angle
+from utils.image_utils import svg2png
+from utils.utils import is_nonempty_file, scream
 
 
 class FafOverlay(FafAnalysis):
+
+    def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "overlay"):
+        super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
+        description = "Create overlay images - transparent background, fovea and disc centers, ellipses."
+        description += f"\nThis comes handy when manually determining the background (reference) region."
+        self.description = description
 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         pass
@@ -35,6 +41,11 @@ class FafOverlay(FafAnalysis):
         https://pythonfix.com/code/svgwrite-code-examples/
         https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-width
         """
+
+        for important_data in ['width', 'height', 'disc_x', 'disc_y', 'fovea_x', 'fovea_y']:
+            if faf_img_dict.get(important_data) is None:
+                scream(f"{important_data} not found for {faf_img_dict['image_path']}")
+                return "failed"
 
         image_size   = (faf_img_dict['width'], faf_img_dict['height'])
         disc_center  = (faf_img_dict['disc_x'], faf_img_dict['disc_y'])
@@ -87,6 +98,7 @@ class FafOverlay(FafAnalysis):
         svg2png(svg_filepath, png_filepath)
         if DEBUG: print(f"wrote {png_filepath}")
         if is_nonempty_file(png_filepath):
+            print(f"wrote {png_filepath}")
             return str(png_filepath)
         else:
             return f"{png_filepath} failed"
@@ -96,12 +108,13 @@ class FafOverlay(FafAnalysis):
         if DEBUG: print(faf_img_dict['image_path'])
 
         svg_filepath = self.write_svg_overlay(faf_img_dict, skip_if_exists)
+        if "failed" in svg_filepath:
+            return f"failed creating svg for {faf_img_dict['image_path']}"
         return self.write_png_overlay(svg_filepath, faf_img_dict, skip_if_exists)
 
 
 def main():
-    description = "Create overlay images - transparent background, fovea and disc centers, ellipses."
-    faf_analysis = FafOverlay(name_stem="overlay", description=description)
+    faf_analysis = FafOverlay()
     faf_analysis.run()
 
 
