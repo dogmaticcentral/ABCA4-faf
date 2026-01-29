@@ -1,11 +1,13 @@
 import json
 from abc import ABC, abstractmethod
+
 from enum import Enum
 from argparse import ArgumentParser, RawDescriptionHelpFormatter as RDF, Namespace
 from pathlib import Path
+from pprint import pprint
 from sys import argv
 
-from distributed import LocalCluster
+from distributed import LocalCluster, CancelledError, as_completed, Client
 from playhouse.shortcuts import model_to_dict
 
 from faf00_settings import WORK_DIR
@@ -14,7 +16,7 @@ from faf00_settings import DATABASES, global_db_proxy
 from utils.conventions import construct_workfile_path
 from utils.db_utils import db_connect
 from utils.reports import make_paired_pdf, make_paired_slides
-from utils.utils import shrug, is_nonempty_file
+from utils.utils import shrug, is_nonempty_file, scream
 
 
 class FafAnalysis(ABC):
@@ -271,16 +273,27 @@ class FafAnalysis(ABC):
         if number_of_cpus == 1:
             pngs_produced = [self.single_image_job(fd, self.args.skip_xisting) for fd in requested_faf_dicts]
         else:
-            # parallelization # start local workers as processes
-            # the cluster should probably created some place else if I can have multiple instatncec of FafAnalysis
-            # (can I?)
-            cluster = LocalCluster(n_workers=number_of_cpus, processes=True, threads_per_worker=1)
-            dask_client = cluster.get_client()
-            other_args = {'skip_if_exists': self.args.skip_xisting}
-            futures  = dask_client.map(self.single_image_job, requested_faf_dicts, **other_args)
-            pngs_produced = dask_client.gather(futures)
-            dask_client.close()
-            cluster.close()
+            #  Best practice: Use context managers - no ConnectionPool.heartbeat_worker error messages in the end
+            with LocalCluster(n_workers=number_of_cpus,
+                              processes=True,
+                              threads_per_worker=1) as cluster, Client(cluster) as dask_client:
+
+                other_args = {'skip_if_exists': self.args.skip_xisting}
+                futures  = dask_client.map(self.single_image_job, requested_faf_dicts, **other_args)
+                pngs_produced = []
+                failed_tasks = []
+                for future in as_completed(futures):
+                    try:
+                        result = future.result()
+                        pngs_produced.append(result)
+                    except CancelledError:
+                        shrug(f"Task {future.key} was cancelled")
+                        failed_tasks.append({'key': future.key, 'error': 'Cancelled'})
+                    except Exception as e:
+                        scream(f"Task {future.key} failed: {e}")
+                        failed_tasks.append({'key': future.key, 'error': str(e)})
+
+
         if any("failed" in r for r in pngs_produced):
             map(print, filter(lambda r: "failed" in r, pngs_produced))
         else:

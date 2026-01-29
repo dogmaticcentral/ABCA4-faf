@@ -19,7 +19,7 @@ load_dotenv(find_dotenv())
 BASE_DIR = Path(__file__).resolve().parent
 WORK_DIR = Path("/home/ivana/scratch/abca4_faf")
 
-DEBUG = True
+DEBUG = False
 
 RECOGNIZED_ENGINES = ["peewee.sqlite", "peewee.mysql", "peewee.postgres"]
 DATABASES = {

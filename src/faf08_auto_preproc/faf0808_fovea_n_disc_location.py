@@ -32,8 +32,7 @@ class FafFoveaDisc(FafAnalysis):
 
     def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "auto_fovea_n_disc"):
         super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
-        description = "A heuristic to autodetect disc and fovea locations."
-        self.description = description
+        self.description = "A heuristic to autodetect disc and fovea locations."
 
     def create_parser(self):
         super().create_parser()
@@ -71,23 +70,27 @@ class FafFoveaDisc(FafAnalysis):
 
         print(f"looking for circular clusters in {recal_image_path}, eye {eye}")
         ret = disc_and_fovea_detector(recal_image_path, None, eye, outpng, verbose=False)
+
         if self.args.store_to_db and ret is not None:
             disc_center, fovea_center = ret
             print(f"storing fovea and disc locations to db for {outpng}, image id {faf_img_dict['id']}")
-            if global_db_proxy.obj is None:
-                 db = db_connect()
-            else:
-                 db = global_db_proxy
-                 db.connect(reuse_if_open=True)
-            update_dict = {"disc_x": disc_center[1], "disc_y": disc_center[0],
-                           "fovea_x": fovea_center[1], "fovea_y": fovea_center[0]}
-            FafImage.update(**update_dict).where(FafImage.id == faf_img_dict['id']).execute()
+            # create private db connection - handy for multithreading
+            local_db = db_connect(initialize_global=False)
+            # Use bind_ctx to force FafImage to use this local_db
+            # instead of global_db_proxy for this block only.
+            with local_db.bind_ctx([FafImage]):
+                update_dict = {"disc_x": disc_center[1], "disc_y": disc_center[0],
+                               "fovea_x": fovea_center[1], "fovea_y": fovea_center[0]}
+                FafImage.update(**update_dict).where(FafImage.id == faf_img_dict['id']).execute()
+            # Close explicitly (though context manager usually handles it)
+            local_db.close()
+
         return f"{outpng} ok"
 
 
 def main():
     # extend faf 12 so that the slides show the ovelays over each image
-    faf_analysis = FafFoveaDisc(name_stem="auto_fovea_n_disc")
+    faf_analysis = FafFoveaDisc()
     faf_analysis.run()
 
 

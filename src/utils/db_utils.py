@@ -13,7 +13,7 @@ from faf00_settings import DATABASES, RECOGNIZED_ENGINES, global_db_proxy
 from peewee import MySQLDatabase, PostgresqlDatabase, SqliteDatabase
 
 
-def db_connect(test=False):
+def db_connect(test=False, initialize_global=True):
     for kwd in ["ENGINE", "DB_NAME"]:
         try:
             DATABASES["default"][kwd]
@@ -50,7 +50,8 @@ def db_connect(test=False):
             autoconnect=False
         )
 
-    global_db_proxy.initialize(db_handle)
-    if not test:
-        db_handle.connect()
+    if initialize_global:
+        global_db_proxy.initialize(db_handle)
+        if not test: db_handle.connect()
+
     return db_handle

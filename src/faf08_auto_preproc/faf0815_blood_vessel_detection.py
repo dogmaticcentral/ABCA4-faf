@@ -44,8 +44,10 @@ class FafVasculature(FafAnalysis):
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         original_image_path = Path(faf_img_dict["image_path"])
         alias = faf_img_dict['case_id']['alias']
+        eye = faf_img_dict['eye']
         # let's use recalibrated images for blood vessel detection
-        recal_image_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "recal", "png")
+        recal_image_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "recal",
+                                                   eye=eye, filetype="png")
         for region_png in [original_image_path, recal_image_path]:
             if not is_nonempty_file(region_png):
                 raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
@@ -173,12 +175,15 @@ class FafVasculature(FafAnalysis):
         scream(f'sanity check failed for {vasculature_image_path}')
         scream(f"image size: {area} vasc pixels {vasc_pixels}  fraction {frac:.1E}  {warn}")
         print()
-        if global_db_proxy.obj is None:
-             db = db_connect()
-        else:
-             db = global_db_proxy
-             db.connect(reuse_if_open=True)
-        FafImage.update({"vasculature_detectable": False}).where(FafImage.id == faf_img_dict["id"]).execute()
+
+        # create private db connection - handy for multithreading
+        local_db = db_connect(initialize_global=False)
+        # Use bind_ctx to force FafImage to use this local_db
+        # instead of global_db_proxy for this block only.
+        with local_db.bind_ctx([FafImage]):
+            FafImage.update({"vasculature_detectable": False}).where(FafImage.id == faf_img_dict["id"]).execute()
+        # Close explicitly (though context manager usually handles it)
+        local_db.close()
 
         return "sanity check failed"
 
@@ -191,12 +196,10 @@ class FafVasculature(FafAnalysis):
         :return: str
             THe return string indicates success or failure - generated in compose() function
         """
-        if self.args.ctrl_only and not faf_img_dict['case_id']['is_control']: return "ok"
         alias = faf_img_dict["case_id"]["alias"]
         [original_image_path, recal_image_path] = self.input_manager(faf_img_dict)
         retstr = self.find_vasculature(original_image_path, recal_image_path, alias, skip_if_exists)
-        if "failed" in retstr:
-            return retstr
+        if "failed" in retstr: return retstr
 
         return self.vasc_sanity_check(Path(retstr), faf_img_dict)
 
