@@ -15,7 +15,7 @@ from itertools import product
 
 import numpy as np
 
-sys.path.insert(0, "../..")
+sys.path.insert(0, "../../..")
 
 from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_boolean_to_255_png
 

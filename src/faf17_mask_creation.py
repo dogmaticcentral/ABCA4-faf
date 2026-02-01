@@ -25,27 +25,25 @@ from utils.vector import Vector
 class FafFullMask(FafAnalysis):
     roi_shape = "elliptic"
 
+    def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "inner_roi_mask"):
+        super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
+        description = "Create ROI masks. "
+        description += "ROI = inner or outer elliptical region, minus optic disc, fovea, blood vessels and artifacts."
+        self.description = description
+
+
     def create_parser(self):
         super().create_parser()
-        self.parser.add_argument(
-            "-c",
-            "--ctrl_only",
-            dest="ctrl_only",
-            action="store_true",
-            help="Run for control cases only. Default: False",
-        )
         default_shape = "elliptic"
         self.parser.add_argument(
-            "-r",
-            "--roi-shape",
+             "--roi-shape",
             dest="roi_shape",
             default=default_shape,
             choices=[default_shape, "peripapillary"],
             help=f"Choice of the region of interest (ROI) shape. Default: {default_shape}.",
         )
         self.parser.add_argument(
-            "-l",
-            "--outer_ellipse",
+             "--outer_ellipse",
             dest="outer_ellipse",
             action="store_true",
             help="Use bigger ellipse radii. Ignored if the ROI region is not elliptic. Default: False.",
@@ -55,9 +53,9 @@ class FafFullMask(FafAnalysis):
         super().argv_parse()
 
         if self.args.roi_shape == "elliptic":
-            self.name_stem = "elliptic_mask"
+            self.name_stem = "inner_roi_mask"
             if self.args.outer_ellipse:
-                self.name_stem = "outer_mask"
+                self.name_stem = "outer_roi_mask"
         elif self.args.roi_shape == "peripapillary":
             self.name_stem = "pp_mask"
         else:
@@ -71,13 +69,17 @@ class FafFullMask(FafAnalysis):
         """
         original_image = Path(faf_img_dict["image_path"])
         alias = faf_img_dict["case_id"]["alias"]
-
+        eye = faf_img_dict["eye"]
         files_to_check = [original_image]
 
         usable_region = original_2_aux_file_path(original_image, ".usable_region.png")
+        if not is_nonempty_file(usable_region):
+            shrug(f"{usable_region} is nonexistent or empty - the image will be treated as free of artifacts")
+            usable_region = None
+
         if faf_img_dict["vasculature_detectable"]:
             blood_vessels = construct_workfile_path(WORK_DIR, original_image, alias, "vasculature",
-                                                    "png", should_exist=True)
+                                                    eye=eye, filetype="png", should_exist=True)
             files_to_check.append(blood_vessels)
         else:
             blood_vessels = None  # if not available, we can do without it
@@ -86,9 +88,6 @@ class FafFullMask(FafAnalysis):
             if not is_nonempty_file(region_png):
                 raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
 
-        if not is_nonempty_file(usable_region):
-            shrug(f"{usable_region} is nonexistent or empty - the image will be treated as free of artifacts")
-            usable_region = None
 
         return [original_image, usable_region, blood_vessels]
 
@@ -102,8 +101,9 @@ class FafFullMask(FafAnalysis):
 
         [original_image_path, usable_region, blood_vessels] = self.input_manager(faf_img_dict)
         alias = faf_img_dict["case_id"]["alias"]
-
-        outpng = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, "png")
+        eye = faf_img_dict["eye"]
+        outpng = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem,
+                                         eye=eye, filetype="png")
         if skip_if_exists and is_nonempty_file(outpng):
             if DEBUG: print(f"found {outpng}")
             return str(outpng)
@@ -113,7 +113,7 @@ class FafFullMask(FafAnalysis):
         dist = Vector.distance(disc_center, fovea_center)
 
         usable_img_region = None if usable_region is None else rgba_255_path_to_255_ndarray(usable_region, channel=2)
-        vasculature =  None if blood_vessels is None else grayscale_img_path_to_255_ndarray(blood_vessels)
+        vasculature = None if blood_vessels is None else grayscale_img_path_to_255_ndarray(blood_vessels)
 
         (width, height) = get_image_dimensions(original_image_path)
         mask = mask_creator(
@@ -135,9 +135,7 @@ class FafFullMask(FafAnalysis):
 
 
 def main():
-    description = "Create ROI masks. "
-    description += "ROI = inner or outer elliptical region, minus optic disc, fovea, blood vessels and artifacts."
-    faf_analysis = FafFullMask(name_stem="elliptic_mask", description=description)
+    faf_analysis = FafFullMask()
     faf_analysis.run()
 
 

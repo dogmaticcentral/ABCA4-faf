@@ -17,14 +17,14 @@ This project requires Python 3.13 or higher. We recommend using `uv` for depende
 2.  **Create a virtual environment:**
     Using standard `venv`:
     ```bash
-    python3.13 -m venv .venv
-    source .venv/bin/activate
+    python3.13 -m venv venv
+    source ./venv/bin/activate
     ```
     
     Or using `uv` (recommended):
     ```bash
     uv venv --python 3.13
-    source .venv/bin/activate
+    source ./venv/bin/activate
     ```
 
 3.  **Install dependencies:**
@@ -43,6 +43,21 @@ This project requires Python 3.13 or higher. We recommend using `uv` for depende
     ```bash
     pip install -e .
     ```
+
+### A note on installing uv
+
+To avoid the scary message from snap:
+```txt
+error: This revision of snap "astral-uv" was published using classic confinement and thus may
+       perform arbitrary system changes outside of the security sandbox that snaps are usually
+       confined to, which may put your system at risk.
+```
+use 
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+This will install uv in  $HOME/.local/bin
+
 
 ## Documentation
 
