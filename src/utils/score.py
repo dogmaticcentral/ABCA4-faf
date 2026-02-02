@@ -26,8 +26,7 @@ from faf00_settings import WORK_DIR, SCORE_PARAMS
 from utils.image_utils import grayscale_img_path_to_255_ndarray
 
 
-def collect_bg_distro_params(original_image_path, alias, bg_stem) -> tuple:
-    bg_histogram_path = construct_workfile_path(WORK_DIR, original_image_path, alias, bg_stem, "txt")
+def collect_bg_distro_params(original_image_path, bg_histogram_path, alias, bg_stem) -> tuple:
 
     if not is_nonempty_file(bg_histogram_path):
         scream(f"{bg_histogram_path} does not exist (or may be empty).")

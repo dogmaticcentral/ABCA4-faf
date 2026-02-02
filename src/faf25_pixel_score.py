@@ -43,11 +43,15 @@ def make_score_table_if_needed():
 
 class PixelScore(FafAnalysis):
 
+    def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "pixel_score"):
+        super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
+        description = "Calculate the pixel-level score"
+        self.description = description
+
     def create_parser(self):
         super().create_parser()
         default_shape = "elliptic"
         self.parser.add_argument(
-            "-r",
             "--roi-shape",
             dest="roi_shape",
             default=default_shape,
@@ -55,7 +59,7 @@ class PixelScore(FafAnalysis):
             help=f"Choice of the region of interest (ROI) shape. Default: {default_shape}.",
         )
 
-    def input_manager(self, faf_img_dict) -> list[Path, Path, tuple]:
+    def input_manager(self, faf_img_dict) -> list[Path | tuple]:
         """Check the presence of all input files that we need to create the composite img.
         :param faf_img_dict:
         :return: list[Path]
@@ -64,15 +68,20 @@ class PixelScore(FafAnalysis):
 
         original_image_path = Path(faf_img_dict["image_path"])
         alias = faf_img_dict["case_id"]["alias"]
-        mask_dir = "elliptic_mask" if self.args.roi_shape == "elliptic" else "pp_mask"
-        full_mask_path = construct_workfile_path(WORK_DIR, original_image_path, alias, mask_dir, "png")
+        eye = faf_img_dict["eye"]
+        mask_dir = "inner_roi_mask" if self.args.roi_shape == "elliptic" else "pp_mask"
+        full_mask_path = construct_workfile_path(WORK_DIR, original_image_path, alias, mask_dir, eye=eye, filetype="png")
         bg_stem =  "auto_bg_histogram" if USE_AUTO else "bg_histogram"
-        bg_histogram_path = construct_workfile_path(WORK_DIR, original_image_path, alias, bg_stem, "txt")
+        bg_histogram_path = construct_workfile_path(WORK_DIR, original_image_path, alias, bg_stem, eye=eye, filetype="txt")
         for region_png in [original_image_path, full_mask_path, bg_histogram_path]:
+            msg = f"{region_png} does not exist (or may be empty)."
             if not is_nonempty_file(region_png):
-                raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
+                if self.args.dry_run:
+                    scream(msg)
+                else:
+                    raise FileNotFoundError(msg)
 
-        bg_distro_params = collect_bg_distro_params(original_image_path, alias, bg_stem)
+        bg_distro_params = collect_bg_distro_params(original_image_path, bg_histogram_path, alias, bg_stem)
 
         return [original_image_path, full_mask_path, bg_distro_params]
 
@@ -113,7 +122,8 @@ class PixelScore(FafAnalysis):
     def output_score_png(
         self, faf_img_dict: dict, original_image, alias, score_matrix: np.ndarray, skip_if_exists=False
     ) -> str:
-        outpng = construct_workfile_path(WORK_DIR, original_image, alias, self.name_stem, "png")
+        eye = faf_img_dict["eye"]
+        outpng = construct_workfile_path(WORK_DIR, original_image, alias, self.name_stem, eye=eye, filetype="png")
         if skip_if_exists and is_nonempty_file(outpng):
             print(f"found {outpng}")
             return str(outpng)

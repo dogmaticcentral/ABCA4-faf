@@ -30,15 +30,15 @@ from utils.utils import is_nonempty_file, scream
 
 class FafBgHistograms(FafAnalysis):
 
+
+    def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "roi_histogram"):
+        super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
+        description = "Create pixel intensity histograms within ROI "
+        description += "(inner or outer elliptical region, minus optic disc, fovea, blood vessels and artifacts). "
+        self.description = description
+
     def create_parser(self):
         super().create_parser()
-        self.parser.add_argument(
-            "-c",
-            "--ctrl_only",
-            dest="ctrl_only",
-            action="store_true",
-            help="Run for control cases only. Default: False",
-        )
         self.parser.add_argument(
             "-l",
             "--outer_ellipse",
@@ -68,11 +68,13 @@ class FafBgHistograms(FafAnalysis):
         """
         original_image_path = Path(faf_img_dict["image_path"])
         alias = faf_img_dict["case_id"]["alias"]
-        inner_ellipse_mask_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "elliptic_mask", "png",
-                                                          should_exist=True)
+        eye = faf_img_dict["eye"]
+        inner_ellipse_mask_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "inner_roi_mask",
+                                                          eye=eye, filetype="png", should_exist=True)
         dependencies = [original_image_path, inner_ellipse_mask_path]
         if self.args.outer_ellipse:
-            outer_ellipse_mask_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "outer_mask", "png")
+            outer_ellipse_mask_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "outer_roi_mask",
+                                                              eye=eye, filetype="png")
             dependencies.append(outer_ellipse_mask_path)
         else:
             outer_ellipse_mask_path = Path("dummy")
@@ -86,8 +88,9 @@ class FafBgHistograms(FafAnalysis):
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
         [original_image_path, inner_ellipse_mask_path, outer_ellipse_mask_path] = self.input_manager(faf_img_dict)
         alias = faf_img_dict["case_id"]["alias"]
-        hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, "txt")
-        hist_img_path = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, "png")
+        eye = faf_img_dict["eye"]
+        hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem,  eye=eye, filetype="txt")
+        hist_img_path = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem,  eye=eye, filetype="png")
         if skip_if_exists and is_nonempty_file(hist_img_path):
             print(f"{os.getpid()} {hist_img_path} found")
             return str(hist_img_path)
@@ -124,13 +127,7 @@ class FafBgHistograms(FafAnalysis):
 
 
 def main():
-    description = "Create pixel intensity histograms within ROI "
-    description += "(inner or outer elliptical region, minus optic disc, fovea, blood vessels and artifacts). "
-    description += "\nThe outer ellipse is used in controls, to find the difference in the location "
-    description += "of peak intensities between the inner and the outer ellipse. This number can later be used "
-    description += "to correct for the fact that in patients' images the background correction is estimated from "
-    description += "the outer ellipse region."
-    faf_analysis = FafBgHistograms(name_stem="roi_histogram")
+    faf_analysis = FafBgHistograms()
     faf_analysis.run()
 
 
