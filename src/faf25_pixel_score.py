@@ -58,6 +58,10 @@ class PixelScore(FafAnalysis):
             choices=[default_shape, "peripapillary"],
             help=f"Choice of the region of interest (ROI) shape. Default: {default_shape}.",
         )
+        self.parser.add_argument("-d", '--denoised',
+                                 dest="denoised", action="store_true",
+                                 help="Use denoised images, rather that the original. Default: False")
+
 
     def input_manager(self, faf_img_dict) -> list[Path | tuple]:
         """Check the presence of all input files that we need to create the composite img.
@@ -67,13 +71,29 @@ class PixelScore(FafAnalysis):
         # if USE_AUTO and not faf_img_dict['clean_view']: return [Path(""), Path(""), (0, 0, 0)]
 
         original_image_path = Path(faf_img_dict["image_path"])
+        if not is_nonempty_file(original_image_path):
+            msg = f"{original_image_path} not found."
+            if self.args.dry_run:
+                scream(msg)
+            else:
+                raise FileNotFoundError(msg)
         alias = faf_img_dict["case_id"]["alias"]
         eye = faf_img_dict["eye"]
+        if self.args.denoised:
+            analyzed_image_path  = construct_workfile_path(WORK_DIR, original_image_path, alias, "denoised",
+                                                           eye=eye, filetype='png')
+        else:
+            analyzed_image_path = original_image_path
+
         mask_dir = "inner_roi_mask" if self.args.roi_shape == "elliptic" else "pp_mask"
         full_mask_path = construct_workfile_path(WORK_DIR, original_image_path, alias, mask_dir, eye=eye, filetype="png")
-        bg_stem =  "auto_bg_histogram" if USE_AUTO else "bg_histogram"
+
+        bg_stem = "auto_bg_histogram" if USE_AUTO else "bg_histogram"
+        if self.args.denoised: bg_stem += "_denoised"
+
         bg_histogram_path = construct_workfile_path(WORK_DIR, original_image_path, alias, bg_stem, eye=eye, filetype="txt")
-        for region_png in [original_image_path, full_mask_path, bg_histogram_path]:
+        # TODO - factor out the  visualization from this script - then this won't be needed
+        for region_png in [full_mask_path, bg_histogram_path]:
             msg = f"{region_png} does not exist (or may be empty)."
             if not is_nonempty_file(region_png):
                 if self.args.dry_run:
@@ -81,9 +101,9 @@ class PixelScore(FafAnalysis):
                 else:
                     raise FileNotFoundError(msg)
 
-        bg_distro_params = collect_bg_distro_params(original_image_path, bg_histogram_path, alias, bg_stem)
+        bg_distro_params = collect_bg_distro_params(bg_histogram_path)
 
-        return [original_image_path, full_mask_path, bg_distro_params]
+        return [analyzed_image_path, full_mask_path, bg_distro_params]
 
 
     ###################################################################################
@@ -152,7 +172,10 @@ class PixelScore(FafAnalysis):
     def store_or_update(self, image_id, score):
 
         if self.args.roi_shape == "elliptic":
-            target = "pixel_score_auto" if USE_AUTO else "pixel_score"
+            if self.args.denoised:
+                target = "pixel_score_denoised"
+            else:
+                target = "pixel_score_auto" if USE_AUTO else "pixel_score"
         elif self.args.roi_shape == "peripapillary":
             target = "pixel_score_peripapillary"
         else:
@@ -183,11 +206,11 @@ class PixelScore(FafAnalysis):
         else:
              db = global_db_proxy
              db.connect(reuse_if_open=True)
-        [original_image_path, full_mask_path, bg_distro_params] = self.input_manager(faf_img_dict)
-        print(original_image_path)
-        mask  = grayscale_img_path_to_255_ndarray(full_mask_path)
+        [analyzed_image_path, full_mask_path, bg_distro_params] = self.input_manager(faf_img_dict)
+        print(analyzed_image_path)
+        mask = grayscale_img_path_to_255_ndarray(full_mask_path)
         make_illustration = self.args.make_slides or self.args.make_pdf
-        (score, score_matrix) = image_score(original_image_path,
+        (score, score_matrix) = image_score(analyzed_image_path,
                                             white_pixel_weight=1,
                                             black_pixel_weight=SCORE_PARAMS["black_pixel_weight"],
                                             mask=mask,
@@ -196,14 +219,14 @@ class PixelScore(FafAnalysis):
         self.store_or_update(faf_img_dict["id"], score)
         if make_illustration:
             alias = faf_img_dict["case_id"]["alias"]
-            return self.output_score_png(faf_img_dict, original_image_path, alias, score_matrix, skip_if_exists)
+            return self.output_score_png(faf_img_dict, analyzed_image_path, alias, score_matrix, skip_if_exists)
         else:
             return "ok"
 
 
 def main():
     make_score_table_if_needed()
-    faf_analysis = PixelScore(name_stem="pixel_score")
+    faf_analysis = PixelScore()
     faf_analysis.run()
 
 

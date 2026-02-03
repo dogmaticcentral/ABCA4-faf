@@ -25,6 +25,7 @@ class Score(BaseModel):
     faf_image_id = ForeignKeyField(FafImage, backref='scores',  on_delete='CASCADE')  # what is backref?
     pixel_score = FloatField(null=True)
     pixel_score_auto = FloatField(null=True)
+    pixel_score_denoised = FloatField(null=True)
     pixel_score_peripapillary = FloatField(null=True)
     brisque_score = FloatField(null=True)
 

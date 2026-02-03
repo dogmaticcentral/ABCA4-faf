@@ -42,14 +42,14 @@ class FafBgHistograms(FafAnalysis):
          :param faf_img_dict:
          :return: list[Path]
          """
-        if not is_nonempty_file(faf_img_dict['image_path']):
-            msg = f"{faf_img_dict['image_path']} not found."
+        original_image_path = faf_img_dict['image_path']
+        if not is_nonempty_file(original_image_path):
+            msg = f"{original_image_path} not found."
             if self.args.dry_run:
                 scream(msg)
             else:
                 raise FileNotFoundError(msg)
 
-        original_image_path= faf_img_dict['image_path']
         alias = faf_img_dict['case_id']['alias']
         eye   = faf_img_dict['eye']
         if self.args.denoised:
@@ -120,7 +120,7 @@ class FafBgHistograms(FafAnalysis):
             return str(hist_img_path)
 
         analyzed_image = grayscale_img_path_to_255_ndarray(analyzed_image_path)
-        usable_region  = None if (usable_region_path is None) else  rgba_255_path_to_255_ndarray(usable_region_path, channel=2)
+        usable_region  = None if (usable_region_path is None) else rgba_255_path_to_255_ndarray(usable_region_path, channel=2)
         bg_region      = rgba_255_path_to_255_ndarray(bg_sample_path, channel=2)
         mask = usable_region*bg_region if (usable_region is not None) else bg_region
         histogram = in_mask_histogram(analyzed_image, mask, hist_path, skip_if_exists)
@@ -132,6 +132,7 @@ class FafBgHistograms(FafAnalysis):
             msg += f"=\tbg region: {bg_sample_path}"
             scream(msg)
             return msg
+
         plot_histogram(histogram, hist_img_path,
                        title="pixel intensity histogram (bg sample)",
                        fitted_gaussians=fitted_gaussians, weights=weights,

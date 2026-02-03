@@ -26,7 +26,7 @@ from faf00_settings import WORK_DIR, SCORE_PARAMS
 from utils.image_utils import grayscale_img_path_to_255_ndarray
 
 
-def collect_bg_distro_params(original_image_path, bg_histogram_path, alias, bg_stem) -> tuple:
+def collect_bg_distro_params(bg_histogram_path) -> tuple:
 
     if not is_nonempty_file(bg_histogram_path):
         scream(f"{bg_histogram_path} does not exist (or may be empty).")
@@ -40,7 +40,7 @@ def collect_bg_distro_params(original_image_path, bg_histogram_path, alias, bg_s
 
 
 def image_score(
-    original_image_path: Path,
+    analyzed_image_path: Path,
     white_pixel_weight: int,
     black_pixel_weight: int,
     mask: np.ndarray,
@@ -48,7 +48,7 @@ def image_score(
     evaluate_score_matrix=False,
 ) -> (float, np.ndarray):
 
-    image = grayscale_img_path_to_255_ndarray(original_image_path)
+    image = grayscale_img_path_to_255_ndarray(analyzed_image_path)
 
     (bg_mean, bg_stdev, gradient_correction) = bg_distro_params
     score = 0

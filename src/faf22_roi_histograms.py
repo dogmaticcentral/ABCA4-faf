@@ -46,6 +46,9 @@ class FafBgHistograms(FafAnalysis):
             action="store_true",
             help="Use the ring between the inner an the outer ellipse as the ROI. Default: False",
         )
+        self.parser.add_argument("-d", '--denoised',
+                                 dest="denoised", action="store_true",
+                                 help="Use denoised images, rather that the original. Default: False")
 
     def argv_parse(self):
         super().argv_parse()
@@ -67,8 +70,28 @@ class FafBgHistograms(FafAnalysis):
         :return: list[Path]
         """
         original_image_path = Path(faf_img_dict["image_path"])
+        if not is_nonempty_file(original_image_path):
+            msg = f"{original_image_path} not found."
+            if self.args.dry_run:
+                scream(msg)
+            else:
+                raise FileNotFoundError(msg)
+
         alias = faf_img_dict["case_id"]["alias"]
         eye = faf_img_dict["eye"]
+
+        if self.args.denoised:
+            analyzed_image_path  = construct_workfile_path(WORK_DIR, original_image_path, alias, "denoised", eye=eye, filetype='png')
+        else:
+            analyzed_image_path = original_image_path
+
+        if not is_nonempty_file(analyzed_image_path):
+            msg = f"{analyzed_image_path} does not exist (or may be empty)."
+            if self.args.dry_run:
+                scream(msg)
+            else:
+                raise FileNotFoundError(msg)
+
         inner_ellipse_mask_path = construct_workfile_path(WORK_DIR, original_image_path, alias, "inner_roi_mask",
                                                           eye=eye, filetype="png", should_exist=True)
         dependencies = [original_image_path, inner_ellipse_mask_path]
@@ -83,19 +106,23 @@ class FafBgHistograms(FafAnalysis):
             if not is_nonempty_file(region_png):
                 raise FileNotFoundError(f"{region_png} does not exist (or may be empty).")
 
-        return [original_image_path, inner_ellipse_mask_path, outer_ellipse_mask_path]
+        return [analyzed_image_path, inner_ellipse_mask_path, outer_ellipse_mask_path]
+
 
     def single_image_job(self, faf_img_dict: dict, skip_if_exists: bool) -> str:
-        [original_image_path, inner_ellipse_mask_path, outer_ellipse_mask_path] = self.input_manager(faf_img_dict)
+        [analyzed_image_path, inner_ellipse_mask_path, outer_ellipse_mask_path] = self.input_manager(faf_img_dict)
+        original_image_path = Path(faf_img_dict["image_path"])
         alias = faf_img_dict["case_id"]["alias"]
         eye = faf_img_dict["eye"]
-        hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem,  eye=eye, filetype="txt")
-        hist_img_path = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem,  eye=eye, filetype="png")
+
+        name_stem = f"{self.name_stem}_denoised" if self.args.denoised else self.name_stem
+        hist_path = construct_workfile_path(WORK_DIR, original_image_path, alias, name_stem,  eye=eye, filetype="txt")
+        hist_img_path = construct_workfile_path(WORK_DIR, original_image_path, alias, name_stem,  eye=eye, filetype="png")
         if skip_if_exists and is_nonempty_file(hist_img_path):
             print(f"{os.getpid()} {hist_img_path} found")
             return str(hist_img_path)
 
-        original_image = grayscale_img_path_to_255_ndarray(original_image_path)
+        analyzed_image = grayscale_img_path_to_255_ndarray(analyzed_image_path)
         roi_region = grayscale_img_path_to_255_ndarray(inner_ellipse_mask_path)
         if self.args.outer_ellipse:
             outer_ellipse_mask_path: Path
@@ -106,7 +133,7 @@ class FafBgHistograms(FafAnalysis):
         else:
             mask = roi_region
 
-        histogram = in_mask_histogram(original_image, mask, hist_path, skip_if_exists)
+        histogram = in_mask_histogram(analyzed_image, mask, hist_path, skip_if_exists)
 
         # (fitted_gaussians, weights) = gaussian_mixture(histogram, n_comps_to_try=[1])
         plot_histogram(
@@ -123,7 +150,7 @@ class FafBgHistograms(FafAnalysis):
             return str(hist_img_path)
         else:
             print(f"{os.getpid()} {hist_img_path} failed")
-            return f"bg histogram for {original_image} failed"
+            return f"counting histogram for {analyzed_image_path} failed"
 
 
 def main():
