@@ -41,7 +41,7 @@ def make_score_table_if_needed():
         db.create_tables([Score])
 
 
-class PixelScore(FafAnalysis):
+class FafPixelScore(FafAnalysis):
 
     def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "pixel_score"):
         super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
@@ -226,7 +226,7 @@ class PixelScore(FafAnalysis):
 
 def main():
     make_score_table_if_needed()
-    faf_analysis = PixelScore()
+    faf_analysis = FafPixelScore()
     faf_analysis.run()
 
 

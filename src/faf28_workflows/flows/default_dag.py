@@ -1,3 +1,7 @@
+from faf15_background_hists import FafBgHistogram
+from faf17_mask_creation import  FafFullMask
+from faf22_roi_histograms import FafROIHistogram
+from faf25_pixel_score import FafPixelScore
 from faf28_workflows.flows.dag_class import DAG
 
 
@@ -21,21 +25,18 @@ def create_default_dag() -> DAG:
     ###################################################
     # 1. Define Nodes
     dag.add_node(name="FafDenoising", job_class=FafDenoising, description="Denoise the input image")
+    dag.add_node(name="FafRecalibration", job_class=FafRecalibration)
+    dag.add_node(name="FafFoveaDisc", job_class=FafFoveaDisc, config_factory=lambda: {"db-store": True})
+    dag.add_node(name="FafAutoBg", job_class=FafAutoBg)
+    
+    dag.add_node(name="FafVasculature", job_class=FafVasculature)
+    dag.add_node(name="FafInnerMask", job_class=FafFullMask, config_factory=lambda: {"outer-mask": False})
+    dag.add_node(name="FafOuterMask", job_class=FafFullMask, config_factory=lambda: {"outer-mask": True})
 
-    description_recal = "Locate the denoised version of the input image and recalibrate."
-    dag.add_node(name="FafRecalibration", job_class=FafRecalibration, description=description_recal)
+    dag.add_node(name="FafBgHistogram", job_class=FafBgHistogram)
+    dag.add_node(name="FafROIHistogram", job_class=FafROIHistogram)
 
-    description_vd = "For the recalibrated input image find blood vessels, where possible."
-    dag.add_node(name="FafVasculature", job_class=FafVasculature, description=description_vd)
-
-    description_fd  = "Locate the recalibrated version of the input image and find the fovea and disc. "
-    description_fd += "Save the  fovea and disc locations in the project database"
-    dag.add_node(name="FafFoveaDisc", job_class=FafFoveaDisc, description=description_fd)
-
-    description_bg  = "For the input image retrieve the fovea and disc locations from the database. "
-    description_bg += "Use heuristic to find a reference region."
-    dag.add_node( name="FafAutoBg", job_class=FafAutoBg, description=description_bg)
-
+    dag.add_node(name="FafPixelScore", job_class=FafPixelScore)
 
     ###################################################
     # 2. Define Edges (Dependencies)
@@ -49,9 +50,10 @@ def create_default_dag() -> DAG:
     dag.add_edge("FafRecalibration", "FafVasculature")
 
     # mask components
-    dag.add_edge("FafFoveaDisc", "FafMask")
-    dag.add_edge("FafVasculature", "FafMask")
-    dag.add_edge("FafMask", "FafROIHistogram")
+    dag.add_edge("FafFoveaDisc", "FafInnerMask")
+    dag.add_edge("FafVasculature", "FafInnerMask")
+
+    dag.add_edge("FafInnerMask", "FafROIHistogram")
 
     # mask components
     dag.add_edge("FafFoveaDisc", "FafOuterMask")
@@ -62,7 +64,7 @@ def create_default_dag() -> DAG:
     dag.add_edge("FafAutoBg", "FafBgHistogram")
     dag.add_edge("FafOuterMask", "FafBgHistogram")
 
-    dag.add_edge("FaROIHistogram", "FafPixelScore")
-    dag.add_edge("FaROIHistogram", "FafPIxelScore")
+    dag.add_edge("FafROIHistogram", "FafPixelScore")
+    dag.add_edge("FafROIHistogram", "FafPixelScore")
 
     return dag

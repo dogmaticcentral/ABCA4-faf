@@ -9,7 +9,7 @@ from pathlib import Path
 
 import click
 
-from faf28_workflows.flows.central_pipe_runner import CentralPipeRunner, central_pipe_flow
+from faf28_workflows.flows.central_dag_runner import CentralDagRunner, central_dag_flow
 from faf28_workflows.flows.run_params_class import RunParams
 from utils.utils import shrug
 
@@ -55,17 +55,18 @@ def main(
 
     ctx.ensure_object(dict)
     ctx.obj["log_level"] = log_level
-    ctx.obj["runner"] = CentralPipeRunner(log_level=log_level)
+    ctx.obj["runner"] = CentralDagRunner(log_level=log_level)
 
+# TODO add "draw-dags" option
 
 @main.command()
 @click.pass_context
 def list_jobs(ctx: click.Context) -> None:
     """List all available jobs in the pipeline."""
-    runner: CentralPipeRunner = ctx.obj["runner"]
+    runner: CentralDagRunner = ctx.obj["runner"]
 
     click.echo("Available jobs:")
-    for i, name in enumerate(runner.available_jobs, 1):
+    for i, name in enumerate(runner.available_nodes, 1):
         click.echo(f"  {i}. {name}")
 
 
@@ -76,7 +77,7 @@ def run_single_flow(runner, rp: RunParams) -> None:
         sys.exit(1)
     click.echo(f"From CLI: Running the pipeline for {input_image_path}")
 
-    result = central_pipe_flow(input_data=str(input_image_path), start_from=rp.start_from,
+    result = central_dag_flow(input_data=str(input_image_path), start_from=rp.start_from,
                       stop_after=rp.stop_after, skip_existing=rp.skip_existing)
 
     if result is None:
@@ -123,9 +124,9 @@ def run(
     INPUT_DATA: Input for the starting job (file path, batch ID, etc).
     If 'all' the pipeline runs over all images in the database.
     """
-    runner: CentralPipeRunner = ctx.obj["runner"]
+    runner: CentralDagRunner = ctx.obj["runner"]
 
-    available_jobs = runner.available_jobs
+    available_jobs = runner.available_nodes
     if start_from and start_from not in available_jobs:
         click.echo(click.style(f"From CLI: Error: Start job '{start_from}' not found.", fg="red"))
         click.echo("Available jobs:")

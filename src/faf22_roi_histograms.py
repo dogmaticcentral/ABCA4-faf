@@ -28,7 +28,7 @@ from utils.plot_utils import plot_histogram
 from utils.utils import is_nonempty_file, scream
 
 
-class FafBgHistograms(FafAnalysis):
+class FafROIHistogram(FafAnalysis):
 
 
     def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "roi_histogram"):
@@ -154,7 +154,7 @@ class FafBgHistograms(FafAnalysis):
 
 
 def main():
-    faf_analysis = FafBgHistograms()
+    faf_analysis = FafROIHistogram()
     faf_analysis.run()
 
 

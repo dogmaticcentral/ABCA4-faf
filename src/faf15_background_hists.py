@@ -26,7 +26,7 @@ from utils.plot_utils import plot_histogram
 from utils.utils import is_nonempty_file, scream, shrug
 
 
-class FafBgHistograms(FafAnalysis):
+class FafBgHistogram(FafAnalysis):
 
     def create_parser(self):
         super().create_parser()
@@ -148,7 +148,7 @@ class FafBgHistograms(FafAnalysis):
 
 def main():
     name_stem = "auto_bg_histogram" if USE_AUTO else "bg_histogram"
-    faf_analysis = FafBgHistograms(name_stem=name_stem)
+    faf_analysis = FafBgHistogram(name_stem=name_stem)
     faf_analysis.run()
 
 
