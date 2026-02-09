@@ -10,6 +10,7 @@ from pathlib import Path
 import click
 
 from faf28_workflows.flows.central_dag_runner import CentralDagRunner, central_dag_flow
+from faf28_workflows.flows.dag_visualization import print_dag_diagram, print_dag_mermaid, dag_to_string
 from faf28_workflows.flows.run_params_class import RunParams
 from utils.utils import shrug
 
@@ -57,8 +58,6 @@ def main(
     ctx.obj["log_level"] = log_level
     ctx.obj["runner"] = CentralDagRunner(log_level=log_level)
 
-# TODO add "draw-dags" option
-
 @main.command()
 @click.pass_context
 def list_jobs(ctx: click.Context) -> None:
@@ -68,6 +67,17 @@ def list_jobs(ctx: click.Context) -> None:
     click.echo("Available jobs:")
     for i, name in enumerate(runner.available_nodes, 1):
         click.echo(f"  {i}. {name}")
+
+
+@main.command()
+@click.pass_context
+def draw_dag(ctx: click.Context) -> None:
+    """Draw DAG for the whole pipeline"""
+    runner: CentralDagRunner = ctx.obj["runner"]
+
+    click.echo("DAG for the whole pipeline:")
+    dag_str = dag_to_string(runner.dag, )
+
 
 
 def run_single_flow(runner, rp: RunParams) -> None:

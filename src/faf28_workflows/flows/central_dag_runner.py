@@ -27,6 +27,10 @@ class CentralDagRunner:
     def available_nodes(self) -> list[str]:
         return self._dag.node_names
 
+    @property
+    def dag(self) -> DAG:
+        return self._dag
+
     def run(
             self,
             logger,
