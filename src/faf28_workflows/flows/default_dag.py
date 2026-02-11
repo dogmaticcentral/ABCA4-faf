@@ -65,6 +65,6 @@ def create_default_dag() -> DAG:
     dag.add_edge("FafOuterMask", "FafBgHistogram")
 
     dag.add_edge("FafROIHistogram", "FafPixelScore")
-    dag.add_edge("FafROIHistogram", "FafPixelScore")
+    dag.add_edge("FafBgHistogram", "FafPixelScore")
 
     return dag

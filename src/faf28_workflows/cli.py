@@ -76,8 +76,8 @@ def draw_dag(ctx: click.Context) -> None:
     runner: CentralDagRunner = ctx.obj["runner"]
 
     click.echo("DAG for the whole pipeline:")
-    dag_str = dag_to_string(runner.dag, )
-
+    dag_str = dag_to_string(runner.dag, "mermaid" )
+    print(dag_str)
 
 
 def run_single_flow(runner, rp: RunParams) -> None:
