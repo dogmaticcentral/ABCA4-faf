@@ -26,9 +26,8 @@ graph TD
     FafOuterMask --> FafAutoBg
     FafOuterMask --> FafBgHistogram
     FafBgHistogram --> FafPixelScore
-   FafROIHistogram --> FafPixelScore
+    FafROIHistogram --> FafPixelScore
 ```
-
 
 
 ## Getting Started

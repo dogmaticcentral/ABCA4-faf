@@ -10,7 +10,7 @@ from pathlib import Path
 import click
 
 from faf28_workflows.flows.central_dag_runner import CentralDagRunner, central_dag_flow
-from faf28_workflows.flows.dag_visualization import print_dag_diagram, print_dag_mermaid, dag_to_string
+from faf28_workflows.flows.dag_visualization import  dag_to_string
 from faf28_workflows.flows.run_params_class import RunParams
 from utils.utils import shrug
 
@@ -76,7 +76,7 @@ def draw_dag(ctx: click.Context) -> None:
     runner: CentralDagRunner = ctx.obj["runner"]
 
     click.echo("DAG for the whole pipeline:")
-    dag_str = dag_to_string(runner.dag, "mermaid" )
+    dag_str = dag_to_string(runner.dag, "tree" )
     print(dag_str)
 
 
