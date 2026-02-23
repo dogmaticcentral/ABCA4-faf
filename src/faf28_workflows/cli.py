@@ -80,7 +80,7 @@ def draw_dag(ctx: click.Context) -> None:
     print(dag_str)
 
 
-def run_single_flow(runner, rp: RunParams) -> None:
+def run_single_flow(rp: RunParams) -> None:
     input_image_path = Path(rp.input_data)
     if not input_image_path.exists():
         click.echo(click.style(f"From CLI: Error: File not found: {input_image_path}", fg="red"))
@@ -163,7 +163,7 @@ def run(
         from faf28_workflows.flows.concurrency_driver import deploy_multiple_flows
         deploy_multiple_flows(params)
     else:
-        run_single_flow(runner,params)
+        run_single_flow(params)
 
 ####################################
 if __name__ == "__main__":

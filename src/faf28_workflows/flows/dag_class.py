@@ -123,12 +123,12 @@ class DAG:
         
         while queue:
             current = queue.pop(0)
-            if current not in visited:
-                visited.add(current)
-                reachable_nodes.add(current)
-                # Add children to queue
-                children = self._edges.get(current, [])
-                queue.extend(children)
+            if current in visited: continue
+            visited.add(current)
+            reachable_nodes.add(current)
+            # Add children to queue
+            children = self._edges.get(current, [])
+            queue.extend(children)
         
         # Now we need to topologically sort 'reachable_nodes'.
         # We can extract the subgraph induced by reachable_nodes and topo sort it.
@@ -138,8 +138,8 @@ class DAG:
         in_degree = {node: 0 for node in reachable_nodes}
         for u in reachable_nodes:
             for v in self._edges.get(u, []):
-                if v in reachable_nodes:
-                    in_degree[v] += 1
+                if v  not in reachable_nodes:  continue
+                in_degree[v] += 1
 
         topo_queue = [n for n in reachable_nodes if in_degree[n] == 0]
         sorted_nodes = []
@@ -155,3 +155,62 @@ class DAG:
                         topo_queue.append(v)
                         
         return sorted_nodes
+
+    def extract_subgraph(self, start_node: str, end_node: str) -> DAG:
+        """
+        Extract a subgraph containing all nodes and edges on paths from start_node to end_node.
+        
+        Args:
+            start_node: The starting node of the subgraph.
+            end_node: The ending node of the subgraph.
+            
+        Returns:
+            A new DAG instance containing only the nodes and edges on paths 
+            between start_node and end_node.
+        """
+        if start_node not in self._nodes:
+            raise ValueError(f"Start node '{start_node}' not found in DAG")
+        if end_node not in self._nodes:
+            raise ValueError(f"End node '{end_node}' not found in DAG")
+
+        # 1. Forward reachability from start_node
+        forward_visited = set()
+        queue = [start_node]
+        while queue:
+            curr = queue.pop(0)
+            if curr not in forward_visited:
+                forward_visited.add(curr)
+                queue.extend(self._edges.get(curr, []))
+                
+        # 2. Backward reachability from end_node
+        backward_visited = set()
+        queue = [end_node]
+        while queue:
+            curr = queue.pop(0)
+            if curr not in backward_visited:
+                backward_visited.add(curr)
+                queue.extend(self._reverse_edges.get(curr, []))
+                
+        # The subgraph consists of nodes that are reachable from start_node 
+        # AND can reach end_node
+        subgraph_nodes = forward_visited.intersection(backward_visited)
+        
+        new_dag = DAG(name=f"{self.name}_subgraph")
+        
+        # Add the nodes to the new DAG
+        for node_name in subgraph_nodes:
+            spec = self._nodes[node_name]
+            new_dag.add_node(
+                name=spec.name,
+                job_class=spec.job_class,
+                config_factory=spec.config_factory,
+                description=spec.description,
+            )
+            
+        # Add edges between nodes in the subgraph
+        for node_name in subgraph_nodes:
+            for child in self._edges.get(node_name, []):
+                if child in subgraph_nodes:
+                    new_dag.add_edge(node_name, child)
+                    
+        return new_dag

@@ -62,7 +62,7 @@ class FafFoveaDisc(FafAnalysis):
         alias = faf_img_dict['case_id']['alias']
         eye = faf_img_dict['eye']
         if faf_img_dict['fd_annot_manual']:
-            shrug(f"{original_image_path} have manual annotation for disc and fovea.")
+            shrug(f"{original_image_path} has manual annotation for disc and fovea.")
             return "ok"
         outpng = construct_workfile_path(WORK_DIR, original_image_path, alias, self.name_stem, eye=eye, filetype="png")
         if skip_if_exists and is_nonempty_file(outpng):

@@ -36,6 +36,7 @@ class CentralDagRunner:
             logger,
             input_data: Any,
             start_from: str | None = None,
+            stop_after:  str | None = None,
             skip_existing: bool = False
     ) -> FafStepResult[Any] | None:
         """
@@ -56,7 +57,28 @@ class CentralDagRunner:
 
         # Get topologically sorted nodes to run
         try:
-            nodes_to_run = self._dag.get_descendants(entry_node)
+            if stop_after is  None:
+                nodes_to_run = self._dag.get_descendants(entry_node)
+            else:
+                subdag = self._dag.extract_subgraph(entry_node, stop_after)
+                nodes_to_run = subdag.get_descendants(entry_node)
+                
+                # Check for outside incoming edges
+                subgraph_node_names = set(subdag.node_names)
+                outside_dependencies = set()
+                for node_name in subgraph_node_names:
+                    for parent in self._dag._reverse_edges.get(node_name, []):
+                        if parent not in subgraph_node_names:
+                            outside_dependencies.add(parent)
+                
+                if outside_dependencies:
+                    logger.warning(
+                        "The subgraph will fail if the data from the incoming edges "
+                        "from the nodes outside of the subgraph are not found. "
+                        f"Missing adjacent-but-outside nodes: {', '.join(sorted(outside_dependencies))}"
+                    )
+
+
         except ValueError as e:
             logger.error(str(e))
             return None
@@ -152,6 +174,7 @@ class CentralDagRunner:
 def central_dag_flow(
         input_data: str,
         start_from: str | None = None,
+        stop_after: str | None = None,
         skip_existing: bool = False
 ):
     runner = CentralDagRunner()
@@ -161,5 +184,6 @@ def central_dag_flow(
         logger,
         input_data=input_data,
         start_from=start_from,
+        stop_after=stop_after,
         skip_existing=skip_existing
     )
