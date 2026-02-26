@@ -26,12 +26,12 @@ def create_default_dag() -> DAG:
     # 1. Define Nodes
     dag.add_node(name="FafDenoising", job_class=FafDenoising, description="Denoise the input image")
     dag.add_node(name="FafRecalibration", job_class=FafRecalibration)
-    dag.add_node(name="FafFoveaDisc", job_class=FafFoveaDisc, config_factory=lambda: {"db-store": True})
+    dag.add_node(name="FafFoveaDisc", job_class=FafFoveaDisc, config_factory=lambda: {"db_store": True})
     dag.add_node(name="FafAutoBg", job_class=FafAutoBg)
     
     dag.add_node(name="FafVasculature", job_class=FafVasculature)
-    dag.add_node(name="FafInnerMask", job_class=FafFullMask, config_factory=lambda: {"outer-mask": False})
-    dag.add_node(name="FafOuterMask", job_class=FafFullMask, config_factory=lambda: {"outer-mask": True})
+    dag.add_node(name="FafInnerMask", job_class=FafFullMask, config_factory=lambda: {"outer_ellipse": False})
+    dag.add_node(name="FafOuterMask", job_class=FafFullMask, config_factory=lambda: {"outer_ellipse": True})
 
     dag.add_node(name="FafBgHistogram", job_class=FafBgHistogram)
     dag.add_node(name="FafROIHistogram", job_class=FafROIHistogram)

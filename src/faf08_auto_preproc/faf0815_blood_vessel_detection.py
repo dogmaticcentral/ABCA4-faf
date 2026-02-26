@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-    © 2024 Ivana Mihalek ivana.mihalek@gmail.com
+    © 2024-2026 Ivana Mihalek ivana.mihalek@gmail.com
 
     Licensed under Creative Commons Attribution-NonCommercial 4.0 International Public License:
     You may obtain a copy of the License at https://creativecommons.org/licenses/by-nc/4.0/
@@ -9,15 +9,12 @@
     The License is noncommercial - you may not use this material for commercial purposes.
 
 """
-from itertools import product
 
 import numpy as np
 
 from models.abca4_faf_models import FafImage
 from utils.db_utils import db_connect
-from faf00_settings import global_db_proxy
 from utils.image_utils import grayscale_img_path_to_255_ndarray, ndarray_to_int_png
-from utils.vector import Vector
 
 """
 Find and mark blood vessels inside the usable region.
@@ -36,10 +33,14 @@ from faf00_settings import WORK_DIR, DEBUG
 from utils.conventions import construct_workfile_path
 from utils.pil_utils import extremize_pil
 from utils.utils import is_nonempty_file, scream
-from utils.ndarray_utils import elliptic_mask
 
 
 class FafVasculature(FafAnalysis):
+
+    def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "vasculature"):
+        super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
+        description = "A heuristic to detect blood vessels in the input image."
+        self.description = description
 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         original_image_path = Path(faf_img_dict["image_path"])
