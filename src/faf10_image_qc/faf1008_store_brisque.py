@@ -16,7 +16,7 @@ from utils.db_utils import db_connect
 from faf00_settings import global_db_proxy
 
 from models.abca4_results import Score
-from faf05_image_qc.qc_utils.stat_utils import brisque_score
+from faf10_image_qc.qc_utils.stat_utils import brisque_score
 
 class BrisqueScore(FafAnalysis):
 

@@ -85,7 +85,7 @@ def plot_scores(data: list[tuple[float, float, str]]) -> None:
             mec = 'blue'
         # s = marker size
         plt.scatter(age, brisque, facecolors=color, edgecolors=mec, linewidths=2, marker=shape,  alpha=0.6, s=120)
-    plt.legend(handles=get_legend_elements(), loc='lower right', fontsize=12)
+    plt.legend(handles=get_legend_elements(), loc='upper right', fontsize=12)
     plt.xlabel("Age image acquired (years)", fontsize=14)
     plt.ylabel("BRISQUE Score", fontsize=14)
     # plt.title("BRISQUE Score vs Age image acquired")
