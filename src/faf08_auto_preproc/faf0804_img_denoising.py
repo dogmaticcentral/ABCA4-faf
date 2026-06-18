@@ -14,7 +14,9 @@ import os
 from pathlib import Path
 
 import numpy as np
-from scipy.signal import wiener
+from scipy.signal import wiener, medfilt, gammatone
+from skimage import exposure
+from skimage.filters import gaussian
 from skimage.io import imread
 
 from faf00_settings import WORK_DIR, global_db_proxy
@@ -24,12 +26,11 @@ from utils.db_utils import db_connect
 from utils.image_utils import ndarray_to_int_png
 from utils.utils import is_nonempty_file
 
-
 class FafDenoising(FafAnalysis):
 
     def __init__(self, internal_kwargs: dict|None=None, name_stem: str = "denoised"):
         super().__init__(internal_kwargs=internal_kwargs, name_stem=name_stem)
-        self.description = "Wiener denoising."
+        self.description = "Median denoising."
 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
         original_image_path = Path(faf_img_dict['image_path'])
@@ -48,8 +49,12 @@ class FafDenoising(FafAnalysis):
         # 'mysize' defines the window size (e.g., 3x3, 5x5, etc.)
         # If 'noise' is None, it is estimated from the local variance
         # looks the best without mysize
-        filtered = wiener(orig_img)
+        # filtered = wiener(orig_img)
+        # filtered  =  wiener(medfilt(orig_img))
+        # filtered =  exposure.adjust_gamma(medfilt(orig_img), gamma=1.2)
+        filtered = gaussian(exposure.adjust_gamma(orig_img, gamma=1.2), sigma=2)
         denoised_image = np.clip(filtered*255, 0, 255).astype(np.uint8)
+
         # to check the difference (there is some)
         # orig_img = grayscale_img_path_to_255_ndarray(input_filepath)
         # ndarray_to_int_png(np.abs(denoised_image-orig_img), outpng)

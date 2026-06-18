@@ -11,6 +11,8 @@
 """
 from pathlib import Path
 
+from sqlalchemy.orm import orm_insert_sentinel
+
 from faf_classes.faf_analysis import FafAnalysis
 from utils.db_utils import db_connect
 from faf00_settings import global_db_proxy
@@ -51,6 +53,12 @@ class BrisqueScore(FafAnalysis):
              db.connect(reuse_if_open=True)
         try:
             original_image_path = self.input_manager(faf_img_dict)
+            # pieces = str(original_image_path).split("/")
+            # alias = pieces[7]
+            # eye  = pieces[8]
+            # base = pieces[9].split(".")[0]
+            # fudge_path = f"/home/ivana/scratch/abca4_faf/{alias}/denoiseds/{eye}/{base}.denoised.png"
+            # score = brisque_score(fudge_path)
             score = brisque_score(original_image_path)
             self.store_or_update(faf_img_dict["id"], score)
             return "ok"

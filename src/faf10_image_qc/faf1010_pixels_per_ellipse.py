@@ -27,7 +27,7 @@ class PixelsPerEllipse(FafAnalysis):
     def __init__(self):
         super().__init__(
             name_stem="pixels_per_ellipse",
-            description="Count pixels within elliptical masks for each usable FAF image."
+            # description="Count pixels within elliptical masks for each usable FAF image."
         )
 
     def input_manager(self, faf_img_dict: dict) -> list[Path]:
@@ -110,8 +110,8 @@ class PixelsPerEllipse(FafAnalysis):
         return list(
             model_to_dict(f) for f in FafImage.select()
             .where(FafImage.usable == True)
-            .join(Case)
-            .where(Case.is_control == True)
+            # .join(Case)
+            # .where(Case.is_control == True)
         )
 
     def run(self):
